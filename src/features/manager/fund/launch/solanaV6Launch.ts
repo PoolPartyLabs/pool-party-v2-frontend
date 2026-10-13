@@ -19,7 +19,11 @@ import {
 import { decodeFunctionData, erc20Abi, type Hex, keccak256, toHex } from "viem";
 import type { BuildCreation, EvmBuild, UnsignedSolanaBuild } from "@/lib/api/v2/solanaSchemas";
 import { SOLANA_SPOKE_PROGRAM } from "@/lib/solana/release";
-import type { SolanaBuiltTransaction } from "@/lib/solana/transaction";
+import {
+  COMPUTE_BUDGET_PROGRAM as COMPUTE_BUDGET,
+  MAX_MICRO_LAMPORTS_PER_CU,
+  type SolanaBuiltTransaction,
+} from "@/lib/solana/transaction";
 import type { BuildPlan, Chain } from "../build/plan/buildPlan";
 import { type ReviewDraft, rawUsdc } from "./review";
 import { SOLANA_LAUNCH_STEPS, type SolanaLaunchState } from "./solanaV6Journal";
@@ -54,9 +58,6 @@ export const RAYDIUM_STOCK_POOLS = new Set([
 export const SOLANA_V6_SEED_FLOOR_RAW = BigInt(1_002_506);
 /** API #198 defaults when the Manager types nothing (creation-options `amounts`). */
 export const SOLANA_V6_DEFAULT_RAW = BigInt(50_000_000);
-const COMPUTE_BUDGET = "ComputeBudget111111111111111111111111111111";
-/** Ceiling on an API-set priority fee: 1,000,000 micro-lamports per CU (0.0014 SOL at 1.4M CU). */
-const MAX_MICRO_LAMPORTS_PER_CU = BigInt(1_000_000);
 
 function solanaChains(plan: BuildPlan): Chain[] {
   return plan.spokes.filter((spoke) => spoke.network === "solana").flatMap((spoke) => spoke.chains);
