@@ -310,9 +310,24 @@ test.describe("@v2-solana-launch dry three-chain launch against the live dev API
     expect(counters.solanaBroadcasts).toBe(0);
   });
 
-  test("the live three-chain demo Fund shows its Solana spoke", async ({ page }) => {
-    await page.goto("/en/strategies/0x1E45E497a734b3BcD67e514F0681F161EC78a718");
-    await expect(page.getByText(/Solana/).first()).toBeVisible({ timeout: 90_000 });
-    await expect(page.getByText(/Robinhood/).first()).toBeVisible();
+  test("the live three-chain demo Fund shows its Solana spoke", async ({ page, wallet }) => {
+    void wallet;
+    await connectAndSignIn(page);
+    await page.goto("/en/funds/0x1E45E497a734b3BcD67e514F0681F161EC78a718");
+    // The header family toggle renders twice (desktop and mobile); click the visible V2.
+    await page
+      .getByRole("button", { name: "V2", exact: true })
+      .filter({ visible: true })
+      .first()
+      .click();
+    // The networks sit in the collapsed "Investment mandate" section.
+    await page.getByText("Investment mandate", { exact: true }).first().click();
+    await expect(page.getByText(/Arbitrum · Robinhood · Solana/).first()).toBeVisible({
+      timeout: 120_000,
+    });
+    const solscan = page.locator('a[href^="https://solscan.io/account/"]');
+    await expect(solscan.first()).toBeVisible();
+    expect(await solscan.count()).toBeGreaterThanOrEqual(4);
+    expect(counters.evmSendAttempts).toBe(0);
   });
 });
