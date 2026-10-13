@@ -7,6 +7,8 @@
  * network slug to a committed official logo asset (public/networks); an unknown slug falls back
  * to a brand-colored monogram so the UI never breaks. Decorative (aria-hidden); the network name
  * is carried by adjacent text. V1 supports Arbitrum, Base and Polygon (the launch chains).
+ *
+ * POO-2347 [R1]: the network `solana` shows the Solana logo of the Solana preview.
  */
 import { cn } from "@/lib/utils/cn";
 
@@ -28,7 +30,14 @@ const NETWORK_VISUALS: Record<string, NetworkVisual> = {
   // POO-1881, ported with the fund builder (POO-2119): Robinhood Chain is the spoke a fund Mandate
   // names, so it gets its official mark instead of the monogram an unmapped slug falls back to.
   robinhood: { src: "/networks/robinhood.png", color: "#00C805" },
+  // POO-2347 [R1]: the Solana logo is the asset of the Solana preview.
+  solana: { src: "/protocols/solana-preview/solana.svg", color: "#9945FF" },
 };
+
+/** The logo asset of a network slug (case-insensitive), or undefined when the slug has none. */
+export function resolveNetworkLogo(network: string): string | undefined {
+  return NETWORK_VISUALS[network.toLowerCase()]?.src;
+}
 
 /** Public props for {@link NetworkLogo}. */
 export interface NetworkLogoProps {
