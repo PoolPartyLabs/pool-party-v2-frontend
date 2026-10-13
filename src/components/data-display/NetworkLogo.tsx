@@ -61,13 +61,13 @@ export function NetworkLogo({
   fallbackColor = "#737373",
   className,
 }: NetworkLogoProps) {
-  const visual = NETWORK_VISUALS[network.toLowerCase()];
+  const src = resolveNetworkLogo(network);
 
-  if (visual) {
+  if (src) {
     return (
       // Decorative; the adjacent network name carries the meaning.
       <img
-        src={visual.src}
+        src={src}
         alt=""
         aria-hidden="true"
         width={size}
