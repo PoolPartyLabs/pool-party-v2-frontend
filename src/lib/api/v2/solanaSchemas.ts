@@ -100,6 +100,15 @@ export const creationOptionsSchema = z
       })
       .passthrough(),
     seed: z.object({ token: addressSchema, decimals: z.number(), default: uint, minimum: uint }),
+    /** API #198: floors, ceilings and defaults of the three amounts the Manager types. */
+    amounts: z
+      .object({
+        seedAmount: z.object({ min: uint, max: uint, default: uint }).passthrough(),
+        minFirstDeposit: z.object({ min: uint, default: uint }).passthrough(),
+        spokeCap: z.object({ min: uint, max: uint, default: uint }).passthrough(),
+      })
+      .passthrough()
+      .optional(),
     mandate: z
       .object({ minFirstDeposit: uint, spokeCap: uint, maxReportAge: z.number() })
       .passthrough(),
@@ -126,6 +135,10 @@ export const buildCreationRequestSchema = z
       .optional(),
     venues: z.array(venueRequestSchema).min(1).max(4).optional(),
     seedAmount: uint.optional(),
+    /** API #198: 0..seedAmount; omitted = min(50 USDC, seed). */
+    minFirstDeposit: uint.nullable().optional(),
+    /** API #198: >= 1, one cap for both spokes; default 50 USDC. */
+    spokeCap: uint.nullable().optional(),
     spokes: z.tuple([z.literal("robinhood"), z.literal("solana")]).optional(),
     bindingTtlSeconds: z.number().int().min(1800).max(86400).optional(),
     creationNumber: uint.nullable().optional(),

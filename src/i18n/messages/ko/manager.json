@@ -1853,5 +1853,171 @@
     "unavailableBody": "이 선택 항목의 가격 기록을 이용할 수 없습니다.",
     "selectionPreserved": "선택 항목은 유지됩니다.",
     "back": "전략 흐름으로 돌아가기"
+  },
+  "solanaLaunch": {
+    "title": "{name}을(를) Arbitrum, Robinhood Chain, Solana에 출시",
+    "subtitle": "모든 트랜잭션은 Pool Party API가 만듭니다. Arbitrum과 Robinhood 단계는 EVM 지갑으로, Solana 단계는 Solana 지갑으로 서명합니다.",
+    "walletsTitle": "지갑",
+    "evmWallet": "매니저 EVM 지갑",
+    "notSignedIn": "로그인하지 않음",
+    "solanaWallet": "매니저 Solana 지갑",
+    "balanceUnknown": "SOL 잔액을 확인할 수 없음",
+    "solBalance": "{sol} SOL",
+    "connectSolana": "Solana 지갑 연결",
+    "walletsHint": "이 Solana 지갑은 펀드의 매니저 Solana 키로 영구 등록됩니다. Solana 계정 임대료를 지불합니다(약 0.1 SOL을 남겨 두세요).",
+    "amountsTitle": "펀드 금액",
+    "amountsHint": "USDC로 입력합니다. 플랜을 만들 때 펀드에 봉인됩니다.",
+    "seedLabel": "시드(첫 입금)",
+    "seedHint": "최소 {floor} USDC(플로우 수수료 후 1좌 이상). 기본값 {fallback} USDC.",
+    "minimumLabel": "최소 첫 입금액",
+    "minimumHint": "{floor} USDC부터 시드 금액까지. 기본값 {fallback} USDC.",
+    "spokeCapLabel": "스포크 한도(스포크별)",
+    "spokeCapHint": "최소 {floor} 단위. Robinhood와 Solana에 공통 한도입니다. 기본값 {fallback} USDC.",
+    "sealedTitle": "팩토리가 봉인하는 항목",
+    "sealedNetworks": "네트워크: Arbitrum(허브), Robinhood Chain, Solana",
+    "sealedSeed": "시드: {amount} USDC",
+    "sealedMinimum": "최소 첫 입금액: {amount} USDC",
+    "sealedSpokeCap": "스포크 한도: 스포크당 {amount} USDC",
+    "sealedReportAge": "최대 보고서 경과 시간: {seconds}초",
+    "sealedFees": "수수료: 운용 {management}%, 성과 {performance}%, 즉시 출금 {payout}%",
+    "sealedVenues": "Solana 운용처: {venues}",
+    "assetsTitle": "Solana 자산",
+    "unavailable": "사용 불가",
+    "stockUnavailable": "주식 토큰(TSLAx, NVDAx)은 표시되지만 아직 펀드에서 사용할 수 없습니다. 스왑은 계속 꺼져 있습니다.",
+    "creationTitle": "펀드 생성",
+    "operationsTitle": "첫 Solana 작업",
+    "operationsHint": "펀드가 생성되면: 자금을 Solana로 보내고, Kamino에 공급하고, SOL로 스왑한 뒤 Raydium 포지션을 엽니다. 금액은 USDC이며 각 단계 전에 수정할 수 있습니다.",
+    "amountSend": "Solana로 보내기",
+    "amountKamino": "Kamino 공급",
+    "amountSwap": "SOL로 스왑",
+    "amountRaydium": "Raydium 포지션(USDC 측)",
+    "operationsStepsTitle": "Solana 작업",
+    "working": "진행 중입니다. 이 탭을 열어 두고 지갑 요청을 승인하세요.",
+    "allDone": "출시 완료: 펀드가 세 체인에서 운영됩니다.",
+    "pause": "일시 중지",
+    "restart": "처음부터 다시",
+    "resumeCreation": "생성 계속",
+    "start": "펀드 생성",
+    "openFund": "펀드 열기",
+    "runOperations": "Solana 작업 실행",
+    "solanaTx": "Solana 트랜잭션 {index}",
+    "arbiscanTx": "Arbiscan에서 보기",
+    "blockscoutTx": "Robinhood 탐색기에서 보기",
+    "accountCore": "펀드(Arbitrum 코어)",
+    "accountRobinhood": "Robinhood 스포크 볼트",
+    "accountFundPda": "Solana 펀드 계정",
+    "accountVault": "Solana 볼트",
+    "accountUsdcAta": "Solana USDC 계정",
+    "accountsCreated": "펀드 계정",
+    "accountsPredicted": "펀드 계정(예상)",
+    "bindingExpiry": "Solana 부트스트랩은 {at} 전에 완료되어야 합니다.",
+    "draftMissing": "이 브라우저에서는 이 초안을 사용할 수 없습니다.",
+    "notSolanaPlan": "이 플랜에는 Solana 스포크가 없습니다. 검토 화면에서 출시하세요.",
+    "backToManager": "매니저로 돌아가기",
+    "reviewSummary": "출시하면 Solana 흐름이 열립니다: 두 번의 동의, Arbitrum의 펀드, Robinhood 스포크와 Solana 스포크, 그다음 첫 Solana 작업입니다.",
+    "steps": {
+      "plan": {
+        "label": "플랜 만들기",
+        "hint": "API가 펀드, 스포크, Solana 계정을 예측합니다."
+      },
+      "sign-binding": {
+        "label": "Solana 바인딩 서명",
+        "hint": "EVM 서명(트랜잭션 없음): Solana 키를 이 펀드에 연결합니다."
+      },
+      "sign-policy": {
+        "label": "스왑 정책 서명",
+        "hint": "EVM 서명(트랜잭션 없음): 봉인되는 SOL/USDC 스왑 한도입니다."
+      },
+      "approve-seed": {
+        "label": "시드 승인",
+        "hint": "Arbitrum: 팩토리가 시드 USDC를 가져가도록 허용합니다."
+      },
+      "create-fund": {
+        "label": "펀드 생성",
+        "hint": "Arbitrum: 봉인된 맨데이트와 시드를 가진 펀드 코어입니다."
+      },
+      "create-spoke": {
+        "label": "Robinhood 스포크 생성",
+        "hint": "Robinhood Chain: 스포크 볼트와 어댑터입니다."
+      },
+      "discover": {
+        "label": "펀드 등록",
+        "hint": "API가 새 펀드를 인덱싱합니다."
+      },
+      "bootstrap": {
+        "label": "Solana 스포크 생성",
+        "hint": "Solana: 정책을 준비한 뒤 펀드 계정을 초기화합니다."
+      },
+      "verify": {
+        "label": "세 체인 확인",
+        "hint": "펀드가 Arbitrum, Robinhood, Solana를 표시합니다."
+      },
+      "solana-report": {
+        "label": "첫 Solana 보고서",
+        "hint": "키퍼가 Solana 스포크를 허브에 보고합니다."
+      },
+      "send-to-solana": {
+        "label": "USDC를 Solana로 보내기",
+        "hint": "Arbitrum: Solana 볼트로 CCTP Fast 전송합니다."
+      },
+      "arrival": {
+        "label": "Solana 입금 확인",
+        "hint": "Circle이 증명하고 키퍼가 Solana 볼트에 입금합니다."
+      },
+      "adapters": {
+        "label": "운용처 활성화",
+        "hint": "Solana: Kamino와 Raydium 어댑터를 초기화합니다."
+      },
+      "kamino-supply": {
+        "label": "Kamino 공급",
+        "hint": "Solana: USDC를 Kamino 리저브에 넣습니다."
+      },
+      "swap": {
+        "label": "USDC를 SOL로 스왑",
+        "hint": "Solana: 승인된 풀을 통한 API 서명 경로입니다."
+      },
+      "raydium-open": {
+        "label": "Raydium 포지션 열기",
+        "hint": "Solana: 가격 주변 약 5%의 SOL/USDC 집중 유동성입니다."
+      },
+      "final-report": {
+        "label": "포지션 보고",
+        "hint": "허브가 Solana 포지션을 받습니다."
+      }
+    },
+    "status": {
+      "idle": "대기",
+      "running": "진행 중",
+      "submitted": "전송됨, 확인 중",
+      "waiting": "기다리는 중",
+      "done": "완료",
+      "skipped": "건너뜀",
+      "failed": "실패"
+    },
+    "errors": {
+      "USER_REJECTED": "지갑 요청이 거부되었습니다. 계속하여 다시 시도하세요.",
+      "SOLANA_WALLET_REQUIRED": "이 펀드를 관리할 Solana 지갑을 연결하세요.",
+      "V2_WALLET_REQUIRED": "로그인한 매니저 EVM 지갑을 연결하세요.",
+      "SOLANA_SEED_BALANCE_LOW": "매니저 지갑에 Arbitrum의 시드 USDC가 없습니다.",
+      "SOLANA_SEED_BELOW_MINIMUM": "시드가 최소 금액보다 적습니다.",
+      "SOLANA_STOCK_UNAVAILABLE": "주식 풀은 아직 펀드에서 사용할 수 없습니다. SOL/USDC 풀을 선택하세요.",
+      "SOLANA_POOL_NOT_ADMITTED": "이 Raydium 풀은 승인되지 않았습니다. SOL/USDC 풀을 선택하세요.",
+      "CREATION_PLAN_STALE": "다른 펀드가 이 생성 번호를 사용했습니다. 처음부터 다시 플랜을 만드세요.",
+      "CREATION_BINDING_EXPIRED": "서명된 바인딩이 곧 만료됩니다. 처음부터 다시 서명하세요.",
+      "SOLANA_PLAN_MISMATCH": "API 플랜이 지갑과 일치하지 않습니다. 아무것도 서명되지 않았습니다.",
+      "UNSAFE_SOLANA_TRANSACTION": "Solana 트랜잭션이 안전 검사에 실패했습니다. 아무것도 전송되지 않았습니다.",
+      "SOLANA_BLOCKHASH_EXPIRED": "Solana 트랜잭션이 서명 전에 만료되었습니다. 계속하여 다시 만드세요.",
+      "TRANSACTION_REVERTED": "트랜잭션이 온체인에서 되돌려졌습니다.",
+      "SOLANA_TRANSACTION_FAILED": "Solana 트랜잭션이 온체인에서 실패했습니다.",
+      "SOLANA_BALANCE_EMPTY": "Solana 볼트에 이 단계에 사용할 잔액이 아직 없습니다.",
+      "V2_UNAUTHORIZED": "매니저 지갑으로 다시 로그인하세요.",
+      "SOLANA_DRAFT_UNAVAILABLE": "저장된 초안 또는 검토 내용이 없습니다.",
+      "CREATION_AMOUNT_INVALID": "각 금액을 USDC로 입력하세요.",
+      "CREATION_SEED_BELOW_ONE_SHARE": "시드는 최소 1좌(1.002506 USDC)를 발행해야 합니다.",
+      "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT": "최소 첫 입금액은 시드를 넘을 수 없습니다.",
+      "CREATION_SPOKE_CAP_ZERO": "스포크 한도는 0보다 커야 합니다.",
+      "CREATION_AMOUNT_ABOVE_MAX": "금액이 최대값을 넘습니다.",
+      "generic": "단계가 실패했습니다({code}). 계속하여 다시 시도하세요."
+    }
   }
 }

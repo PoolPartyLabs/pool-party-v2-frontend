@@ -1853,5 +1853,171 @@
     "unavailableBody": "この選択の価格履歴は利用できません。",
     "selectionPreserved": "選択は保持されています。",
     "back": "戦略フローに戻る"
+  },
+  "solanaLaunch": {
+    "title": "{name} を Arbitrum、Robinhood Chain、Solana でローンチ",
+    "subtitle": "すべてのトランザクションは Pool Party API が作成します。Arbitrum と Robinhood のステップは EVM ウォレット、Solana のステップは Solana ウォレットで署名します。",
+    "walletsTitle": "ウォレット",
+    "evmWallet": "マネージャーの EVM ウォレット",
+    "notSignedIn": "未サインイン",
+    "solanaWallet": "マネージャーの Solana ウォレット",
+    "balanceUnknown": "SOL 残高を取得できません",
+    "solBalance": "{sol} SOL",
+    "connectSolana": "Solana ウォレットを接続",
+    "walletsHint": "この Solana ウォレットはファンドのマネージャー Solana キーとして恒久的に登録されます。Solana アカウントのレントを支払います(約 0.1 SOL を残してください)。",
+    "amountsTitle": "ファンドの金額",
+    "amountsHint": "USDC で入力します。プラン作成時にファンドへ封印されます。",
+    "seedLabel": "シード(最初の入金)",
+    "seedHint": "最低 {floor} USDC(フロー手数料後に 1 口以上)。既定値 {fallback} USDC。",
+    "minimumLabel": "最低初回入金額",
+    "minimumHint": "{floor} USDC からシード額まで。既定値 {fallback} USDC。",
+    "spokeCapLabel": "スポーク上限(各スポーク)",
+    "spokeCapHint": "最低 {floor} 単位。Robinhood と Solana で共通の上限です。既定値 {fallback} USDC。",
+    "sealedTitle": "ファクトリーが封印する内容",
+    "sealedNetworks": "ネットワーク:Arbitrum(ハブ)、Robinhood Chain、Solana",
+    "sealedSeed": "シード:{amount} USDC",
+    "sealedMinimum": "最低初回入金額:{amount} USDC",
+    "sealedSpokeCap": "スポーク上限:スポークごとに {amount} USDC",
+    "sealedReportAge": "レポートの最大経過時間:{seconds} 秒",
+    "sealedFees": "手数料:運用 {management}%、成功報酬 {performance}%、即時出金 {payout}%",
+    "sealedVenues": "Solana の運用先:{venues}",
+    "assetsTitle": "Solana の資産",
+    "unavailable": "利用不可",
+    "stockUnavailable": "株式トークン(TSLAx、NVDAx)は表示されますが、まだファンドでは利用できません。スワップは無効のままです。",
+    "creationTitle": "ファンドの作成",
+    "operationsTitle": "最初の Solana 操作",
+    "operationsHint": "ファンド作成後:資金を Solana へ送り、Kamino に供給し、SOL にスワップして Raydium ポジションを開きます。金額は USDC で、各ステップの前に変更できます。",
+    "amountSend": "Solana へ送金",
+    "amountKamino": "Kamino への供給",
+    "amountSwap": "SOL へスワップ",
+    "amountRaydium": "Raydium ポジション(USDC 側)",
+    "operationsStepsTitle": "Solana 操作",
+    "working": "処理中です。このタブを開いたまま、ウォレットの承認を行ってください。",
+    "allDone": "ローンチ完了:ファンドは 3 つのチェーンで稼働しています。",
+    "pause": "一時停止",
+    "restart": "最初からやり直す",
+    "resumeCreation": "作成を続ける",
+    "start": "ファンドを作成",
+    "openFund": "ファンドを開く",
+    "runOperations": "Solana 操作を実行",
+    "solanaTx": "Solana トランザクション {index}",
+    "arbiscanTx": "Arbiscan で表示",
+    "blockscoutTx": "Robinhood エクスプローラーで表示",
+    "accountCore": "ファンド(Arbitrum コア)",
+    "accountRobinhood": "Robinhood スポーク Vault",
+    "accountFundPda": "Solana ファンドアカウント",
+    "accountVault": "Solana Vault",
+    "accountUsdcAta": "Solana USDC アカウント",
+    "accountsCreated": "ファンドのアカウント",
+    "accountsPredicted": "ファンドのアカウント(予測)",
+    "bindingExpiry": "Solana ブートストラップは {at} までに完了する必要があります。",
+    "draftMissing": "このブラウザではこの下書きを利用できません。",
+    "notSolanaPlan": "このプランには Solana スポークがありません。レビューからローンチしてください。",
+    "backToManager": "マネージャーに戻る",
+    "reviewSummary": "ローンチすると Solana のフローが開きます:2 つの同意、Arbitrum 上のファンド、Robinhood スポーク、Solana スポーク、その後に最初の Solana 操作です。",
+    "steps": {
+      "plan": {
+        "label": "プランを作成",
+        "hint": "API がファンド、スポーク、Solana アカウントを予測します。"
+      },
+      "sign-binding": {
+        "label": "Solana バインディングに署名",
+        "hint": "EVM 署名(トランザクションなし):Solana キーをこのファンドに紐付けます。"
+      },
+      "sign-policy": {
+        "label": "スワップポリシーに署名",
+        "hint": "EVM 署名(トランザクションなし):封印される SOL/USDC スワップ上限です。"
+      },
+      "approve-seed": {
+        "label": "シードを承認",
+        "hint": "Arbitrum:ファクトリーがシードの USDC を受け取れるようにします。"
+      },
+      "create-fund": {
+        "label": "ファンドを作成",
+        "hint": "Arbitrum:封印されたマンデートとシードを持つファンドのコアです。"
+      },
+      "create-spoke": {
+        "label": "Robinhood スポークを作成",
+        "hint": "Robinhood Chain:スポーク Vault とアダプターです。"
+      },
+      "discover": {
+        "label": "ファンドを登録",
+        "hint": "API が新しいファンドをインデックスします。"
+      },
+      "bootstrap": {
+        "label": "Solana スポークを作成",
+        "hint": "Solana:ポリシーを配置し、ファンドアカウントを初期化します。"
+      },
+      "verify": {
+        "label": "3 つのチェーンを確認",
+        "hint": "ファンドが Arbitrum、Robinhood、Solana を表示します。"
+      },
+      "solana-report": {
+        "label": "最初の Solana レポート",
+        "hint": "キーパーが Solana スポークをハブへ報告します。"
+      },
+      "send-to-solana": {
+        "label": "USDC を Solana へ送金",
+        "hint": "Arbitrum:Solana Vault への CCTP Fast 送金です。"
+      },
+      "arrival": {
+        "label": "Solana への入金",
+        "hint": "Circle が証明し、キーパーが Solana Vault に入金します。"
+      },
+      "adapters": {
+        "label": "運用先を有効化",
+        "hint": "Solana:Kamino と Raydium のアダプターを初期化します。"
+      },
+      "kamino-supply": {
+        "label": "Kamino に供給",
+        "hint": "Solana:USDC を Kamino のリザーブへ。"
+      },
+      "swap": {
+        "label": "USDC を SOL にスワップ",
+        "hint": "Solana:承認済みプールを通る API 署名ルートです。"
+      },
+      "raydium-open": {
+        "label": "Raydium ポジションを開く",
+        "hint": "Solana:価格の前後約 5% の SOL/USDC 集中流動性です。"
+      },
+      "final-report": {
+        "label": "ポジションを報告",
+        "hint": "ハブが Solana のポジションを受け取ります。"
+      }
+    },
+    "status": {
+      "idle": "待機中",
+      "running": "処理中",
+      "submitted": "送信済み、確認中",
+      "waiting": "待機",
+      "done": "完了",
+      "skipped": "スキップ",
+      "failed": "失敗"
+    },
+    "errors": {
+      "USER_REJECTED": "ウォレットのリクエストが拒否されました。続行して再試行してください。",
+      "SOLANA_WALLET_REQUIRED": "このファンドを管理する Solana ウォレットを接続してください。",
+      "V2_WALLET_REQUIRED": "サインインに使ったマネージャーの EVM ウォレットを接続してください。",
+      "SOLANA_SEED_BALANCE_LOW": "マネージャーウォレットに Arbitrum 上のシード分の USDC がありません。",
+      "SOLANA_SEED_BELOW_MINIMUM": "シードが最低額を下回っています。",
+      "SOLANA_STOCK_UNAVAILABLE": "株式プールはまだファンドで利用できません。SOL/USDC プールを選んでください。",
+      "SOLANA_POOL_NOT_ADMITTED": "この Raydium プールは承認されていません。SOL/USDC プールを選んでください。",
+      "CREATION_PLAN_STALE": "別のファンドがこの作成番号を使用しました。やり直して新しいプランを作成してください。",
+      "CREATION_BINDING_EXPIRED": "署名済みバインディングの期限が近づいています。やり直して再署名してください。",
+      "SOLANA_PLAN_MISMATCH": "API のプランがウォレットと一致しません。何も署名されていません。",
+      "UNSAFE_SOLANA_TRANSACTION": "Solana トランザクションが安全確認に失敗しました。何も送信されていません。",
+      "SOLANA_BLOCKHASH_EXPIRED": "Solana トランザクションが署名前に期限切れになりました。続行して再作成してください。",
+      "TRANSACTION_REVERTED": "トランザクションがオンチェーンでリバートしました。",
+      "SOLANA_TRANSACTION_FAILED": "Solana トランザクションがオンチェーンで失敗しました。",
+      "SOLANA_BALANCE_EMPTY": "Solana Vault にはこのステップで使える残高がまだありません。",
+      "V2_UNAUTHORIZED": "マネージャーウォレットで再度サインインしてください。",
+      "SOLANA_DRAFT_UNAVAILABLE": "保存された下書きまたはレビューが見つかりません。",
+      "CREATION_AMOUNT_INVALID": "各金額を USDC で入力してください。",
+      "CREATION_SEED_BELOW_ONE_SHARE": "シードは少なくとも 1 口を発行できる額(1.002506 USDC)が必要です。",
+      "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT": "最低初回入金額はシード額を超えられません。",
+      "CREATION_SPOKE_CAP_ZERO": "スポーク上限は 0 より大きくしてください。",
+      "CREATION_AMOUNT_ABOVE_MAX": "金額が上限を超えています。",
+      "generic": "ステップが失敗しました({code})。続行して再試行してください。"
+    }
   }
 }

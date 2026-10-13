@@ -61,6 +61,7 @@ import {
   SOLANA_OPERATION_STEPS,
   SOLANA_USDC_MINT,
   SOLANA_WSOL_MINT,
+  type SolanaCreationAmounts,
   type SolanaLaunchState,
   type SolanaLaunchStepId,
   type SolanaLaunchStepRecord,
@@ -120,7 +121,7 @@ export interface SolanaV6LaunchView {
   solanaBalanceLamports: bigint | null;
   solanaReady: boolean;
   connectSolana: () => void;
-  start: () => void;
+  start: (amounts: SolanaCreationAmounts) => void;
   runCreation: () => void;
   runOperations: () => void;
   stop: () => void;
@@ -706,7 +707,7 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
     [setStep, track],
   );
 
-  const start = () => {
+  const start = (amounts: SolanaCreationAmounts) => {
     if (!manager || !draft?.review || !plan) {
       setError("SOLANA_DRAFT_UNAVAILABLE");
       return;
@@ -723,6 +724,7 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
           solanaKey: solana.address,
           plan,
           review: draft.review,
+          amounts,
         });
         saveSolanaLaunch(localStorage, initial);
         stateRef.current = initial;

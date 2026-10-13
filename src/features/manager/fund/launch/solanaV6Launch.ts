@@ -35,8 +35,10 @@ export const RAYDIUM_STOCK_POOLS = new Set([
   "8aDaBQkTrS6HVMjyc6EZebgdiaXhLYGriDWKWWp1NpFF",
   "49iMatQtoyabsYAQc8GafVq6aeBFVDxSRH44oiatyyw6",
 ]);
-/** The fixed v6 Mandate values the API seals for every Manager (creation-options `mandate`). */
-export const SOLANA_V6_MINIMUM_RAW = BigInt(50_000_000);
+/** API #198 floor: the seed must mint one whole share after the 25 bps flow fee. */
+export const SOLANA_V6_SEED_FLOOR_RAW = BigInt(1_002_506);
+/** API #198 defaults when the Manager types nothing (creation-options `amounts`). */
+export const SOLANA_V6_DEFAULT_RAW = BigInt(50_000_000);
 const COMPUTE_BUDGET = "ComputeBudget111111111111111111111111111111";
 
 export const SOLANA_CREATION_STEPS = [
@@ -107,6 +109,8 @@ const stateSchema = z.object({
       ]),
     ),
     seedAmount: uint,
+    minFirstDeposit: uint,
+    spokeCap: uint,
     bindingTtlSeconds: z.number().int(),
   }),
   plan: z
@@ -173,11 +177,54 @@ function chainsWith(plan: BuildPlan, kind: string): Chain[] {
   );
 }
 
+/** The three amounts the Manager types on the launch page (API #198), raw USDC. */
+export interface SolanaCreationAmounts {
+  seedAmount: string;
+  minFirstDeposit: string;
+  spokeCap: string;
+}
+/** Launch-page defaults: the Review's seed and minimum, and a spoke cap the size of the seed. */
+export function defaultCreationAmounts(review: ReviewDraft): SolanaCreationAmounts {
+  let seed: bigint;
+  let minimum: bigint;
+  try {
+    seed = rawUsdc(review.seed);
+  } catch {
+    seed = SOLANA_V6_DEFAULT_RAW;
+  }
+  try {
+    minimum = rawUsdc(review.minimum);
+  } catch {
+    minimum = seed;
+  }
+  if (minimum > seed) minimum = seed;
+  return {
+    seedAmount: seed.toString(),
+    minFirstDeposit: minimum.toString(),
+    spokeCap: (seed > BigInt(0) ? seed : SOLANA_V6_DEFAULT_RAW).toString(),
+  };
+}
+/** API #198 rules, checked before the API is asked (it answers the same codes with a 422). */
+export function creationAmountsError(amounts: SolanaCreationAmounts): string | null {
+  const values = [amounts.seedAmount, amounts.minFirstDeposit, amounts.spokeCap];
+  if (values.some((value) => !/^\d{1,30}$/.test(value))) return "CREATION_AMOUNT_INVALID";
+  const seed = BigInt(amounts.seedAmount);
+  if (seed < SOLANA_V6_SEED_FLOOR_RAW) return "CREATION_SEED_BELOW_ONE_SHARE";
+  if (BigInt(amounts.minFirstDeposit) > seed) return "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT";
+  if (BigInt(amounts.spokeCap) < BigInt(1)) return "CREATION_SPOKE_CAP_ZERO";
+  return null;
+}
+
 /**
- * §3.13 request from the saved Mandate/Build/Review. Venues follow the Solana blocks of the plan;
- * a stock pool is refused (DEC-204), a plan with neither block takes the API's reviewed default pair.
+ * §3.13 request from the saved Mandate/Build/Review and the launch-page amounts. Venues follow the
+ * Solana blocks of the plan; a stock pool is refused (DEC-204), a plan with neither block takes the
+ * API's reviewed default pair.
  */
-export function solanaCreationRequest(plan: BuildPlan, review: ReviewDraft) {
+export function solanaCreationRequest(
+  plan: BuildPlan,
+  review: ReviewDraft,
+  amounts: SolanaCreationAmounts,
+) {
   const venues: SolanaLaunchState["request"]["venues"] = [];
   if (chainsWith(plan, "solanaKaminoSupply").length)
     venues.push({ kind: "kamino", reserve: KAMINO_USDC_RESERVE });
@@ -191,8 +238,8 @@ export function solanaCreationRequest(plan: BuildPlan, review: ReviewDraft) {
     if (pool !== RAYDIUM_SOL_USDC_POOL) throw new Error("SOLANA_POOL_NOT_ADMITTED");
     venues.push({ kind: "raydium", pool });
   }
-  const seed = rawUsdc(review.seed);
-  if (seed < SOLANA_V6_MINIMUM_RAW) throw new Error("SOLANA_SEED_BELOW_MINIMUM");
+  const invalid = creationAmountsError(amounts);
+  if (invalid) throw new Error(invalid);
   return {
     managementFeeBps: review.managementFeeBps,
     performanceFeeBps: review.performanceFeeBps,
@@ -204,7 +251,9 @@ export function solanaCreationRequest(plan: BuildPlan, review: ReviewDraft) {
           { kind: "kamino" as const, reserve: KAMINO_USDC_RESERVE },
           { kind: "raydium" as const, pool: RAYDIUM_SOL_USDC_POOL },
         ],
-    seedAmount: seed.toString(),
+    seedAmount: amounts.seedAmount,
+    minFirstDeposit: amounts.minFirstDeposit,
+    spokeCap: amounts.spokeCap,
     bindingTtlSeconds: 14_400,
   };
 }
@@ -215,16 +264,16 @@ const sharePct = (chains: Chain[]) => chains.reduce((total, chain) => total + ch
  * The send stays under the 50 USDC spoke cap; the Raydium budget is split half USDC (kept) and half
  * swapped to SOL. Every amount is editable on the journey before it is used.
  */
-export function solanaLaunchAmounts(plan: BuildPlan, seedRaw: bigint) {
+export function solanaLaunchAmounts(plan: BuildPlan, seedRaw: bigint, spokeCapRaw: bigint) {
   const principal = (seedRaw * BigInt(99)) / BigInt(100);
   const solanaPct = plan.spokes
     .filter((spoke) => spoke.network === "solana")
     .reduce((total, spoke) => total + spoke.sharePct, 0);
   const pct = (value: number) => (principal * BigInt(Math.round(value * 100))) / BigInt(10_000);
-  const cap = BigInt(50_000_000);
+  const cap = spokeCapRaw;
   let send = pct(solanaPct || 50);
   if (send > cap) send = cap;
-  if (send < BigInt(1_000_000)) send = BigInt(1_000_000);
+  if (send < BigInt(1_000_000)) send = cap < BigInt(1_000_000) ? cap : BigInt(1_000_000);
   const kaminoChains = chainsWith(plan, "solanaKaminoSupply");
   const raydiumChains = chainsWith(plan, "solanaRaydiumPool");
   const credited = (send * BigInt(9_990)) / BigInt(10_000);
@@ -250,9 +299,10 @@ export function initialSolanaLaunch(input: {
   solanaKey: string;
   plan: BuildPlan;
   review: ReviewDraft;
+  amounts: SolanaCreationAmounts;
   now?: number;
 }): SolanaLaunchState {
-  const request = solanaCreationRequest(input.plan, input.review);
+  const request = solanaCreationRequest(input.plan, input.review, input.amounts);
   return {
     version: 1,
     draftId: input.draftId,
@@ -261,7 +311,7 @@ export function initialSolanaLaunch(input: {
     createdAt: input.now ?? Date.now(),
     request,
     signatures: {},
-    amounts: solanaLaunchAmounts(input.plan, BigInt(request.seedAmount)),
+    amounts: solanaLaunchAmounts(input.plan, BigInt(request.seedAmount), BigInt(request.spokeCap)),
     steps: Object.fromEntries(SOLANA_LAUNCH_STEPS.map((step) => [step, { status: "idle" }])),
   };
 }

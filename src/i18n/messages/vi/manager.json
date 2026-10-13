@@ -1853,5 +1853,171 @@
     "unavailableBody": "Lịch sử giá không khả dụng cho lựa chọn này.",
     "selectionPreserved": "Lựa chọn được giữ nguyên.",
     "back": "Quay lại luồng chiến lược"
+  },
+  "solanaLaunch": {
+    "title": "Ra mắt {name} trên Arbitrum, Robinhood Chain và Solana",
+    "subtitle": "API Pool Party tạo mọi giao dịch. Ví EVM của bạn ký các bước trên Arbitrum và Robinhood, ví Solana của bạn ký các bước trên Solana.",
+    "walletsTitle": "Ví",
+    "evmWallet": "Ví EVM của quản lý",
+    "notSignedIn": "Chưa đăng nhập",
+    "solanaWallet": "Ví Solana của quản lý",
+    "balanceUnknown": "Không đọc được số dư SOL",
+    "solBalance": "{sol} SOL",
+    "connectSolana": "Kết nối ví Solana",
+    "walletsHint": "Ví Solana này trở thành khóa Solana quản lý của quỹ vĩnh viễn. Ví trả phí thuê tài khoản Solana (giữ khoảng 0,1 SOL).",
+    "amountsTitle": "Số tiền của quỹ",
+    "amountsHint": "Nhập bằng USDC. Các giá trị được niêm phong vào quỹ khi tạo kế hoạch.",
+    "seedLabel": "Vốn khởi tạo (khoản nạp đầu tiên của bạn)",
+    "seedHint": "Tối thiểu {floor} USDC (một phần nguyên sau phí luân chuyển). Mặc định {fallback} USDC.",
+    "minimumLabel": "Khoản nạp đầu tối thiểu",
+    "minimumHint": "Từ {floor} USDC đến vốn khởi tạo. Mặc định {fallback} USDC.",
+    "spokeCapLabel": "Hạn mức spoke (mỗi spoke)",
+    "spokeCapHint": "Tối thiểu {floor} đơn vị gốc; một hạn mức cho Robinhood và Solana. Mặc định {fallback} USDC.",
+    "sealedTitle": "Những gì factory niêm phong",
+    "sealedNetworks": "Mạng: Arbitrum (hub), Robinhood Chain, Solana",
+    "sealedSeed": "Vốn khởi tạo: {amount} USDC",
+    "sealedMinimum": "Khoản nạp đầu tối thiểu: {amount} USDC",
+    "sealedSpokeCap": "Hạn mức spoke: {amount} USDC mỗi spoke",
+    "sealedReportAge": "Tuổi báo cáo tối đa: {seconds} giây",
+    "sealedFees": "Phí: quản lý {management}%, hiệu suất {performance}%, rút ngay {payout}%",
+    "sealedVenues": "Nền tảng trên Solana: {venues}",
+    "assetsTitle": "Tài sản Solana",
+    "unavailable": "Không khả dụng",
+    "stockUnavailable": "Token cổ phiếu (TSLAx, NVDAx) được hiển thị nhưng chưa dùng được cho quỹ: giao dịch hoán đổi của chúng vẫn tắt.",
+    "creationTitle": "Tạo quỹ",
+    "operationsTitle": "Các thao tác Solana đầu tiên",
+    "operationsHint": "Khi quỹ đã tồn tại: chuyển vốn sang Solana, cung cấp cho Kamino, hoán đổi sang SOL và mở vị thế Raydium. Số tiền bằng USDC, có thể sửa trước mỗi bước.",
+    "amountSend": "Gửi sang Solana",
+    "amountKamino": "Cung cấp cho Kamino",
+    "amountSwap": "Hoán đổi sang SOL",
+    "amountRaydium": "Vị thế Raydium (phía USDC)",
+    "operationsStepsTitle": "Thao tác Solana",
+    "working": "Đang xử lý. Giữ tab này mở và phê duyệt các yêu cầu của ví.",
+    "allDone": "Ra mắt hoàn tất: quỹ hoạt động trên ba chuỗi.",
+    "pause": "Tạm dừng",
+    "restart": "Bắt đầu lại",
+    "resumeCreation": "Tiếp tục tạo quỹ",
+    "start": "Tạo quỹ",
+    "openFund": "Mở quỹ",
+    "runOperations": "Chạy các thao tác Solana",
+    "solanaTx": "Giao dịch Solana {index}",
+    "arbiscanTx": "Xem trên Arbiscan",
+    "blockscoutTx": "Xem trên trình khám phá Robinhood",
+    "accountCore": "Quỹ (core trên Arbitrum)",
+    "accountRobinhood": "Vault spoke Robinhood",
+    "accountFundPda": "Tài khoản quỹ trên Solana",
+    "accountVault": "Vault Solana",
+    "accountUsdcAta": "Tài khoản USDC trên Solana",
+    "accountsCreated": "Tài khoản của quỹ",
+    "accountsPredicted": "Tài khoản của quỹ (dự kiến)",
+    "bindingExpiry": "Bootstrap Solana phải hoàn tất trước {at}.",
+    "draftMissing": "Bản nháp này không có trong trình duyệt này.",
+    "notSolanaPlan": "Kế hoạch này không có spoke Solana. Hãy ra mắt từ bước xem lại.",
+    "backToManager": "Quay lại trang quản lý",
+    "reviewSummary": "Ra mắt sẽ mở hành trình Solana: hai lần đồng ý, quỹ trên Arbitrum, spoke Robinhood và spoke Solana, sau đó là các thao tác Solana đầu tiên.",
+    "steps": {
+      "plan": {
+        "label": "Tạo kế hoạch",
+        "hint": "API dự đoán quỹ, các spoke và tài khoản Solana."
+      },
+      "sign-binding": {
+        "label": "Ký liên kết Solana",
+        "hint": "Chữ ký EVM (không phải giao dịch): liên kết khóa Solana của bạn với quỹ này."
+      },
+      "sign-policy": {
+        "label": "Ký chính sách hoán đổi",
+        "hint": "Chữ ký EVM (không phải giao dịch): hạn mức hoán đổi SOL/USDC được niêm phong."
+      },
+      "approve-seed": {
+        "label": "Phê duyệt vốn khởi tạo",
+        "hint": "Arbitrum: cho phép factory lấy USDC của vốn khởi tạo."
+      },
+      "create-fund": {
+        "label": "Tạo quỹ",
+        "hint": "Arbitrum: core của quỹ với ủy nhiệm niêm phong và vốn khởi tạo."
+      },
+      "create-spoke": {
+        "label": "Tạo spoke Robinhood",
+        "hint": "Robinhood Chain: vault spoke và các adapter."
+      },
+      "discover": {
+        "label": "Đăng ký quỹ",
+        "hint": "API lập chỉ mục quỹ mới."
+      },
+      "bootstrap": {
+        "label": "Tạo spoke Solana",
+        "hint": "Solana: chuẩn bị chính sách rồi khởi tạo tài khoản quỹ."
+      },
+      "verify": {
+        "label": "Kiểm tra ba chuỗi",
+        "hint": "Quỹ hiển thị Arbitrum, Robinhood và Solana."
+      },
+      "solana-report": {
+        "label": "Báo cáo Solana đầu tiên",
+        "hint": "Keeper báo cáo spoke Solana lên hub."
+      },
+      "send-to-solana": {
+        "label": "Gửi USDC sang Solana",
+        "hint": "Arbitrum: chuyển CCTP Fast vào vault Solana."
+      },
+      "arrival": {
+        "label": "Ghi có trên Solana",
+        "hint": "Circle xác nhận, keeper ghi có vào vault Solana."
+      },
+      "adapters": {
+        "label": "Kích hoạt nền tảng",
+        "hint": "Solana: khởi tạo adapter Kamino và Raydium."
+      },
+      "kamino-supply": {
+        "label": "Cung cấp cho Kamino",
+        "hint": "Solana: USDC vào dự trữ Kamino."
+      },
+      "swap": {
+        "label": "Hoán đổi USDC sang SOL",
+        "hint": "Solana: tuyến do API ký qua pool được chấp thuận."
+      },
+      "raydium-open": {
+        "label": "Mở vị thế Raydium",
+        "hint": "Solana: thanh khoản tập trung SOL/USDC, khoảng 5% quanh giá."
+      },
+      "final-report": {
+        "label": "Báo cáo vị thế",
+        "hint": "Hub nhận các vị thế Solana."
+      }
+    },
+    "status": {
+      "idle": "Chờ",
+      "running": "Đang chạy",
+      "submitted": "Đã gửi, đang xác nhận",
+      "waiting": "Đang đợi",
+      "done": "Xong",
+      "skipped": "Đã bỏ qua",
+      "failed": "Thất bại"
+    },
+    "errors": {
+      "USER_REJECTED": "Yêu cầu của ví đã bị từ chối. Tiếp tục để thử lại.",
+      "SOLANA_WALLET_REQUIRED": "Kết nối ví Solana sẽ quản lý quỹ này.",
+      "V2_WALLET_REQUIRED": "Kết nối ví EVM quản lý mà bạn đã dùng để đăng nhập.",
+      "SOLANA_SEED_BALANCE_LOW": "Ví quản lý không có đủ USDC vốn khởi tạo trên Arbitrum.",
+      "SOLANA_SEED_BELOW_MINIMUM": "Vốn khởi tạo thấp hơn mức tối thiểu.",
+      "SOLANA_STOCK_UNAVAILABLE": "Pool cổ phiếu chưa dùng được cho quỹ. Hãy chọn pool SOL/USDC.",
+      "SOLANA_POOL_NOT_ADMITTED": "Pool Raydium này chưa được chấp thuận. Hãy chọn pool SOL/USDC.",
+      "CREATION_PLAN_STALE": "Một quỹ khác đã dùng số tạo này. Hãy bắt đầu lại để tạo kế hoạch mới.",
+      "CREATION_BINDING_EXPIRED": "Liên kết đã ký sắp hết hạn. Hãy bắt đầu lại để ký lại.",
+      "SOLANA_PLAN_MISMATCH": "Kế hoạch của API không khớp với ví của bạn. Chưa có gì được ký.",
+      "UNSAFE_SOLANA_TRANSACTION": "Một giao dịch Solana không qua được kiểm tra an toàn. Chưa có gì được gửi.",
+      "SOLANA_BLOCKHASH_EXPIRED": "Giao dịch Solana đã hết hạn trước khi ký. Tiếp tục để tạo lại.",
+      "TRANSACTION_REVERTED": "Giao dịch đã bị hoàn tác trên chuỗi.",
+      "SOLANA_TRANSACTION_FAILED": "Giao dịch Solana thất bại trên chuỗi.",
+      "SOLANA_BALANCE_EMPTY": "Vault Solana chưa có số dư khả dụng cho bước này.",
+      "V2_UNAUTHORIZED": "Đăng nhập lại bằng ví quản lý.",
+      "SOLANA_DRAFT_UNAVAILABLE": "Không tìm thấy bản nháp đã lưu hoặc phần xem lại.",
+      "CREATION_AMOUNT_INVALID": "Nhập từng số tiền bằng USDC.",
+      "CREATION_SEED_BELOW_ONE_SHARE": "Vốn khởi tạo phải tạo ra ít nhất một phần nguyên (1,002506 USDC).",
+      "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT": "Khoản nạp đầu tối thiểu không được lớn hơn vốn khởi tạo.",
+      "CREATION_SPOKE_CAP_ZERO": "Hạn mức spoke phải lớn hơn 0.",
+      "CREATION_AMOUNT_ABOVE_MAX": "Một số tiền vượt quá mức tối đa.",
+      "generic": "Bước này thất bại ({code}). Tiếp tục để thử lại."
+    }
   }
 }

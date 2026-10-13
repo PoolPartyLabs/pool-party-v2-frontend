@@ -1853,5 +1853,171 @@
     "unavailableBody": "Er is geen prijsgeschiedenis beschikbaar voor deze selectie.",
     "selectionPreserved": "De selectie blijft behouden.",
     "back": "Terug naar strategieverloop"
+  },
+  "solanaLaunch": {
+    "title": "{name} lanceren op Arbitrum, Robinhood Chain en Solana",
+    "subtitle": "De Pool Party API bouwt elke transactie. Je EVM-wallet ondertekent de stappen op Arbitrum en Robinhood, je Solana-wallet de stappen op Solana.",
+    "walletsTitle": "Wallets",
+    "evmWallet": "EVM-wallet van de manager",
+    "notSignedIn": "Niet aangemeld",
+    "solanaWallet": "Solana-wallet van de manager",
+    "balanceUnknown": "SOL-saldo niet beschikbaar",
+    "solBalance": "{sol} SOL",
+    "connectSolana": "Solana-wallet verbinden",
+    "walletsHint": "De Solana-wallet wordt blijvend de Solana-managersleutel van het fonds. Hij betaalt de huur van de Solana-accounts (houd ongeveer 0,1 SOL aan).",
+    "amountsTitle": "Fondsbedragen",
+    "amountsHint": "In USDC. Ze worden in het fonds verzegeld zodra het plan is gebouwd.",
+    "seedLabel": "Startkapitaal (je eerste storting)",
+    "seedHint": "Minstens {floor} USDC (één volledig aandeel na de flowfee). Standaard {fallback} USDC.",
+    "minimumLabel": "Minimale eerste storting",
+    "minimumHint": "Van {floor} USDC tot het startkapitaal. Standaard {fallback} USDC.",
+    "spokeCapLabel": "Spoke-limiet (per spoke)",
+    "spokeCapHint": "Minstens {floor} ruwe eenheid; één limiet voor Robinhood en Solana. Standaard {fallback} USDC.",
+    "sealedTitle": "Wat de factory verzegelt",
+    "sealedNetworks": "Netwerken: Arbitrum (hub), Robinhood Chain, Solana",
+    "sealedSeed": "Startkapitaal: {amount} USDC",
+    "sealedMinimum": "Minimale eerste storting: {amount} USDC",
+    "sealedSpokeCap": "Spoke-limiet: {amount} USDC per spoke",
+    "sealedReportAge": "Maximale rapportleeftijd: {seconds} s",
+    "sealedFees": "Kosten: beheer {management}%, prestatie {performance}%, directe uitbetaling {payout}%",
+    "sealedVenues": "Solana-platforms: {venues}",
+    "assetsTitle": "Solana-assets",
+    "unavailable": "Niet beschikbaar",
+    "stockUnavailable": "Aandelentokens (TSLAx, NVDAx) worden getoond maar zijn nog niet beschikbaar voor fondsen: hun swaps blijven uit.",
+    "creationTitle": "Fonds aanmaken",
+    "operationsTitle": "Eerste Solana-operaties",
+    "operationsHint": "Zodra het fonds bestaat: kapitaal naar Solana sturen, Kamino voorzien, naar SOL swappen en de Raydium-positie openen. Bedragen in USDC, aanpasbaar voor elke stap.",
+    "amountSend": "Naar Solana sturen",
+    "amountKamino": "Kamino-inleg",
+    "amountSwap": "Naar SOL swappen",
+    "amountRaydium": "Raydium-positie (USDC-kant)",
+    "operationsStepsTitle": "Solana-operaties",
+    "working": "Bezig. Houd dit tabblad open en keur de walletverzoeken goed.",
+    "allDone": "Lancering voltooid: het fonds draait op drie chains.",
+    "pause": "Pauzeren",
+    "restart": "Opnieuw beginnen",
+    "resumeCreation": "Aanmaken voortzetten",
+    "start": "Fonds aanmaken",
+    "openFund": "Fonds openen",
+    "runOperations": "Solana-operaties uitvoeren",
+    "solanaTx": "Solana-transactie {index}",
+    "arbiscanTx": "Bekijk op Arbiscan",
+    "blockscoutTx": "Bekijk in de Robinhood-explorer",
+    "accountCore": "Fonds (Arbitrum-core)",
+    "accountRobinhood": "Robinhood-spokevault",
+    "accountFundPda": "Solana-fondsaccount",
+    "accountVault": "Solana-vault",
+    "accountUsdcAta": "Solana-USDC-account",
+    "accountsCreated": "Fondsaccounts",
+    "accountsPredicted": "Fondsaccounts (voorspeld)",
+    "bindingExpiry": "De Solana-bootstrap moet voor {at} landen.",
+    "draftMissing": "Dit concept is niet beschikbaar in deze browser.",
+    "notSolanaPlan": "Dit plan heeft geen Solana-spoke. Lanceer het vanuit de controle.",
+    "backToManager": "Terug naar manager",
+    "reviewSummary": "De lancering opent het Solana-traject: twee toestemmingen, het fonds op Arbitrum, de Robinhood-spoke en de Solana-spoke, daarna de eerste Solana-operaties.",
+    "steps": {
+      "plan": {
+        "label": "Plan bouwen",
+        "hint": "De API voorspelt het fonds, zijn spokes en de Solana-accounts."
+      },
+      "sign-binding": {
+        "label": "Solana-koppeling ondertekenen",
+        "hint": "EVM-handtekening (geen transactie): koppelt je Solana-sleutel aan dit fonds."
+      },
+      "sign-policy": {
+        "label": "Swapbeleid ondertekenen",
+        "hint": "EVM-handtekening (geen transactie): de verzegelde SOL/USDC-swaplimieten."
+      },
+      "approve-seed": {
+        "label": "Startkapitaal goedkeuren",
+        "hint": "Arbitrum: laat de factory de USDC van het startkapitaal nemen."
+      },
+      "create-fund": {
+        "label": "Fonds aanmaken",
+        "hint": "Arbitrum: de fondscore met verzegeld mandaat en startkapitaal."
+      },
+      "create-spoke": {
+        "label": "Robinhood-spoke aanmaken",
+        "hint": "Robinhood Chain: de spokevault en zijn adapters."
+      },
+      "discover": {
+        "label": "Fonds registreren",
+        "hint": "De API indexeert het nieuwe fonds."
+      },
+      "bootstrap": {
+        "label": "Solana-spoke aanmaken",
+        "hint": "Solana: beleid klaarzetten, daarna het fondsaccount initialiseren."
+      },
+      "verify": {
+        "label": "Drie chains controleren",
+        "hint": "Het fonds meldt Arbitrum, Robinhood en Solana."
+      },
+      "solana-report": {
+        "label": "Eerste Solana-rapport",
+        "hint": "De keeper rapporteert de Solana-spoke aan de hub."
+      },
+      "send-to-solana": {
+        "label": "USDC naar Solana sturen",
+        "hint": "Arbitrum: CCTP Fast-overboeking naar de Solana-vault."
+      },
+      "arrival": {
+        "label": "Bijschrijving op Solana",
+        "hint": "Circle bevestigt, de keeper schrijft de Solana-vault bij."
+      },
+      "adapters": {
+        "label": "Platforms activeren",
+        "hint": "Solana: de Kamino- en Raydium-adapters initialiseren."
+      },
+      "kamino-supply": {
+        "label": "Kamino voorzien",
+        "hint": "Solana: USDC in de Kamino-reserve."
+      },
+      "swap": {
+        "label": "USDC naar SOL swappen",
+        "hint": "Solana: door de API ondertekende route via de toegelaten pool."
+      },
+      "raydium-open": {
+        "label": "Raydium-positie openen",
+        "hint": "Solana: geconcentreerde SOL/USDC-liquiditeit, ongeveer 5% rond de prijs."
+      },
+      "final-report": {
+        "label": "Posities rapporteren",
+        "hint": "De hub ontvangt de Solana-posities."
+      }
+    },
+    "status": {
+      "idle": "In afwachting",
+      "running": "Bezig",
+      "submitted": "Verzonden, bevestigen",
+      "waiting": "Wachten",
+      "done": "Klaar",
+      "skipped": "Overgeslagen",
+      "failed": "Mislukt"
+    },
+    "errors": {
+      "USER_REJECTED": "Het walletverzoek is geweigerd. Ga verder om het opnieuw te proberen.",
+      "SOLANA_WALLET_REQUIRED": "Verbind de Solana-wallet die dit fonds gaat beheren.",
+      "V2_WALLET_REQUIRED": "Verbind de EVM-wallet van de manager waarmee je bent aangemeld.",
+      "SOLANA_SEED_BALANCE_LOW": "De managerwallet heeft het startkapitaal niet in USDC op Arbitrum.",
+      "SOLANA_SEED_BELOW_MINIMUM": "Het startkapitaal ligt onder het minimum.",
+      "SOLANA_STOCK_UNAVAILABLE": "Aandelenpools zijn nog niet beschikbaar voor fondsen. Kies de SOL/USDC-pool.",
+      "SOLANA_POOL_NOT_ADMITTED": "Deze Raydium-pool is niet toegelaten. Kies de SOL/USDC-pool.",
+      "CREATION_PLAN_STALE": "Een ander fonds nam dit aanmaaknummer. Begin opnieuw om een nieuw plan te bouwen.",
+      "CREATION_BINDING_EXPIRED": "De ondertekende koppeling verloopt bijna. Begin opnieuw om opnieuw te ondertekenen.",
+      "SOLANA_PLAN_MISMATCH": "Het API-plan past niet bij je wallets. Er is niets ondertekend.",
+      "UNSAFE_SOLANA_TRANSACTION": "Een Solana-transactie zakte voor de veiligheidscontrole. Er is niets verzonden.",
+      "SOLANA_BLOCKHASH_EXPIRED": "De Solana-transactie verliep voor het ondertekenen. Ga verder om haar opnieuw te bouwen.",
+      "TRANSACTION_REVERTED": "De transactie is on-chain teruggedraaid.",
+      "SOLANA_TRANSACTION_FAILED": "De Solana-transactie is on-chain mislukt.",
+      "SOLANA_BALANCE_EMPTY": "De Solana-vault heeft nog geen besteedbaar saldo voor deze stap.",
+      "V2_UNAUTHORIZED": "Meld je opnieuw aan met de managerwallet.",
+      "SOLANA_DRAFT_UNAVAILABLE": "Het opgeslagen concept of de controle ervan ontbreekt.",
+      "CREATION_AMOUNT_INVALID": "Vul elk bedrag in USDC in.",
+      "CREATION_SEED_BELOW_ONE_SHARE": "Het startkapitaal moet minstens één volledig aandeel opleveren (1,002506 USDC).",
+      "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT": "De minimale eerste storting mag niet boven het startkapitaal liggen.",
+      "CREATION_SPOKE_CAP_ZERO": "De spoke-limiet moet groter dan nul zijn.",
+      "CREATION_AMOUNT_ABOVE_MAX": "Een bedrag ligt boven zijn maximum.",
+      "generic": "De stap is mislukt ({code}). Ga verder om het opnieuw te proberen."
+    }
   }
 }
