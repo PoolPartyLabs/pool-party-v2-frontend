@@ -731,6 +731,8 @@
       "metrics": "TVL and APR are not indexed yet.",
       "limits": "Robinhood percentage is stored as fund intent, not enforced on chain until POO-2169.",
       "allocation": "Protocol and token sliders are local Build allocation aids, not fund limits.",
+      "allocationProtocol": "Protocol sliders are local Build allocation aids, not fund limits.",
+      "allocationToken": "Token sliders are local Build allocation aids, not fund limits.",
       "poolId": "Paste a bytes32 PoolId"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "Set a cap or tick No cap to continue.",
       "sliderLabel": "Max share for {name}",
       "noCapLabel": "No cap for {name}",
+      "sectionNoCapLabel": "No cap for all rows in {name}",
       "unset": "Not set",
       "noRows": "Nothing to cap here: nothing was added in this group.",
       "kind": {

@@ -731,6 +731,8 @@
       "metrics": "TVL en APR zijn nog niet geïndexeerd.",
       "limits": "Het Robinhood-percentage wordt als fondsintentie opgeslagen, maar wordt pas na POO-2169 on-chain afgedwongen.",
       "allocation": "Protocol- en tokenregelaars zijn lokale Build-allocatiehulpmiddelen, geen fondslimieten.",
+      "allocationProtocol": "Protocolregelaars zijn lokale Build-allocatiehulpmiddelen, geen fondslimieten.",
+      "allocationToken": "Tokenregelaars zijn lokale Build-allocatiehulpmiddelen, geen fondslimieten.",
       "poolId": "Plak een bytes32 PoolId"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "Stel een limiet in of vink Geen limiet aan om door te gaan.",
       "sliderLabel": "Maximaal aandeel voor {name}",
       "noCapLabel": "Geen limiet voor {name}",
+      "sectionNoCapLabel": "Geen limiet voor alle rijen in {name}",
       "unset": "Niet ingesteld",
       "noRows": "Hier is niets om te begrenzen: aan deze groep is niets toegevoegd.",
       "kind": {

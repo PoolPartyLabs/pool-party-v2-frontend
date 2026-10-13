@@ -4,7 +4,8 @@
  * @description DEX Screener embed URL for the exact pool or asset of the selected block.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675
  * @linear https://linear.app/yeildbay/issue/POO-2338
- * @implements-rules-version v1 (POO-2338); POO-2343 rules v1 (R8 Raydium CLMM pool chart)
+ * @linear https://linear.app/yeildbay/issue/POO-2350
+ * @implements-rules-version v1 (POO-2338); POO-2343 rules v1 (R8 Raydium CLMM pool chart); POO-2350 rules v1 (frame size)
  * @analytics-events none, pure market and embed helpers; the chart host owns events.
  *
  * POO-2338 replaces the POO-2309 TradingView and Binance reference. The chart shows public
@@ -171,4 +172,17 @@ export function chartAnalyticsMarket(
   availability: ChartAvailability,
 ): "pool" | "token" | "unavailable" {
   return availability.status === "available" ? availability.market.kind : "unavailable";
+}
+
+/**
+ * POO-2350 R2: the minimum height of the chart frame, in px. The Raydium embed needs 400 px for
+ * its chart, its left toolbar and its time axis. The other chart sources keep the old minimum.
+ */
+export const CHART_FRAME_MIN_HEIGHT_PX = { base: 96, raydium: 400 } as const;
+
+/** POO-2350 R1, R3: the frame minimum height of a market. Only a Raydium pool gets the taller frame. */
+export function chartFrameMinHeight(market: ChartMarket): number {
+  return market.kind === "pool" && market.venue === POOL_VENUES.raydium
+    ? CHART_FRAME_MIN_HEIGHT_PX.raydium
+    : CHART_FRAME_MIN_HEIGHT_PX.base;
 }

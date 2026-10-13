@@ -731,6 +731,8 @@
       "metrics": "TVL y APR aún no están indexados.",
       "limits": "El porcentaje de Robinhood se guarda como intención del fondo, sin aplicarse on-chain hasta POO-2169.",
       "allocation": "Los controles de protocolo y token son ayudas locales de asignación del Build, no límites del fondo.",
+      "allocationProtocol": "Los controles de protocolo son ayudas locales de asignación del Build, no límites del fondo.",
+      "allocationToken": "Los controles de token son ayudas locales de asignación del Build, no límites del fondo.",
       "poolId": "Pegue un PoolId bytes32"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "Defina un límite o marque Sin límite para continuar.",
       "sliderLabel": "Porcentaje máximo para {name}",
       "noCapLabel": "Sin límite para {name}",
+      "sectionNoCapLabel": "Sin límite para todas las filas de {name}",
       "unset": "No definido",
       "noRows": "No hay nada que limitar aquí: no se agregó nada a este grupo.",
       "kind": {

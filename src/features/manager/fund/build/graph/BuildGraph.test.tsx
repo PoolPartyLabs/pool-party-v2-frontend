@@ -125,7 +125,7 @@ function localContextProps(): BuildGraphProps {
     spokes: [{ network: "solana", sharePct: 100, chains: [] }],
   };
   return propsFor(canvasA, {
-    layout: layoutGraph(input, { startHereWidth: 0 }),
+    layout: layoutGraph(input, { startHereWidth: 0, spokeContext: true }),
     networkName: (network) => (network === "solana" ? "Solana" : "Arbitrum"),
     networkPresentation: (network) =>
       network === "solana" ? { stableSymbol: "USDC", nativeSymbol: "SOL" } : undefined,

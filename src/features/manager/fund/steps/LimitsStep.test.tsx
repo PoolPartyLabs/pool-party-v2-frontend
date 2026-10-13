@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-039
  * @name LimitsStep.test
  * @implements-rules-version v2 (POO-2142 rules v2, POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2349 rules v1)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] to [R43], epic POO-2119. Mandate step 5.
@@ -672,5 +673,141 @@ describe("LimitsStep", () => {
     expect(copy).not.toContain("on chain");
     expect(copy).not.toContain("guarantee");
     expect(copy).not.toContain("enforced");
+  });
+});
+
+/**
+ * POO-2349 rules v1: the "No cap" box of each group. The rules of the box are tested as pure
+ * functions in `limitsNoCap.test.ts`; these cases assert what the screen shows and sends.
+ */
+describe("LimitsStep group No cap box (POO-2349)", () => {
+  const box = (name: string) => screen.getByRole("checkbox", { name });
+
+  // @rule POO-2349 R1
+  it("puts the box on the row of the group title, on the right", () => {
+    renderStep();
+
+    for (const [title, label] of [
+      ["Per network", "No cap for all rows in Per network"],
+      ["Per protocol", "No cap for all rows in Per protocol"],
+      ["Per token", "No cap for all rows in Per token"],
+    ] as const) {
+      const head = screen.getByRole("heading", { name: title }).parentElement?.parentElement;
+      expect(head).toContainElement(box(label));
+      // The box is the last child of the head, so it sits at the right of the title.
+      expect(head?.lastElementChild).toBe(box(label));
+    }
+  });
+
+  // @rule POO-2349 R3
+  it("shows mixed when only some rows have No cap", () => {
+    renderStep();
+
+    // Uniswap v4 has No cap, Aave v3 and Uniswap v3 have a cap. WBTC has No cap, WETH has 60%.
+    expect(box("No cap for all rows in Per protocol")).toHaveAttribute("aria-checked", "mixed");
+    expect(box("No cap for all rows in Per token")).toHaveAttribute("aria-checked", "mixed");
+    // The hub has no row (R40), so its No cap does not count: Robinhood alone, at 40%, is clear.
+    expect(document.querySelector('[data-mandate-row="arbitrum"]')).toBeNull();
+    expect(box("No cap for all rows in Per network")).toHaveAttribute("aria-checked", "false");
+  });
+
+  // @rule POO-2349 R3
+  it("shows checked when every row has No cap and clear when no row has it", () => {
+    renderStep(
+      figmaDraft({
+        caps: {
+          networks: { arbitrum: { noCap: true, pct: 0 }, robinhood: { noCap: true, pct: 40 } },
+          protocols: {
+            "aave-v3": { noCap: false, pct: 60 },
+            "uniswap-v3": { noCap: false, pct: 35 },
+            "uniswap-v4": { noCap: false, pct: 10 },
+          },
+          tokens: {},
+        },
+      }),
+    );
+
+    expect(box("No cap for all rows in Per network")).toHaveAttribute("aria-checked", "true");
+    expect(box("No cap for all rows in Per protocol")).toHaveAttribute("aria-checked", "false");
+  });
+
+  // @rule POO-2349 R3
+  it("has no box for a group with no rows", () => {
+    renderStep(emptyDraft());
+
+    expect(screen.queryByRole("checkbox", { name: /No cap for all rows/ })).not.toBeInTheDocument();
+  });
+
+  // @rule POO-2349 R2
+  it("checks No cap on every row of the group when it is pressed", async () => {
+    const user = userEvent.setup();
+    const { capsAfterUpdate } = renderStep();
+
+    await user.click(box("No cap for all rows in Per protocol"));
+
+    expect(capsAfterUpdate().protocols).toEqual({
+      "aave-v3": { noCap: true, pct: 60 },
+      "uniswap-v3": { noCap: true, pct: 35 },
+      "uniswap-v4": { noCap: true, pct: 0 },
+    });
+    // The other groups are not touched.
+    expect(capsAfterUpdate().networks.robinhood).toEqual({ noCap: false, pct: 40 });
+    expect(capsAfterUpdate().tokens[tokenKey(WETH)]).toEqual({ noCap: false, pct: 60 });
+  });
+
+  // @rule POO-2349 R2
+  it("gives each row the state of a clear row box when a checked group box is pressed", async () => {
+    const user = userEvent.setup();
+    const { capsAfterUpdate } = renderStep(
+      figmaDraft({
+        caps: {
+          networks: { arbitrum: { noCap: true, pct: 0 }, robinhood: { noCap: true, pct: 40 } },
+          protocols: {},
+          tokens: {},
+        },
+      }),
+    );
+
+    await user.click(box("No cap for all rows in Per network"));
+
+    // The one row of Per network (the hub has no row, R40) gets the state of a clear row box.
+    expect(capsAfterUpdate().networks.robinhood).toEqual({ noCap: false, pct: 40 });
+  });
+
+  // @rule POO-2349 R4
+  it("follows a change on one row", async () => {
+    const user = userEvent.setup();
+    let draft = figmaDraft();
+    const update = vi.fn();
+    const step = () => (
+      <LimitsStep
+        draft={draft}
+        catalog={catalog}
+        update={update}
+        block={null}
+        onBlocked={vi.fn()}
+      />
+    );
+    const { rerender } = renderWithProviders(step());
+    expect(box("No cap for all rows in Per token")).toHaveAttribute("aria-checked", "mixed");
+
+    // WETH is the only token row without No cap, so checking it checks the group.
+    await user.click(within(row(tokenKey(WETH))).getByRole("checkbox"));
+    draft = update.mock.calls.at(-1)?.[0](draft);
+    rerender(step());
+
+    expect(box("No cap for all rows in Per token")).toHaveAttribute("aria-checked", "true");
+  });
+
+  // @rule POO-2349 R2
+  it("sets the Every token row in All tokens mode", async () => {
+    const user = userEvent.setup();
+    const { draftAfterUpdate } = renderStep(
+      figmaDraft({ tokenMode: "all", allTokensCap: { noCap: false, pct: 20 } }),
+    );
+
+    await user.click(box("No cap for all rows in Per token"));
+
+    expect(draftAfterUpdate().allTokensCap).toEqual({ noCap: true, pct: 20 });
   });
 });

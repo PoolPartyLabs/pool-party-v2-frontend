@@ -25,7 +25,8 @@ matching remains case-sensitive; a similarly named or case-mutated mint cannot s
 requirement. Native SOL is distinct from WSOL SPL positions. PR #151 supplies the explicit local
 layout context: 236 × 62 USDC Idle and 144 × 96 native SOL cash with a 32 px gap and shared vertical
 center. Cash owns no financial handle/edge and its quantity/USD readings remain unavailable.
-Standard Build has no cash. LP and Holding WSOL
+Standard Build has no cash, and since POO-2348 the Build canvas shows neither Idle nor cash for a
+Solana spoke. LP and Holding WSOL
 conversions require the exact current mandate tokens and Jupiter selection. The shared graph keeps
 gray principal/return routes and a separate green LP-fee connection; Kamino/Holding do not acquire
 an LP collector. A label or semantic port never attests a pool, account or transaction capability.

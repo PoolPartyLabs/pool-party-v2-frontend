@@ -125,8 +125,8 @@ describe("useGraphLayout", () => {
 });
 
 describe("useDraftGraphLayout", () => {
-  // @rule R5
-  it("[R5] opts into Solana contexts from the network of the plan and restores default geometry", () => {
+  // @rule POO-2348 R1
+  it("[POO-2348 R1] gives a Solana spoke no Idle and no Operating cash on the Build canvas, as for Robinhood", () => {
     const solanaPlan = emptySpokePlan();
     solanaPlan.spokes[0] = { network: "solana", sharePct: 0, chains: [] };
     const draft: MandateDraft = { ...makeTestDraft(), plan: solanaPlan };
@@ -134,7 +134,7 @@ describe("useDraftGraphLayout", () => {
       wrapper: Messages,
       initialProps: { draft },
     });
-    expect(result.current.spokeContexts?.[0]?.idle.id).toBe("spoke-idle:solana");
+    expect(result.current.spokeContexts).toBeUndefined();
     const plan = emptySpokePlan();
     rerender({ draft: { ...draft, plan } });
     expect(result.current).toEqual(layoutGraph(toLayoutInput(plan), { startHereWidth: 0 }));

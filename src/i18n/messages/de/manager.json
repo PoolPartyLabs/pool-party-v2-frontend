@@ -731,6 +731,8 @@
       "metrics": "TVL und APR sind noch nicht indexiert.",
       "limits": "Der Robinhood-Prozentsatz wird als Fondsabsicht gespeichert, bis POO-2169 jedoch nicht on-chain durchgesetzt.",
       "allocation": "Protokoll- und Token-Regler sind lokale Build-Allokationshilfen, keine Fondsgrenzen.",
+      "allocationProtocol": "Protokoll-Regler sind lokale Build-Allokationshilfen, keine Fondsgrenzen.",
+      "allocationToken": "Token-Regler sind lokale Build-Allokationshilfen, keine Fondsgrenzen.",
       "poolId": "Fügen Sie eine bytes32-PoolId ein"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "Legen Sie ein Limit fest oder aktivieren Sie Kein Limit, um fortzufahren.",
       "sliderLabel": "Maximaler Anteil für {name}",
       "noCapLabel": "Kein Limit für {name}",
+      "sectionNoCapLabel": "Kein Limit für alle Zeilen in {name}",
       "unset": "Nicht festgelegt",
       "noRows": "Hier gibt es nichts zu begrenzen: Dieser Gruppe wurde nichts hinzugefügt.",
       "kind": {

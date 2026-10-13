@@ -12,7 +12,8 @@
  * Decorative in every caller (the row's name carries the meaning), so every branch is `aria-hidden`.
  * Protocols reuse the Mandate steps' `ProtocolMark` (the Uniswap asset, else a monogram on the raised
  * surface); Pendle and GMX have no `ProtocolId`, so they take the same monogram here. Networks reuse
- * `NetworkLogo`. Flow blocks draw the pill's own icon (`swap`, `coins`) from the canvas pieces.
+ * `NetworkLogo`, which also draws Solana (POO-2347). Flow blocks draw the pill's own icon (`swap`,
+ * `coins`) from the canvas pieces.
  */
 "use client";
 
@@ -35,17 +36,6 @@ export interface BlockMarkProps {
 /** A protocol, network or flow mark, decorative. */
 export function BlockMark({ logo, markId, name, size = 20 }: BlockMarkProps) {
   if (markId === "jupiter") return <ProtocolMark id="jupiter" name={name} size={size} />;
-  if (logo === "network" && markId === "solana")
-    return (
-      // biome-ignore lint/performance/noImgElement: committed external protocol mark.
-      <img
-        src="/protocols/solana-preview/solana.svg"
-        alt=""
-        width={size}
-        height={size}
-        className="shrink-0 rounded-full"
-      />
-    );
   if (logo === "network") return <NetworkLogo network={markId} name={name} size={size} />;
   if (logo === "flow") {
     return (

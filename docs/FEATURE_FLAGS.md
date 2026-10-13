@@ -52,7 +52,9 @@ shared draft/Review fields for retry; unapplied inner edits may be lost on rende
 recovery supplies no new release flag or execution permission.
 Exact Base58 mint/protocol selection guards and the renderer do not confer financial authority.
 Native SOL remains distinct from WSOL SPL positions. PR #151 adds a 236 × 62 USDC Idle surface
-and 144 × 96 native SOL cash decoration only when the plan has a Solana spoke.
+and 144 × 96 native SOL cash decoration only when the plan has a Solana spoke and the layout
+option `spokeContext` is on. Since POO-2348 the Build canvas leaves this option off, so a Solana
+spoke shows no Idle and no cash there.
 Cash sits 32 px to the right, vertically centered, with no financial handles or edges. Both cash
 readings stay Not available; the standard Build has no operating-cash addition.
 

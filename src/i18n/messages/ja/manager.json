@@ -731,6 +731,8 @@
       "metrics": "TVLとAPRはまだインデックス化されていません。",
       "limits": "Robinhoodの割合はファンドの意図として保存されますが、POO-2169まではon-chainで強制されません。",
       "allocation": "プロトコルとトークンのスライダーはBuildのローカル配分補助で、ファンドの制限ではありません。",
+      "allocationProtocol": "プロトコルのスライダーはBuildのローカル配分補助で、ファンドの制限ではありません。",
+      "allocationToken": "トークンのスライダーはBuildのローカル配分補助で、ファンドの制限ではありません。",
       "poolId": "bytes32 PoolIdを貼り付けてください"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "続けるには上限を設定するか、「上限なし」にチェックを入れてください。",
       "sliderLabel": "{name} の最大割合",
       "noCapLabel": "{name} は上限なし",
+      "sectionNoCapLabel": "{name} のすべての行を上限なしにする",
       "unset": "未設定",
       "noRows": "ここには設定する上限がありません。このグループには何も追加されていません。",
       "kind": {

@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-023
  * @name graphTypes
  * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
- * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine); v1 (POO-2348 spokeContext option)
  * @analytics-events none, type declarations and one pure key function: nothing here is rendered.
  *
  * The shapes the Build canvas layout reads and returns (coordinator plan, section 3.3). The names
@@ -83,6 +83,11 @@ export interface LayoutOptions {
    * rounded up to an even integer there, so a fractional measure keeps every x whole.
    */
   startHereWidth: number;
+  /**
+   * POO-2348 R1. True gives a Solana spoke its Idle and cash context (the Manage presentation).
+   * Omitted or false lays a Solana spoke out like any other spoke, as the Build canvas does.
+   */
+  spokeContext?: boolean;
 }
 
 /** Everything on the canvas a manager can act on, or drop a palette block onto. */

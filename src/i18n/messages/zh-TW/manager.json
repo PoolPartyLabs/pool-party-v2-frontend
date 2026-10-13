@@ -731,6 +731,8 @@
       "metrics": "TVL 與 APR 尚未建立索引。",
       "limits": "Robinhood 百分比儲存為基金意圖，在 POO-2169 完成前不會在鏈上強制執行。",
       "allocation": "協議與代幣滑桿僅為本機 Build 配置分配工具，並非基金限額。",
+      "allocationProtocol": "協議滑桿僅為本機 Build 配置分配工具，並非基金限額。",
+      "allocationToken": "代幣滑桿僅為本機 Build 配置分配工具，並非基金限額。",
       "poolId": "貼上 bytes32 PoolId"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "請設定限額，或勾選「無上限」以繼續。",
       "sliderLabel": "{name} 的最大佔比",
       "noCapLabel": "{name} 無上限",
+      "sectionNoCapLabel": "{name} 的所有列均無上限",
       "unset": "未設定",
       "noRows": "此處無需設定限額：此分組中未新增任何內容。",
       "kind": {

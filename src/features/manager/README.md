@@ -725,6 +725,17 @@ cap off, and a network or protocol starts with No cap on (`effectiveCap`). An en
 (`cap_zero`) makes Next `aria-disabled`; a press scrolls to the control, blinks it two times and
 sends `builder_mandate_blocked` with `cap_zero`. Real data mode keeps its earlier behavior.
 
+**Limits group No cap box (POO-2349, rules v1).** Each group on Limits (Per network, Per protocol and
+Per token) has a "No cap" box on the title row, on the right. The box has three states: checked (each
+row has No cap), mixed (some rows have No cap) and clear (no row has No cap). A group with no row shows
+no box. The state comes from the rows and is never stored, so a change on one row updates the box. A press
+on a clear or mixed box gives No cap to each row. A press on a checked box gives each row the state that
+a clear of its own box gives (in real data mode, a row with no stored share becomes unset). In All tokens
+mode the box follows the one "Every token" row. The pure rules live in `fund/limitsNoCap.ts`
+(`PP-MGR-LIB-097`). Real data mode uses a separate caption for Per protocol
+(`fundBuilder.real.allocationProtocol`) and for Per token (`fundBuilder.real.allocationToken`). The box
+sends no analytics event of its own.
+
 A completed draft that no longer meets Limits opens Mandate rather than Build/Review. This is a
 display guard, with no mount-time draft or checkpoint rewrite. Wallet-scoped existing launch journeys
 keep their original recovery path, including when the wallet arrives after draft hydration. While

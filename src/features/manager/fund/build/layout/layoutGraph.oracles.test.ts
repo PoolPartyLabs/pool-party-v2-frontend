@@ -1,12 +1,15 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph oracle tests
- * @implements-rules-version v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1)
+ * @implements-rules-version v1 (POO-2348); v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * Fixed node positions, insertion ports, labels and chips retain the October 3 Figma oracles.
  * POO-2273 v2 replaces historical return-edge snapshots with explicit origin/endpoints and
  * shared return Bridge hull checks. The October 7 handoff takes precedence for these returns.
+ * POO-2348 R2 starts the return lines below the box of each spoke group. A canvas where a spoke box
+ * is the lowest element (canvas A and B, worked example 2) is 16 px (GROUP_PAD) higher than before,
+ * and the numbers below that are marked R2 moved by the same 16 px. The other canvases do not change.
  */
 
 import { describe, expect, it } from "vitest";
@@ -419,8 +422,9 @@ const FIGMA_ORACLES: FigmaOracle[] = [
 // Return buses move below it; a left principal bypass can require separate income level (+24px).
 /** October 7 V2 changes only derived returns, outputs and enclosing hull heights. */
 const V2_HEIGHT: Record<string, number> = {
-  "canvas A": 920,
-  "canvas B": 722,
+  // @rule R2 (POO-2348): 920 and 722 before. The return band starts under the spoke box (+16).
+  "canvas A": 936,
+  "canvas B": 738,
   "canvas C": 724,
   "canvas D": 572,
   "Build state 3": 576,
@@ -682,15 +686,17 @@ describe("worked example 2, POO-2213 fee-return override of handoff numbers (one
   });
 
   // @rule L9 @rule L5
-  it("[L9] places the outputs, the merge line, Withdraw and the graph size", () => {
+  // @rule R2 (POO-2348): every y below is 16 px lower than before (724, 810, 834, 920), because
+  // the outputs start under the spoke box and not under its content.
+  it("[L9, R2] places the outputs, the merge line, Withdraw and the graph size", () => {
     expect(xRange("idleOutput")).toEqual([212, 448]);
     expect(xRange("income")).toEqual([480, 716]);
-    expect(yRange("idleOutput")).toEqual([724, 786]);
-    expect(yRange("income")).toEqual([724, 786]);
-    expect(horizontalRuns(layout, "structural", 810)).toEqual([[330, 598]]);
+    expect(yRange("idleOutput")).toEqual([740, 802]);
+    expect(yRange("income")).toEqual([740, 802]);
+    expect(horizontalRuns(layout, "structural", 826)).toEqual([[330, 598]]);
     expect(xRange("withdraw")).toEqual([346, 582]);
-    expect(yRange("withdraw")).toEqual([834, 896]);
-    expect([layout.width, layout.height]).toEqual([928, 920]);
+    expect(yRange("withdraw")).toEqual([850, 912]);
+    expect([layout.width, layout.height]).toEqual([928, 936]);
   });
 });
 
@@ -739,9 +745,10 @@ describe("canvas D, the handoff numbers (empty canvas, English sentence 420 wide
 describe("canvas A as a plan", () => {
   // @rule L10
   // The Figma frame of canvas A is 772 high. The POO-2213 fee-return override (fee conversion with
-  // its own return levels) makes the layout 920 high. The width stays 2080.
-  it("[L10, POO-2213] is 2080 x 920 with fee conversion; menus and tooltips stay outside graph bounds", () => {
+  // its own return levels) makes the layout 920 high. POO-2348 R2 adds 16 px (936) because the
+  // return lines start under the spoke boxes. The width stays 2080.
+  it("[L10, POO-2213, R2] is 2080 x 936 with fee conversion; menus and tooltips stay outside graph bounds", () => {
     const layout = layoutGraph(canvasA.input, EN);
-    expect([layout.width, layout.height]).toEqual([2080, 920]);
+    expect([layout.width, layout.height]).toEqual([2080, 936]);
   });
 });
