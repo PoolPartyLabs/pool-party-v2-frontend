@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "Hạn mức spoke phải lớn hơn 0.",
       "CREATION_AMOUNT_ABOVE_MAX": "Một số tiền vượt quá mức tối đa.",
       "generic": "Bước này thất bại ({code}). Tiếp tục để thử lại."
-    }
+    },
+    "chooseSolana": "Chọn ví Solana sẽ quản lý quỹ này",
+    "evmBlocksNotice": "{count, plural, other {Kế hoạch này còn có # khối vị thế trên Arbitrum hoặc Robinhood. Lần ra mắt này không mở chúng: hãy quản lý từ quỹ sau khi ra mắt.}}"
   }
 }

@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "分支上限必须大于零。",
       "CREATION_AMOUNT_ABOVE_MAX": "某个金额超过了上限。",
       "generic": "此步骤失败({code})。继续即可重试。"
-    }
+    },
+    "chooseSolana": "选择将管理此基金的 Solana 钱包",
+    "evmBlocksNotice": "{count, plural, other {此计划还包含 # 个 Arbitrum 或 Robinhood 仓位区块。本次发布不会开立它们,请在发布后从基金中管理。}}"
   }
 }

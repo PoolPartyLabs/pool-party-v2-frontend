@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "스포크 한도는 0보다 커야 합니다.",
       "CREATION_AMOUNT_ABOVE_MAX": "금액이 최대값을 넘습니다.",
       "generic": "단계가 실패했습니다({code}). 계속하여 다시 시도하세요."
-    }
+    },
+    "chooseSolana": "이 펀드를 관리할 Solana 지갑을 선택하세요",
+    "evmBlocksNotice": "{count, plural, other {이 플랜에는 Arbitrum 또는 Robinhood 포지션 블록도 #개 있습니다. 이번 출시에서는 열리지 않으므로 출시 후 펀드에서 관리하세요.}}"
   }
 }

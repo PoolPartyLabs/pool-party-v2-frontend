@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "The spoke cap must be above zero.",
       "CREATION_AMOUNT_ABOVE_MAX": "An amount is above its maximum.",
       "generic": "The step failed ({code}). Continue to retry."
-    }
+    },
+    "chooseSolana": "Choose the Solana wallet that will manage this Fund",
+    "evmBlocksNotice": "{count, plural, one {This plan also has # Arbitrum or Robinhood position block. This launch does not open it: manage it from the Fund after launch.} other {This plan also has # Arbitrum or Robinhood position blocks. This launch does not open them: manage them from the Fund after launch.}}"
   }
 }

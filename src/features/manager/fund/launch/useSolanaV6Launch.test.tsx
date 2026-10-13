@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   },
   send: vi.fn(),
   receipt: vi.fn(),
+  nonce: vi.fn(),
   signTypedData: vi.fn(),
   solanaSend: vi.fn(),
   confirmation: vi.fn(),
@@ -36,12 +37,15 @@ vi.mock("@/lib/tx/useEnsureWalletChain", () => ({
 }));
 vi.mock("@/lib/tx/sendTransaction", () => ({
   sendBuiltTransaction: mocks.send,
-  isUserRejection: () => false,
+  isUserRejection: (error: unknown) => error instanceof Error && error.message === "rejected",
 }));
 vi.mock("viem", async (original) => ({
   ...(await original<typeof import("viem")>()),
   createWalletClient: () => ({ signTypedData: mocks.signTypedData }),
-  createPublicClient: () => ({ getTransactionReceipt: mocks.receipt }),
+  createPublicClient: () => ({
+    getTransactionReceipt: mocks.receipt,
+    getTransactionCount: mocks.nonce,
+  }),
 }));
 vi.mock("@/features/auth/siweActions", () => ({ getSessionAction: async () => MANAGER }));
 vi.mock("@/lib/analytics/useAnalytics", () => ({ useAnalytics: () => ({ track: vi.fn() }) }));
@@ -143,6 +147,7 @@ beforeEach(() => {
   };
   mocks.signTypedData.mockResolvedValue(`0x${"11".repeat(65)}`);
   mocks.receipt.mockResolvedValue({ status: "success" });
+  mocks.nonce.mockResolvedValue(7);
   mocks.confirmation.mockResolvedValue("finalized");
   mocks.solanaSend.mockImplementation(async (input: { persist: (signature: string) => void }) => {
     input.persist(
@@ -279,5 +284,96 @@ describe("useSolanaV6Launch", () => {
     expect(mocks.send).not.toHaveBeenCalled();
     expect(result.current.state?.steps["create-fund"]?.status).toBe("done");
     expect(result.current.state?.steps["create-spoke"]?.status).toBe("done");
+  });
+
+  function resumedAt(step: "approve-seed" | "create-fund", patch: Record<string, unknown>) {
+    return import("./solanaV6Launch").then(({ initialSolanaLaunch }) => {
+      const state = initialSolanaLaunch({
+        draftId: "d1",
+        manager: MANAGER,
+        solanaKey: SOLANA_KEY,
+        plan,
+        review: (mocks.draft as { review: never }).review,
+        amounts,
+      });
+      state.plan = {
+        core: LIVE_UNSIGNED_PLAN.core,
+        fundId: LIVE_UNSIGNED_PLAN.fundId,
+        creationNumber: LIVE_UNSIGNED_PLAN.creationNumber,
+        bindingNonce: "0",
+        bindingExpiry: "1791871620",
+        expiresAt: "2026-10-13T06:07:00.000Z",
+        fundPda: SOLANA_KEY,
+        vault: SOLANA_KEY,
+        usdcAta: SOLANA_KEY,
+        robinhoodSpokeVault: MANAGER,
+      };
+      state.signatures = { binding: `0x${"11".repeat(65)}`, swapPolicy: `0x${"11".repeat(65)}` };
+      for (const done of ["plan", "sign-binding", "sign-policy", "approve-seed"] as const)
+        if (done !== step) state.steps[done] = { status: "done" };
+      state.steps[step] = { status: "failed", ...patch } as never;
+      localStorage.setItem(solanaLaunchKey(MANAGER, "d1"), JSON.stringify(state));
+    });
+  }
+
+  it("never resends a Fund creation whose wallet prompt ended without a hash while a nonce is pending", async () => {
+    const p = plans();
+    await resumedAt("create-fund", { attempted: true, nonce: "7" });
+    mocks.actions.buildSolanaCreationAction.mockResolvedValue(ok(p.readyCreate));
+    // latest 7 (nothing mined from nonce 7), pending 8 (something in the mempool): wait, never resend.
+    mocks.nonce.mockImplementation(async ({ blockTag }: { blockTag: string }) =>
+      blockTag === "pending" ? 8 : 7,
+    );
+    const { result } = renderHook(() => useSolanaV6Launch("d1"));
+    await waitFor(() => expect(result.current.state?.plan?.core).toBeDefined());
+    act(() => result.current.runCreation());
+    await waitFor(() => expect(result.current.state?.steps["create-fund"]?.status).toBe("waiting"));
+    act(() => result.current.stop());
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+
+  it("treats a creation found on the Hub as landed after an ambiguous prompt", async () => {
+    const p = plans();
+    await resumedAt("create-fund", { attempted: true, nonce: "7" });
+    mocks.actions.buildSolanaCreationAction
+      .mockResolvedValueOnce(ok(p.readyCreate))
+      .mockResolvedValueOnce(ok(p.created))
+      .mockResolvedValue(ok(p.spokeDone));
+    mocks.nonce.mockResolvedValue(8);
+    mocks.actions.discoverSolanaFundAction.mockResolvedValue({
+      ok: false,
+      error: { status: 400, code: "INVALID_TEST_STOP" },
+    });
+    const { result } = renderHook(() => useSolanaV6Launch("d1"));
+    await waitFor(() => expect(result.current.state?.plan?.core).toBeDefined());
+    act(() => result.current.runCreation());
+    await waitFor(() => expect(result.current.error).toBe("INVALID_TEST_STOP"), {
+      timeout: 10_000,
+    });
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(result.current.state?.steps["create-fund"]?.status).toBe("done");
+  });
+
+  it("forgets a reverted hash so the step can be rebuilt, and keeps restart off once a hash exists", async () => {
+    const p = plans();
+    await resumedAt("create-fund", {
+      status: "submitted",
+      txHash: `0x${"b2".repeat(32)}`,
+      chain: 42161,
+    });
+    mocks.actions.buildSolanaCreationAction.mockResolvedValue(ok(p.readyCreate));
+    mocks.receipt.mockResolvedValue({ status: "reverted" });
+    const { result } = renderHook(() => useSolanaV6Launch("d1"));
+    await waitFor(() => expect(result.current.state?.plan?.core).toBeDefined());
+    const { creationLanded } = await import("./solanaV6Launch");
+    expect(creationLanded(result.current.state as never)).toBe(true);
+    act(() => result.current.restartCreation());
+    expect(result.current.state).not.toBeNull();
+    act(() => result.current.runCreation());
+    await waitFor(() => expect(result.current.error).toBe("TRANSACTION_REVERTED"), {
+      timeout: 10_000,
+    });
+    expect(result.current.state?.steps["create-fund"]?.txHash).toBeUndefined();
+    expect(creationLanded(result.current.state as never)).toBe(false);
   });
 });

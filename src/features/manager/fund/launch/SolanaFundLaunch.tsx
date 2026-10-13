@@ -22,6 +22,7 @@ import { isMockMode } from "@/lib/services";
 import { solscanAccountUrl, solscanTxUrl } from "@/lib/solana/explorer";
 import {
   creationAmountsError,
+  creationLanded,
   defaultCreationAmounts,
   formatRawUnits,
   SOLANA_CREATION_STEPS,
@@ -103,7 +104,7 @@ export function SolanaFundLaunchView({
         spokeCap: state.request.spokeCap,
       }
     : amounts;
-  const amountsError = !state && amounts ? creationAmountsError(amounts) : null;
+  const amountsError = !state && amounts ? creationAmountsError(amounts, options?.amounts) : null;
   const operationsDone = state?.steps["final-report"]?.status === "done";
   const errorText = launch.error
     ? KNOWN_ERRORS.has(launch.error)
@@ -143,7 +144,22 @@ export function SolanaFundLaunchView({
           <dd className="break-all font-mono text-xs">{launch.manager ?? t("notSignedIn")}</dd>
           <dt className="text-muted-foreground">{t("solanaWallet")}</dt>
           <dd className="space-y-1">
-            {launch.solanaAddress ? (
+            {!launch.solanaAddress && launch.solanaCandidates.length > 1 ? (
+              <fieldset className="flex flex-col gap-1">
+                <legend className="text-muted-foreground text-xs">{t("chooseSolana")}</legend>
+                {launch.solanaCandidates.map((candidate) => (
+                  <Button
+                    key={candidate}
+                    size="sm"
+                    variant="secondary"
+                    className="justify-start font-mono text-xs"
+                    onClick={() => launch.chooseSolana(candidate)}
+                  >
+                    {candidate}
+                  </Button>
+                ))}
+              </fieldset>
+            ) : launch.solanaAddress ? (
               <>
                 <span className="block break-all font-mono text-xs">{launch.solanaAddress}</span>
                 <span className="block text-muted-foreground text-xs">
@@ -256,6 +272,15 @@ export function SolanaFundLaunchView({
         )}
       </Card>
 
+      {launch.evmBlocks > 0 && (
+        <p
+          role="note"
+          className="rounded-xl border border-border p-3 text-muted-foreground text-xs"
+        >
+          {t("evmBlocksNotice", { count: launch.evmBlocks })}
+        </p>
+      )}
+
       <StepList
         title={t("creationTitle")}
         steps={SOLANA_CREATION_STEPS}
@@ -313,7 +338,7 @@ export function SolanaFundLaunchView({
             </Button>
           ) : !created ? (
             <>
-              {state?.plan && state.steps["create-fund"]?.status !== "done" && (
+              {state && !creationLanded(state) && (
                 <Button variant="ghost" onClick={launch.restartCreation}>
                   {t("restart")}
                 </Button>
@@ -336,7 +361,7 @@ export function SolanaFundLaunchView({
             <>
               <Link
                 className="inline-flex items-center rounded-md px-3 text-sm underline"
-                href={`/strategies/${state?.plan?.core ?? ""}`}
+                href={`/funds/${state?.plan?.core ?? ""}?view=manager`}
               >
                 {t("openFund")}
               </Link>

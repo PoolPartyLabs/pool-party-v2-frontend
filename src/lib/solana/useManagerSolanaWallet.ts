@@ -51,6 +51,8 @@ export function useManagerSolanaWallet(boundAddress?: string) {
     enabled,
     ready,
     address: wallet?.address ?? null,
+    /** Every connected Solana wallet: with several and no bound key, the Manager picks one. */
+    addresses: enabled ? wallets.map((candidate) => candidate.address) : [],
     balanceLamports: wallet ? (balance.data ?? null) : null,
     balanceError: balance.isError,
     refreshBalance: balance.refetch,

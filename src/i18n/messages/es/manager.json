@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "El límite por spoke debe ser mayor que cero.",
       "CREATION_AMOUNT_ABOVE_MAX": "Un monto supera su máximo.",
       "generic": "El paso falló ({code}). Continúa para reintentar."
-    }
+    },
+    "chooseSolana": "Elige la wallet de Solana que gestionará este fondo",
+    "evmBlocksNotice": "{count, plural, one {Este plan también tiene # bloque de posición en Arbitrum o Robinhood. Este lanzamiento no lo abre: gestiónalo desde el fondo después del lanzamiento.} other {Este plan también tiene # bloques de posición en Arbitrum o Robinhood. Este lanzamiento no los abre: gestiónalos desde el fondo después del lanzamiento.}}"
   }
 }

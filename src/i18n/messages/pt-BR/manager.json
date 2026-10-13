@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "O limite por spoke precisa ser maior que zero.",
       "CREATION_AMOUNT_ABOVE_MAX": "Um valor está acima do máximo.",
       "generic": "A etapa falhou ({code}). Continue para tentar de novo."
-    }
+    },
+    "chooseSolana": "Escolha a carteira Solana que vai gerir este fundo",
+    "evmBlocksNotice": "{count, plural, one {Este plano também tem # bloco de posição na Arbitrum ou na Robinhood. Este lançamento não o abre: gerencie-o pelo fundo depois do lançamento.} other {Este plano também tem # blocos de posição na Arbitrum ou na Robinhood. Este lançamento não os abre: gerencie-os pelo fundo depois do lançamento.}}"
   }
 }

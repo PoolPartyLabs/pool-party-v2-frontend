@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "Das Spoke-Limit muss größer als null sein.",
       "CREATION_AMOUNT_ABOVE_MAX": "Ein Betrag liegt über seinem Maximum.",
       "generic": "Der Schritt ist fehlgeschlagen ({code}). Fortsetzen, um es erneut zu versuchen."
-    }
+    },
+    "chooseSolana": "Wähle die Solana-Wallet, die diesen Fonds verwalten wird",
+    "evmBlocksNotice": "{count, plural, one {Dieser Plan enthält auch # Positionsblock auf Arbitrum oder Robinhood. Dieser Start eröffnet ihn nicht: verwalte ihn nach dem Start im Fonds.} other {Dieser Plan enthält auch # Positionsblöcke auf Arbitrum oder Robinhood. Dieser Start eröffnet sie nicht: verwalte sie nach dem Start im Fonds.}}"
   }
 }

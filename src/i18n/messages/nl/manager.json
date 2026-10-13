@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "De spoke-limiet moet groter dan nul zijn.",
       "CREATION_AMOUNT_ABOVE_MAX": "Een bedrag ligt boven zijn maximum.",
       "generic": "De stap is mislukt ({code}). Ga verder om het opnieuw te proberen."
-    }
+    },
+    "chooseSolana": "Kies de Solana-wallet die dit fonds gaat beheren",
+    "evmBlocksNotice": "{count, plural, one {Dit plan heeft ook # positieblok op Arbitrum of Robinhood. Deze lancering opent het niet: beheer het na de lancering vanuit het fonds.} other {Dit plan heeft ook # positieblokken op Arbitrum of Robinhood. Deze lancering opent ze niet: beheer ze na de lancering vanuit het fonds.}}"
   }
 }

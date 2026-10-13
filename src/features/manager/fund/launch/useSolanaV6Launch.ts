@@ -41,7 +41,7 @@ import {
   trackSolanaTransitAction,
 } from "@/lib/api/v2/solanaLaunchActions";
 import type { BuildCreation, EvmBuild, UnsignedSolanaBuild } from "@/lib/api/v2/solanaSchemas";
-import { getChainById } from "@/lib/chains";
+import { getChainById, transportMap } from "@/lib/chains";
 import { createManagerSolanaRpc, readSolanaConfirmation } from "@/lib/solana/rpc";
 import { validateSolanaApiQuote } from "@/lib/solana/swap";
 import { isSolanaNotSubmitted, sendSolanaTransaction } from "@/lib/solana/transaction";
@@ -69,6 +69,7 @@ import {
   type SolanaLaunchStepRecord,
   saveSolanaLaunch,
   solanaBuildToSign,
+  solanaLaunchKey,
   verifyCreationPlan,
 } from "./solanaV6Launch";
 
@@ -100,6 +101,13 @@ function unwrap<T>(result: ActionResult<T>, waitOn: string[] = []): T {
     throw new Wait(Math.min(Math.max(retryAfterSeconds ?? 10, 2), 120));
   throw new StepFailure(code);
 }
+/** sendBuiltTransaction refusals raised before the wallet could broadcast anything. */
+const UNSENT_EVM_CODES = new Set([
+  "WRONG_CHAIN",
+  "WRONG_ACCOUNT",
+  "CHAIN_UNAVAILABLE",
+  "BUILD_TARGET_MISMATCH",
+]);
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
     const timer = setTimeout(resolve, ms);
@@ -119,6 +127,9 @@ export interface SolanaV6LaunchView {
   manager: string | null;
   state: SolanaLaunchState | null;
   solanaAddress: string | null;
+  /** Connected Solana wallets when more than one could be the Manager's key. */
+  solanaCandidates: string[];
+  chooseSolana: (address: string) => void;
   solanaBalanceLamports: bigint | null;
   solanaReady: boolean;
   connectSolana: () => void;
@@ -129,6 +140,8 @@ export interface SolanaV6LaunchView {
   restartCreation: () => void;
   setAmount: (key: keyof SolanaLaunchState["amounts"], raw: string) => void;
   busy: boolean;
+  /** Arbitrum/Robinhood position blocks in the plan that this launch does not open. */
+  evmBlocks: number;
   activeStep: SolanaLaunchStepId | null;
   error: string | null;
 }
@@ -146,7 +159,8 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
   const abortRef = useRef<AbortController | null>(null);
   const { wallets } = useWallets();
   const ensureChain = useEnsureWalletChain();
-  const solana = useManagerSolanaWallet(state?.solanaKey);
+  const [chosenSolana, setChosenSolana] = useState<string | undefined>(undefined);
+  const solana = useManagerSolanaWallet(state?.solanaKey ?? chosenSolana);
 
   useEffect(() => {
     const read = () => setDraft(getDraft(draftId));
@@ -198,6 +212,15 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
 
   const plan = draft ? planOf(draft) : null;
   const supported = !!plan && isSolanaV6Plan(plan);
+  // Arbitrum and Robinhood position blocks are sealed in the Mandate but not run by this journey.
+  const evmBlocks = plan
+    ? [
+        ...plan.hub.chains,
+        ...plan.spokes
+          .filter((spoke) => spoke.network !== "solana")
+          .flatMap((spoke) => spoke.chains),
+      ].flatMap((chain) => chain.steps.filter((step) => step.family === "position")).length
+    : 0;
 
   // ---- wallets -------------------------------------------------------------------------------
   const evmWallet = () => {
@@ -230,45 +253,101 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
       );
     }
   };
-  /** Send an API-built EVM transaction with its `gas`, persist the hash, wait for the receipt. */
-  const sendEvm = async (step: SolanaLaunchStepId, tx: EvmBuild, signal: AbortSignal) => {
+  const publicClient = (chainId: number) => {
+    const chain = getChainById(chainId);
+    if (!chain) throw new StepFailure("V2_UNAVAILABLE");
+    return createPublicClient({ chain, transport: transportMap[chainId] ?? http() });
+  };
+  /**
+   * An earlier wallet prompt ended without a hash (an ambiguous failure or a reload mid-prompt).
+   * Never resend before knowing: nothing pending from the persisted nonce means provably unsent;
+   * a consumed nonce asks the step's own evidence (`landed`), else the Manager must check.
+   */
+  const reconcileAttempt = async (
+    step: SolanaLaunchStepId,
+    chainId: number,
+    landed?: () => Promise<boolean>,
+  ): Promise<"landed" | "unsent"> => {
     const record = stateRef.current?.steps[step];
-    let hash = record?.status === "submitted" ? record.txHash : undefined;
+    const manager = stateRef.current?.manager as Hex;
+    const client = publicClient(chainId);
+    const [mined, pending] = await Promise.all([
+      client.getTransactionCount({ address: manager, blockTag: "latest" }),
+      client.getTransactionCount({ address: manager, blockTag: "pending" }),
+    ]);
+    const nonce = record?.nonce ? Number(record.nonce) : null;
+    if (landed && (await landed())) return "landed";
+    if (nonce !== null && pending <= nonce) return "unsent";
+    if (nonce !== null && mined <= nonce) throw new Wait(10); // still in the mempool
+    if (landed) return "unsent"; // the nonce went to another transaction and this one did not land
+    throw new StepFailure("SUBMISSION_RECONCILIATION_REQUIRED");
+  };
+  /**
+   * Send an API-built EVM transaction with its `gas` from the Manager wallet, persist the attempt
+   * and the hash, wait for the receipt. Resumes from a persisted hash; never sends twice.
+   */
+  const sendEvm = async (
+    step: SolanaLaunchStepId,
+    tx: EvmBuild,
+    signal: AbortSignal,
+    landed?: () => Promise<boolean>,
+  ): Promise<"sent" | "landed"> => {
+    const record = stateRef.current?.steps[step];
+    let hash = record?.chain !== "solana" ? record?.txHash : undefined;
+    if (!hash && record?.attempted) {
+      if ((await reconcileAttempt(step, tx.chainId, landed)) === "landed") {
+        setStep(step, { attempted: undefined, nonce: undefined });
+        return "landed";
+      }
+      setStep(step, { attempted: undefined, nonce: undefined });
+    }
     if (!hash) {
       if (signal.aborted) throw new StepFailure("LAUNCH_CANCELLED");
+      // Every API build carries its padded gas limit (§3.10, §3.13): never let the wallet guess it.
+      if (!tx.gas) throw new StepFailure("V2_INVALID_RESPONSE");
       // The exact Manager wallet, never `wallets[0]`: an embedded wallet may sit first in the list.
       const { wallet } = evmWallet();
       const provider = await ensureChain(wallet, tx.chainId);
+      const nonce = await publicClient(tx.chainId).getTransactionCount({
+        address: wallet.address as Hex,
+        blockTag: "pending",
+      });
+      setStep(step, { attempted: true, nonce: String(nonce) });
       try {
         hash = await sendBuiltTransaction(
           provider,
           {
-            tx: {
-              from: tx.from,
-              to: tx.to,
-              data: tx.data,
-              value: tx.value,
-              ...(tx.gas ? { gas: tx.gas } : {}),
-            },
+            tx: { from: tx.from, to: tx.to, data: tx.data, value: tx.value, gas: tx.gas },
             chainId: tx.chainId,
           },
           wallet.address,
           tx.chainId,
         );
       } catch (failure) {
-        throw new StepFailure(
-          isUserRejection(failure) ? "USER_REJECTED" : "SUBMISSION_RECONCILIATION_REQUIRED",
-        );
+        const code = (failure as { cause?: { code?: unknown } }).cause?.code;
+        if (isUserRejection(failure) || (typeof code === "string" && UNSENT_EVM_CODES.has(code))) {
+          setStep(step, { attempted: undefined, nonce: undefined });
+          throw new StepFailure(isUserRejection(failure) ? "USER_REJECTED" : String(code));
+        }
+        // Unknown outcome: keep the attempt; the next run reconciles before any resend.
+        throw new StepFailure("SUBMISSION_RECONCILIATION_REQUIRED");
       }
-      setStep(step, { status: "submitted", txHash: hash, chain: tx.chainId });
+      setStep(step, {
+        status: "submitted",
+        txHash: hash,
+        chain: tx.chainId,
+        attempted: undefined,
+      });
     }
-    const chain = getChainById(tx.chainId);
-    if (!chain) throw new StepFailure("V2_UNAVAILABLE");
-    const client = createPublicClient({ chain, transport: http() });
+    const client = publicClient(tx.chainId);
     for (let attempt = 0; attempt < 200 && !signal.aborted; attempt += 1) {
       const receipt = await client.getTransactionReceipt({ hash: hash as Hex }).catch(() => null);
-      if (receipt?.status === "success") return hash;
-      if (receipt?.status === "reverted") throw new StepFailure("TRANSACTION_REVERTED");
+      if (receipt?.status === "success") return "sent";
+      if (receipt?.status === "reverted") {
+        // Proven failure: nothing moved, so the step can be rebuilt.
+        setStep(step, { status: "failed", txHash: undefined, nonce: undefined });
+        throw new StepFailure("TRANSACTION_REVERTED");
+      }
       await sleep(3000, signal);
     }
     throw new Wait(5);
@@ -282,7 +361,11 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
     for (let attempt = 0; attempt < 120 && !signal.aborted; attempt += 1) {
       const status = await readSolanaConfirmation(last).catch(() => "unknown" as const);
       if (status === "finalized") return "final" as const;
-      if (status === "failed") throw new StepFailure("SOLANA_TRANSACTION_FAILED");
+      if (status === "failed") {
+        // Proven on-chain failure: forget the signature so the step can be rebuilt.
+        setStep(step, { status: "failed", txHash: undefined, lastValid: undefined });
+        throw new StepFailure("SOLANA_TRANSACTION_FAILED");
+      }
       if (status === "unknown" && record.lastValid) {
         // Past the blockhash's last valid height an unseen signature can never land: rebuild.
         const height = await solanaRpc.blockHeight().catch(() => null);
@@ -334,6 +417,7 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
           if (record) {
             record.txHash = undefined;
             record.lastValid = undefined;
+            record.status = "running";
           }
         });
         throw new StepFailure(codeOf(failure));
@@ -374,6 +458,7 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
       manager: current.manager,
       solanaKey: current.solanaKey,
       core: core(),
+      seedAmount: current.request.seedAmount,
     });
     if (built.status !== "awaiting-signatures")
       commit((next) => {
@@ -397,7 +482,11 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
             ...current.request,
           }),
         );
-        verifyCreationPlan(built, { manager: current.manager, solanaKey: current.solanaKey });
+        verifyCreationPlan(built, {
+          manager: current.manager,
+          solanaKey: current.solanaKey,
+          seedAmount: current.request.seedAmount,
+        });
         planRef.current = built;
         commit((next) => {
           next.plan = {
@@ -440,47 +529,57 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
       },
       async "approve-seed"(signal) {
         const record = stateRef.current?.steps["approve-seed"];
-        if (record?.status === "submitted" && record.txHash) {
-          await sendEvm("approve-seed", { chainId: 42161 } as EvmBuild, signal);
-          return "done";
-        }
+        const resuming = !!record?.txHash || !!record?.attempted;
         // The signed rebuild proves both consents before any transaction and reads the live seed.
         const built = await rebuildSigned();
-        if (built.status === "created") return "skipped";
-        if (!built.seed.balanceSufficient) throw new StepFailure("SOLANA_SEED_BALANCE_LOW");
+        if (built.status === "created") return resuming ? "done" : "skipped";
         const approve = built.transactions.approve;
-        if (!approve || !built.seed.approveRequired) return "skipped";
-        if (approve.to.toLowerCase() !== ARBITRUM_USDC.toLowerCase())
+        if (!resuming) {
+          if (!built.seed.balanceSufficient) throw new StepFailure("SOLANA_SEED_BALANCE_LOW");
+          if (!approve || !built.seed.approveRequired) return "skipped";
+        }
+        if (approve && approve.to.toLowerCase() !== ARBITRUM_USDC.toLowerCase())
           throw new StepFailure("SOLANA_PLAN_MISMATCH");
-        await sendEvm("approve-seed", approve, signal);
+        await sendEvm(
+          "approve-seed",
+          approve ?? ({ chainId: 42161 } as EvmBuild),
+          signal,
+          async () => !(await rebuildSigned()).seed.approveRequired,
+        );
         return "done";
       },
       async "create-fund"(signal) {
         const record = stateRef.current?.steps["create-fund"];
-        if (record?.status === "submitted" && record.txHash) {
-          await sendEvm("create-fund", { chainId: 42161 } as EvmBuild, signal);
-          await rebuildSigned();
-          return "done";
-        }
         const built = await rebuildSigned();
+        // The API answers `created` once this binding's Fund exists: the creation landed.
         if (built.status === "created") return "done";
         const createFund = built.transactions.createFund;
-        if (!createFund?.gas) throw new Wait(5); // the approve is not mined yet
-        await sendEvm("create-fund", createFund, signal);
+        if (!record?.txHash && !createFund?.gas) throw new Wait(5); // the approve is not mined yet
+        await sendEvm(
+          "create-fund",
+          createFund ?? ({ chainId: 42161 } as EvmBuild),
+          signal,
+          async () => (await rebuildSigned()).status === "created",
+        );
         return "done";
       },
       async "create-spoke"(signal) {
         const record = stateRef.current?.steps["create-spoke"];
-        if (record?.status === "submitted" && record.txHash) {
-          await sendEvm("create-spoke", { chainId: 4663 } as EvmBuild, signal);
-          return "done";
-        }
         const built = await rebuildSigned();
-        if (!built.transactions.createSpoke) {
+        const spoke = built.transactions.createSpoke;
+        if (!record?.txHash && !spoke) {
           if (built.robinhoodSpokeCreated) return "done";
           throw new Wait(5);
         }
-        await sendEvm("create-spoke", built.transactions.createSpoke, signal);
+        await sendEvm(
+          "create-spoke",
+          spoke ?? ({ chainId: 4663 } as EvmBuild),
+          signal,
+          async () => {
+            const again = await rebuildSigned();
+            return again.robinhoodSpokeCreated && !again.transactions.createSpoke;
+          },
+        );
         return "done";
       },
       async discover() {
@@ -526,32 +625,51 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
       },
       async "send-to-solana"(signal) {
         const record = stateRef.current?.steps["send-to-solana"];
-        if (record?.status === "submitted" && record.txHash) {
+        // A send that already left: the Hub knows its transit (stage `sent` even before tracking).
+        const previous = stateRef.current?.transit?.transitId;
+        const transitExists = async () =>
+          !!previous && (await readSolanaTransitAction(core(), previous)).ok;
+        if (record?.txHash) {
           await sendEvm("send-to-solana", { chainId: 42161 } as EvmBuild, signal);
+          return "done";
+        }
+        if (record?.attempted && (await transitExists())) {
+          setStep("send-to-solana", { attempted: undefined, nonce: undefined });
           return "done";
         }
         const amount = stateRef.current?.amounts.send ?? "0";
         const built = unwrap(await buildSendToSolanaAction(core(), { amount }));
+        const [transaction] = built.transactions;
+        if (!transaction) throw new StepFailure("V2_INVALID_RESPONSE");
+        // Persist the preview transit before the prompt: a reload mid-prompt reconciles against it.
         commit((next) => {
           next.transit = {
             transitId: built.preview.transitId,
             amountToArrive: built.preview.amountToArrive,
           };
         });
-        const [transaction] = built.transactions;
-        if (!transaction) throw new StepFailure("V2_INVALID_RESPONSE");
-        await sendEvm("send-to-solana", transaction, signal);
+        await sendEvm("send-to-solana", transaction, signal, transitExists);
         return "done";
       },
       async arrival(signal) {
+        // A manual receive this step already signed must settle before anything is rebuilt.
+        await settleSolana("arrival", signal);
         const sent = stateRef.current?.steps["send-to-solana"]?.txHash;
-        if (!sent) throw new StepFailure("SOLANA_SEND_REQUIRED");
-        const tracked = unwrap(await trackSolanaTransitAction(core(), sent), ["NOT_FOUND"]);
-        const transitId = tracked.transits[0]?.transitId;
-        if (!transitId) throw new Wait(5);
-        commit((next) => {
-          next.transit = { transitId, amountToArrive: next.transit?.amountToArrive ?? "0" };
-        });
+        let transitId = stateRef.current?.transit?.transitId;
+        if (sent) {
+          // Register the mined send so the keeper relays it before Arbitrum finality (§3.11).
+          const tracked = unwrap(await trackSolanaTransitAction(core(), sent), ["NOT_FOUND"]);
+          transitId = tracked.transits[0]?.transitId;
+          if (!transitId) throw new Wait(5);
+          const confirmed = transitId;
+          commit((next) => {
+            next.transit = {
+              transitId: confirmed,
+              amountToArrive: next.transit?.amountToArrive ?? "0",
+            };
+          });
+        }
+        if (!transitId) throw new StepFailure("SOLANA_SEND_REQUIRED");
         for (let attempt = 0; attempt < 400 && !signal.aborted; attempt += 1) {
           const transit = unwrap(await readSolanaTransitAction(core(), transitId), ["NOT_FOUND"]);
           if (transit.stage === "credited" || transit.stage === "acknowledged") return "done";
@@ -764,6 +882,10 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
     manager,
     state,
     solanaAddress: solana.address,
+    solanaCandidates: state ? [] : solana.addresses,
+    chooseSolana: (address) => {
+      if (!stateRef.current && solana.addresses.includes(address)) setChosenSolana(address);
+    },
     solanaBalanceLamports: solana.balanceLamports,
     solanaReady: solana.ready,
     connectSolana: () => {
@@ -791,13 +913,16 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
     runOperations: () => void runSteps(SOLANA_OPERATION_STEPS),
     stop: () => abortRef.current?.abort(),
     restartCreation: () => {
-      if (!stateRef.current || creationLanded(stateRef.current) || abortRef.current) return;
-      commit((next) => {
-        delete next.plan;
-        next.signatures = {};
-        for (const step of SOLANA_CREATION_STEPS) next.steps[step] = { status: "idle" };
-      });
+      const current = stateRef.current;
+      if (!current || creationLanded(current) || abortRef.current) return;
+      // Nothing created yet: drop the journal so the amounts and wallets can be chosen again. A seed
+      // approve that already landed stays as an allowance and is reused by the next plan.
+      try {
+        localStorage.removeItem(solanaLaunchKey(current.manager, current.draftId));
+      } catch {}
+      stateRef.current = null;
       planRef.current = null;
+      setState(null);
       setError(null);
     },
     setAmount: (key, raw) => {
@@ -807,6 +932,7 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
       });
     },
     busy,
+    evmBlocks,
     activeStep,
     error,
   };

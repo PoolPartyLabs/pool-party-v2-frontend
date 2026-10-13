@@ -2020,6 +2020,8 @@
       "CREATION_SPOKE_CAP_ZERO": "スポーク上限は 0 より大きくしてください。",
       "CREATION_AMOUNT_ABOVE_MAX": "金額が上限を超えています。",
       "generic": "ステップが失敗しました({code})。続行して再試行してください。"
-    }
+    },
+    "chooseSolana": "このファンドを管理する Solana ウォレットを選択してください",
+    "evmBlocksNotice": "{count, plural, other {このプランには Arbitrum または Robinhood のポジションブロックも # 個あります。このローンチでは開かれないため、ローンチ後にファンドから管理してください。}}"
   }
 }
