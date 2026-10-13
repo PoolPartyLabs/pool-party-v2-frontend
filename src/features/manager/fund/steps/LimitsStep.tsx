@@ -132,7 +132,7 @@ function GroupHead({
   trailing?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex items-start justify-between gap-3">
       <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
         <h3 className="font-medium text-foreground text-sm">{title}</h3>
         <p className="text-muted-foreground text-sm">{caption}</p>

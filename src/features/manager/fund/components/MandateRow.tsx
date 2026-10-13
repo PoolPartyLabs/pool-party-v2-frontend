@@ -68,15 +68,17 @@ export function MandateCheckbox({
   mixed = false,
 }: {
   selected: boolean;
-  /** POO-2349 R3: some of the rows it stands for are selected. Drawn as a dash on the selected style. */
+  /** POO-2349 R3: some of the rows it stands for are selected. Drawn as a dash on the filled style, and it wins over `selected`. */
   mixed?: boolean;
 }) {
+  // @rule R3: `mixed` wins over `selected`. The box takes the filled style and shows a dash, not a check.
+  const filled = selected || mixed;
   return (
     <span
       aria-hidden="true"
       className={cn(
         "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
-        selected ? "border-primary bg-primary text-primary-foreground" : "border-input",
+        filled ? "border-primary bg-primary text-primary-foreground" : "border-input",
       )}
     >
       {mixed ? (

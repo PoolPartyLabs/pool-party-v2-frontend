@@ -703,8 +703,12 @@ describe("LimitsStep group No cap box (POO-2349)", () => {
   it("shows mixed when only some rows have No cap", () => {
     renderStep();
 
-    // Arbitrum has No cap and Robinhood has 40%.
-    expect(box("No cap for all rows in Per network")).toHaveAttribute("aria-checked", "mixed");
+    // Uniswap v4 has No cap, Aave v3 and Uniswap v3 have a cap. WBTC has No cap, WETH has 60%.
+    expect(box("No cap for all rows in Per protocol")).toHaveAttribute("aria-checked", "mixed");
+    expect(box("No cap for all rows in Per token")).toHaveAttribute("aria-checked", "mixed");
+    // The hub has no row (R40), so its No cap does not count: Robinhood alone, at 40%, is clear.
+    expect(document.querySelector('[data-mandate-row="arbitrum"]')).toBeNull();
+    expect(box("No cap for all rows in Per network")).toHaveAttribute("aria-checked", "false");
   });
 
   // @rule POO-2349 R3
@@ -739,14 +743,16 @@ describe("LimitsStep group No cap box (POO-2349)", () => {
     const user = userEvent.setup();
     const { capsAfterUpdate } = renderStep();
 
-    await user.click(box("No cap for all rows in Per network"));
+    await user.click(box("No cap for all rows in Per protocol"));
 
-    expect(capsAfterUpdate().networks).toEqual({
-      arbitrum: { noCap: true, pct: 0 },
-      robinhood: { noCap: true, pct: 40 },
+    expect(capsAfterUpdate().protocols).toEqual({
+      "aave-v3": { noCap: true, pct: 60 },
+      "uniswap-v3": { noCap: true, pct: 35 },
+      "uniswap-v4": { noCap: true, pct: 0 },
     });
     // The other groups are not touched.
-    expect(capsAfterUpdate().protocols["aave-v3"]).toEqual({ noCap: false, pct: 60 });
+    expect(capsAfterUpdate().networks.robinhood).toEqual({ noCap: false, pct: 40 });
+    expect(capsAfterUpdate().tokens[tokenKey(WETH)]).toEqual({ noCap: false, pct: 60 });
   });
 
   // @rule POO-2349 R2
@@ -764,8 +770,8 @@ describe("LimitsStep group No cap box (POO-2349)", () => {
 
     await user.click(box("No cap for all rows in Per network"));
 
+    // The one row of Per network (the hub has no row, R40) gets the state of a clear row box.
     expect(capsAfterUpdate().networks.robinhood).toEqual({ noCap: false, pct: 40 });
-    expect(capsAfterUpdate().networks.arbitrum).toEqual({ noCap: false, pct: 0 });
   });
 
   // @rule POO-2349 R4
@@ -783,13 +789,14 @@ describe("LimitsStep group No cap box (POO-2349)", () => {
       />
     );
     const { rerender } = renderWithProviders(step());
-    expect(box("No cap for all rows in Per network")).toHaveAttribute("aria-checked", "mixed");
+    expect(box("No cap for all rows in Per token")).toHaveAttribute("aria-checked", "mixed");
 
-    await user.click(within(row("robinhood")).getByRole("checkbox"));
+    // WETH is the only token row without No cap, so checking it checks the group.
+    await user.click(within(row(tokenKey(WETH))).getByRole("checkbox"));
     draft = update.mock.calls.at(-1)?.[0](draft);
     rerender(step());
 
-    expect(box("No cap for all rows in Per network")).toHaveAttribute("aria-checked", "true");
+    expect(box("No cap for all rows in Per token")).toHaveAttribute("aria-checked", "true");
   });
 
   // @rule POO-2349 R2

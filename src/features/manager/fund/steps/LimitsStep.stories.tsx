@@ -232,7 +232,11 @@ export const MixedTokenCaps: Story = {
   render: () => <Harness catalog={catalog} initial={selections(FIGMA_CAPS)} />,
 };
 
-/** POO-2349 R3: the box of each group is mixed in `Figma`, checked when every row has No cap and clear when none has it. */
+/**
+ * POO-2349 R3: the three states of the group box side by side. Per network is checked (its one row,
+ * Robinhood, has No cap; the hub has no row, R40, so its No cap does not count), Per protocol is clear
+ * (no row has No cap) and Per token is mixed (WBTC has No cap, WETH has 60%).
+ */
 export const GroupBoxStates: Story = {
   render: () => (
     <Harness
