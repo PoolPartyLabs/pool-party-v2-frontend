@@ -308,11 +308,11 @@ async function requestSolanaReport(core: string) {
  */
 export async function refreshSolanaReportAction(core: string) {
   return resultOf(async () => {
-    await walletIdentity();
+    const wallet = await walletIdentity();
     addressSchema.parse(core);
     if (isMockMode)
       return { usable: true, refreshing: false, retryAfterSeconds: null, jobId: null };
-    const key = core.toLowerCase();
+    const key = `${wallet.toLowerCase()}:${core.toLowerCase()}`;
     const now = Date.now();
     for (const [entry, value] of solanaRefreshes)
       if (now - value.at > 15_000) solanaRefreshes.delete(entry);
@@ -321,7 +321,9 @@ export async function refreshSolanaReportAction(core: string) {
       if (previous.fresh) return previous.fresh;
       throw new ApiError(429, "V2_RATE_LIMITED", "rate limited");
     }
-    if (solanaRefreshes.size >= 100) throw new ApiError(429, "V2_RATE_LIMITED", "rate limited");
+    // Bounded memory without a global refusal: one session cannot lock everyone else out.
+    if (solanaRefreshes.size >= 1000)
+      solanaRefreshes.delete(solanaRefreshes.keys().next().value as string);
     solanaRefreshes.set(key, { at: now });
     const fresh = await requestSolanaReport(core);
     solanaRefreshes.set(key, { at: now, fresh });
