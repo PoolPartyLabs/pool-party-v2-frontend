@@ -895,7 +895,21 @@
     "transitSend": "Senden",
     "transitFill": "Ausführung",
     "transitAcknowledgement": "Empfangsbestätigung",
-    "decodedError": "Entschlüsselter Fehler: {name}"
+    "decodedError": "Entschlüsselter Fehler: {name}",
+    "reportRefreshing": "Bericht wird aktualisiert. Der Fonds braucht zuerst einen aktuellen Bericht aus jedem Netzwerk, das kann einige Minuten dauern.",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "Bericht {minutes} Min. alt",
+      "noReport": "Noch kein Bericht",
+      "usable": "Nutzbar",
+      "refreshing": "Wird aktualisiert",
+      "program": "Programm",
+      "fundAccount": "Fondskonto",
+      "vault": "Vault",
+      "usdcAccount": "USDC-Konto",
+      "accountsUnavailable": "Solana-Konten nicht verfügbar"
+    }
   },
   "investV2": {
     "notAvailable": "Nicht verfügbar",

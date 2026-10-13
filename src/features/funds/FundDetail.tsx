@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-006
  * @name FundDetail
- * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2223); v1 (POO-2224); v1 (POO-2262 v6 chain names)
+ * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2223); v1 (POO-2224); v1 (POO-2262 v6 networks)
  * @analytics-events strategy_detail_viewed, app_cta_blocked, app_error_shown
  * Investor V2 projection in the existing Details frame; authorized manager canvas is separate.
  */
@@ -28,8 +28,10 @@ import { isMockMode } from "@/lib/services";
 import { readErc20Balance } from "@/lib/tokens/readErc20";
 import { formatPercent, formatTokenAmount } from "@/lib/utils/format";
 import { FundComposition } from "./FundComposition";
+import { FundNetworks } from "./FundNetworks";
 import { loadPersonalFundDetailsAction, loadPublicFundDetailsAction } from "./fundDetailsActions";
 import { fundResumeAmount, hasFundInterest, type PersonalFundState } from "./fundDetailsModel";
+import { hasSolanaSpoke } from "./fundModel";
 
 export interface FundDetailProps {
   core: string;
@@ -397,6 +399,7 @@ export function FundDetailsPresenter({
             )
             .join(" · ")}
         />
+        {hasSolanaSpoke(fund) ? <FundNetworks fund={fund} /> : null}
         <Row
           label={t("allowed")}
           value={

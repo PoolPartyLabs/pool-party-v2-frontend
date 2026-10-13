@@ -895,7 +895,21 @@
     "transitSend": "Gửi",
     "transitFill": "Khớp lệnh",
     "transitAcknowledgement": "Xác nhận nhận",
-    "decodedError": "Lỗi đã giải mã: {name}"
+    "decodedError": "Lỗi đã giải mã: {name}",
+    "reportRefreshing": "Đang cập nhật báo cáo. Quỹ cần báo cáo mới từ mọi mạng trước, việc này có thể mất vài phút.",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "Báo cáo {minutes} phút trước",
+      "noReport": "Chưa có báo cáo",
+      "usable": "Dùng được",
+      "refreshing": "Đang cập nhật",
+      "program": "Chương trình",
+      "fundAccount": "Tài khoản quỹ",
+      "vault": "Vault",
+      "usdcAccount": "Tài khoản USDC",
+      "accountsUnavailable": "Không có tài khoản Solana"
+    }
   },
   "investV2": {
     "notAvailable": "Chưa có dữ liệu",
