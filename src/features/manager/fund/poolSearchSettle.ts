@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-107
  * @name poolSearchSettle
  * @implements-rules-version v1 (POO-2343)
+ * @implements-rules-version DEC-204 (POO-2262: a failed read keeps its pinned fallback pools)
  * @analytics-events none, pure logic
  *
  * R5: the decision a multi-network pool read makes when some networks answer and some fail.
@@ -13,6 +14,11 @@
  *
  * When EVERY read fails there is nothing to keep. The first error is thrown, so a mandate with
  * one network keeps the error state it always had.
+ *
+ * DEC-204: a job can name a `fallback`, the pools it lists with no read at all (the pinned Raydium
+ * release pools). When its read fails those pools stay, in the job's place, and the network still
+ * counts as failed, so the step keeps its error with Retry. With a fallback pool in hand, a read
+ * where every job failed answers that list and its failures instead of throwing.
  */
 import type { MandatePoolRef, NetworkId } from "./mandateDraft";
 
@@ -20,6 +26,8 @@ import type { MandatePoolRef, NetworkId } from "./mandateDraft";
 export interface PoolSearchJob {
   network: NetworkId;
   run: () => Promise<MandatePoolRef[]>;
+  /** DEC-204: the pools this job still lists when its read fails. They need no read. */
+  fallback?: () => MandatePoolRef[];
 }
 
 /** The pools that arrived, deduped by pool id, and the networks whose read failed. */
@@ -43,10 +51,12 @@ export async function settlePoolSearches(jobs: PoolSearchJob[]): Promise<Settled
     }
     if (failures === 0) firstError = outcome.reason;
     failures += 1;
-    const network = jobs[index]?.network;
+    const job = jobs[index];
+    for (const pool of job?.fallback?.() ?? []) if (!byId.has(pool.id)) byId.set(pool.id, pool);
+    const network = job?.network;
     if (network && !failedNetworks.includes(network)) failedNetworks.push(network);
   });
-  if (jobs.length > 0 && failures === jobs.length) throw firstError;
+  if (jobs.length > 0 && failures === jobs.length && byId.size === 0) throw firstError;
   return { pools: [...byId.values()], failedNetworks };
 }
 
