@@ -289,18 +289,15 @@ test.describe("@v2-solana-launch dry three-chain launch against the live dev API
     await expect(stepRow(page, "Create the Fund").getByRole("status")).toHaveText("Pending");
 
     evidence.counters = counters;
-    evidence.steps = await page.evaluate(
-      ([prefix]) => {
-        const key = Object.keys(localStorage).find((entry) => entry.startsWith(prefix));
-        if (!key) return null;
-        const state = JSON.parse(localStorage.getItem(key) ?? "{}") as {
-          steps?: Record<string, { status: string; error?: string }>;
-          request?: unknown;
-        };
-        return { steps: state.steps, request: state.request };
-      },
-      ["pp:v2:solana-launch:1:"],
-    );
+    evidence.steps = await page.evaluate((prefix) => {
+      const key = Object.keys(localStorage).find((entry) => entry.startsWith(prefix));
+      if (!key) return null;
+      const state = JSON.parse(localStorage.getItem(key) ?? "{}") as {
+        steps?: Record<string, { status: string; error?: string }>;
+        request?: unknown;
+      };
+      return { steps: state.steps, request: state.request };
+    }, "pp:v2:solana-launch:1:");
     await page.screenshot({ path: info.outputPath("solana-launch-dry.png"), fullPage: true });
     await info.attach("evidence", {
       body: JSON.stringify(evidence, null, 2),
