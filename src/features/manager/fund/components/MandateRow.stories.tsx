@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-041
  * @name MandateRow.stories
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2142 rules v2, POO-2349 rules v1)
  *
  * Storybook coverage for the shared Mandate selection row (POO-2123 [R12]).
  *
@@ -11,7 +11,7 @@
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { buildMandateCatalog } from "../mandateCatalog";
-import { MandateRow } from "./MandateRow";
+import { MandateCheckbox, MandateRow } from "./MandateRow";
 import { NetworkDots, NetworkLogoWithName } from "./NetworkDots";
 
 const catalog = buildMandateCatalog();
@@ -100,4 +100,26 @@ export const WithTrailingNetworks: Story = {
       </span>
     ),
   },
+};
+
+/**
+ * POO-2349 R3: the three states of the group "No cap" box. Clear is an outline, checked is a
+ * check on the primary fill, and mixed is a dash on the same fill. Mixed wins over selected, so the
+ * last box (selected and mixed together) shows the dash.
+ */
+export const GroupBoxStates: Story = {
+  args: Unselected.args,
+  render: () => (
+    <div className="flex items-center gap-6 text-sm">
+      <span className="flex items-center gap-2">
+        <MandateCheckbox selected={false} /> Clear
+      </span>
+      <span className="flex items-center gap-2">
+        <MandateCheckbox selected /> Checked
+      </span>
+      <span className="flex items-center gap-2">
+        <MandateCheckbox selected mixed /> Mixed
+      </span>
+    </div>
+  ),
 };

@@ -731,6 +731,8 @@
       "metrics": "TVL et APR ne sont pas encore indexés.",
       "limits": "Le pourcentage Robinhood est enregistré comme intention du fonds, sans application on-chain avant POO-2169.",
       "allocation": "Les curseurs de protocole et de token sont des aides locales à l’allocation Build, pas des limites du fonds.",
+      "allocationProtocol": "Les curseurs de protocole sont des aides locales à l’allocation Build, pas des limites du fonds.",
+      "allocationToken": "Les curseurs de token sont des aides locales à l’allocation Build, pas des limites du fonds.",
       "poolId": "Collez un PoolId bytes32"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "Définissez un plafond ou cochez Aucun plafond pour continuer.",
       "sliderLabel": "Part maximale pour {name}",
       "noCapLabel": "Aucun plafond pour {name}",
+      "sectionNoCapLabel": "Aucun plafond pour toutes les lignes de {name}",
       "unset": "Non défini",
       "noRows": "Rien à plafonner ici : rien n'a été ajouté à ce groupe.",
       "kind": {
