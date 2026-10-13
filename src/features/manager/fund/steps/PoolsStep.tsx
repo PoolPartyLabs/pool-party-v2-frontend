@@ -90,6 +90,8 @@
  * NVDAx/USDC). A pool with a token the catalog lists as unavailable (a stock) is drawn with the
  * permanent-refusal control, "Unavailable" with the reason, and reports `coming_soon`; it never counts
  * as addable (see {@link canEverAdd}), so "Add all", the universe and R37 leave it out.
+ * When the DEX Screener read fails, those pinned pools stay listed (no read is needed for them) and
+ * the error with Retry shows as for any partial failure (R5), so SOL/USDC is never lost.
  *
  * Pool catalog resolved by POO-2133: `mandatePoolSource` reads the real v4 catalog;
  * mock mode retains the existing fixtures.
@@ -147,6 +149,7 @@ import {
   settlePoolSearches,
   solanaFailureNetwork,
 } from "../poolSearchSettle";
+import { withRaydiumReleasePools } from "../solana-preview/solanaBuilderRuntime";
 import { poolFeeLabel, poolMeta } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
@@ -249,6 +252,20 @@ function universeSignatureOf(
   tokens: readonly MandateTokenRef[],
 ): string {
   return [networks.join(","), protocols.join(","), tokens.map(tokenKey).join(",")].join("|");
+}
+
+/**
+ * DEC-204: what a Solana read still lists when DEX Screener fails: the pinned Raydium release pools
+ * of the searched mint(s), which need no read. Nothing for any other network or protocol.
+ */
+function releasePoolsOnFailure(
+  network: NetworkId,
+  protocols: readonly DexProtocolId[],
+  tokenAddress: string,
+  secondTokenAddress: string | undefined,
+): (() => MandatePoolRef[]) | undefined {
+  if (network !== SOLANA_NETWORK || !protocols.includes("raydium")) return undefined;
+  return () => withRaydiumReleasePools([], tokenAddress, secondTokenAddress);
 }
 
 /** `WETH/USDC`, in the order the API returned the sides. Never inverted: there is no range here. */
@@ -579,6 +596,7 @@ export function PoolsStep({
             secondTokenAddress: undefined,
             protocols,
           }),
+        fallback: releasePoolsOnFailure(token.network, protocols, token.address, undefined),
       })),
     );
   }, [mandateTokens, protocols]);
@@ -625,6 +643,7 @@ export function PoolsStep({
             secondTokenAddress: query.second,
             protocols,
           }),
+        fallback: releasePoolsOnFailure(id, protocols, query.address, query.second),
       })),
     );
     return { pools, foundOn: null, signature: null, failedNetworks };

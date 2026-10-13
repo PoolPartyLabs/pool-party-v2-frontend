@@ -1682,6 +1682,33 @@ describe("PoolsStep: the Raydium stock pools are listed and unavailable (DEC-204
     await waitFor(() => expect(onUniverseCount).toHaveBeenLastCalledWith(1));
   });
 
+  it("keeps the pinned pools with the error and Retry when DEX Screener fails", async () => {
+    vi.mocked(searchMandatePools).mockImplementation(async (input) => {
+      if (input.network === "solana") throw new Error("mock: DEX Screener timed out");
+      return [];
+    });
+    const { onError, onUniverseCount } = renderStep(raydiumDraft(), { source: solana });
+
+    await waitFor(() =>
+      expect(resultCards().map((card) => card.getAttribute("data-mandate-row"))).toEqual([
+        solUsdc.id,
+        tslaxUsdc.id,
+        nvdaxUsdc.id,
+      ]),
+    );
+    expect(
+      screen.getByText("Couldn't load the pools. Check your connection and try again."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(within(resultCard(solUsdc.id)).getByRole("button", { name: "Add" })).toBeInTheDocument();
+    expect(
+      within(resultCard(tslaxUsdc.id)).getByRole("button", { name: "Unavailable" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    // R5 / R10: one failure event naming Solana, and no universe measured from a partial read.
+    expect(onError.mock.calls).toEqual([[{ code: "POOLS_FETCH_FAILED", network: "solana" }]]);
+    expect(onUniverseCount).not.toHaveBeenCalled();
+  });
+
   it("reports a press on a stock pool as coming_soon and writes nothing", async () => {
     const user = userEvent.setup();
     solanaAnswersPinned();
