@@ -6,6 +6,8 @@
  */
 import { type AnchorHTMLAttributes, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import fund6 from "@/features/funds/fixtures/fund6Detail.json";
+import { fundViewSchema } from "@/lib/api/v2/fundSchemas";
 import { supportedChainMetas } from "@/lib/chains/config";
 import { mockFund } from "@/mocks/data/v2Funds";
 import {
@@ -359,4 +361,40 @@ it("a core change clears inspection history even when structural IDs survive", a
     "aria-pressed",
     "false",
   );
+});
+
+describe("POO-2262 v6 Fund", () => {
+  // POO-2262: a v6 Fund lists Solana, badges each spoke's report and shows the Solana accounts.
+  it("[POO-2262] shows the three networks, spoke report badges and the Solana accounts", async () => {
+    const view = renderWithProviders(
+      <ManageScreen fund={fundViewSchema.parse(fund6.data)} panel={() => null} />,
+    );
+    const networks = [...view.container.querySelectorAll("[data-manage-network]")];
+    expect(networks.map((node) => node.getAttribute("data-manage-network"))).toEqual([
+      "42161",
+      "4663",
+      "1",
+    ]);
+    expect(networks[2]?.querySelector("h3")).toHaveTextContent("Solana · Spoke");
+    expect(networks[0]?.querySelector("[data-fund-report]")).toBeNull();
+    expect(networks[1]?.querySelector("[data-fund-report]")).toHaveTextContent("Refreshing");
+    expect(networks[2]?.querySelector("[data-fund-report]")).toHaveTextContent("Usable");
+    await userEvent.click(screen.getByRole("button", { name: "View mandate" }));
+    expect(
+      screen.getByRole("link", {
+        name: "Fund account 4fhgX4FhW8Gvq5cnt7QJq9d4uTDhQdYc8ZMRULWkRWnu",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://solscan.io/account/4fhgX4FhW8Gvq5cnt7QJq9d4uTDhQdYc8ZMRULWkRWnu",
+    );
+  });
+  it("[POO-2262] keeps an EVM-only Fund without report badges or a networks block", async () => {
+    const view = renderWithProviders(
+      <ManageScreen fund={{ ...mockFund, reportsUsable: false }} panel={() => null} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "View mandate" }));
+    expect(view.container.querySelector("[data-fund-report]")).toBeNull();
+    expect(view.container.querySelector("[data-fund-networks]")).toBeNull();
+  });
 });

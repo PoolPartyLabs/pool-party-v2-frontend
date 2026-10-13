@@ -1,0 +1,382 @@
+{
+  "_source": "GET /api/v2/funds/0x1E45E497a734b3BcD67e514F0681F161EC78a718 on the dev API, 2026-10-13 (POO-2262), report payloads trimmed",
+  "data": {
+    "chains": [
+      {
+        "chainId": "42161",
+        "spokeVault": "0xda86b057F6a76d20bCa9431868828979F18F229D",
+        "uniswapV4Adapter": "0xc84E9b8165CAEA471435EFb39e5c84c9891A5F6D",
+        "aaveV3Adapter": "0x82C18424492b434C2BDd4a622Ad60cA1aE07c3d9",
+        "acrossBridgeAdapter": "0xcEaE18eb3EDC5683f8256b52e4D8054A423eF15A",
+        "uniswapV3SwapAdapter": "0x6ed1F09F35e171cb76d0ae4c962e3A0E16bbC8ed",
+        "status": "created",
+        "creationBlock": "514245597",
+        "protocolVersion": "v2"
+      },
+      {
+        "chainId": "4663",
+        "spokeVault": "0x3962BE64873eEcA667B2934A1d6406Bf75A529ee",
+        "uniswapV4Adapter": "0x505cE7B842bC2C6752cd3e66Dd8e3fc5672C1B4A",
+        "aaveV3Adapter": "0xe18877525064Eec04e5dCBB4002548A64185a7cf",
+        "acrossBridgeAdapter": "0x82Ec472B35Ed098E22eA878E30aA14bA084BECbc",
+        "uniswapV3SwapAdapter": "0x710Bc278f39f4aBC25E0b5f74050B6Cc29Cb92C5",
+        "status": "created",
+        "creationBlock": "87021994",
+        "protocolVersion": "v2"
+      },
+      {
+        "chainId": "1",
+        "status": "created",
+        "solana": {
+          "program": "7PptZ653uyn5eoAFKqs4DXR1ijxH6sf49f2YAGMLTfCx",
+          "fund": "4fhgX4FhW8Gvq5cnt7QJq9d4uTDhQdYc8ZMRULWkRWnu",
+          "vault": "AXnN1ihCoy6bCwqcii6eDLT74abAwzDrn1AmgN57wNK6",
+          "usdcAta": "HEkWhruKWari9tepXfcKCTpS2YYfbYCWfoJtKmzqRw8b",
+          "protocolVersion": "v2"
+        },
+        "protocolVersion": "v2"
+      }
+    ],
+    "fundId": "0xc1dd194c69aea0418fbc56fbc08ae7a6396d066bd0e124fb4ffa3e3a41de7aee",
+    "factory": "0xe964f36Eb23E95e20049D97122f375FbFe6B40dE",
+    "manager": "0x26cD63ca3fe96e1D963f0160cb7542CEd13A53DE",
+    "coreVault": "0x1E45E497a734b3BcD67e514F0681F161EC78a718",
+    "shareToken": "0x9C7aB867e600801F9553100242C883507Dc5ae51",
+    "mandateHash": "0x34396c38de249b44c73493cda407afd0d6443b394308e8dc8cde7b5afec8147d",
+    "creationBlock": "514245597",
+    "creationNumber": "1",
+    "managerFeeVault": "0xaf8cE0f88298D0c3356cd54e70Db0bb375e18070",
+    "valueReportReceiver": "0x5d82167aE33e0D0c3aaAbB620fb06339Da07500d",
+    "core": "0x1e45e497a734b3bcd67e514f0681f161ec78a718",
+    "limitsSource": "none",
+    "limits": {
+      "protocolVersion": "v2",
+      "networks": [
+        {
+          "protocolVersion": "v2",
+          "chainId": 4663,
+          "percent": null,
+          "enforcedOnChain": false
+        }
+      ]
+    },
+    "limitsUsage": [
+      {
+        "protocolVersion": "v2",
+        "kind": "network",
+        "key": "4663",
+        "chainId": 4663,
+        "percent": null,
+        "enforcedOnChain": false,
+        "currentPercent": "0.00"
+      }
+    ],
+    "shareAssets": "53077774",
+    "shareAssetsUsd": "53.077774",
+    "protocolVersion": "v2",
+    "valuationSource": "CoreVault.spokeCapUsage / CoreVault.shareAssets (price source; latest accepted spoke report)",
+    "priceSource": "0xF7251A4Ef7c6118aA889F7FE39B8256422e04b8a",
+    "observedAt": "2026-10-13T02:02:13.000Z",
+    "blockNumber": "514296074",
+    "blockTimestamp": "2026-10-13T02:02:13.000Z",
+    "profile": null,
+    "fundState": 0,
+    "sharePrice": "1001467433962264150943396",
+    "grossAssets": "53087200",
+    "idle": "27999980",
+    "freeIdle": "27999980",
+    "payoutReserve": "0",
+    "inFlightValue": "0",
+    "operatingCash": "0",
+    "unmatchedArrivals": "0",
+    "incomeCollection": {
+      "round": "0",
+      "attempt": 0,
+      "deadline": "0",
+      "pendingSpokes": "0",
+      "openResults": "0",
+      "heldDollars": "0",
+      "protocolVersion": "v2"
+    },
+    "mandate": {
+      "manager": "0x26cD63ca3fe96e1D963f0160cb7542CEd13A53DE",
+      "hubChainId": "42161",
+      "hubWormholeChainId": 23,
+      "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "tokens": [
+        {
+          "chainId": "42161",
+          "token": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "4663",
+          "token": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "4663",
+          "token": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "token": "0x06DcaCb276039C31D0c4d13c8D7b4D129B4E7253",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "token": "0x1823649e3e218Cf2B2B32805D013d448BABab0cc",
+          "protocolVersion": "v2"
+        }
+      ],
+      "adapters": [
+        {
+          "chainId": "42161",
+          "adapter": "0x82C18424492b434C2BDd4a622Ad60cA1aE07c3d9",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "4663",
+          "adapter": "0x505cE7B842bC2C6752cd3e66Dd8e3fc5672C1B4A",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "adapter": "0xc851aE7a8b7ec9AB0114eEDaC8ffe275d912240d",
+          "protocolVersion": "v2"
+        }
+      ],
+      "swapAdapters": [
+        {
+          "chainId": "42161",
+          "adapter": "0x6ed1F09F35e171cb76d0ae4c962e3A0E16bbC8ed",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "4663",
+          "adapter": "0x710Bc278f39f4aBC25E0b5f74050B6Cc29Cb92C5",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "adapter": "0x4d5f45743886207F71717A16DFB75133633140f2",
+          "protocolVersion": "v2"
+        }
+      ],
+      "pools": [
+        {
+          "chainId": "42161",
+          "adapter": "0x82C18424492b434C2BDd4a622Ad60cA1aE07c3d9",
+          "poolKey": "0x000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "4663",
+          "adapter": "0x505cE7B842bC2C6752cd3e66Dd8e3fc5672C1B4A",
+          "poolKey": "0xfcfae8fa0bd6da961bcf5d990f27690932deac4f093e99bf3e871691c6586593",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "adapter": "0xc851aE7a8b7ec9AB0114eEDaC8ffe275d912240d",
+          "poolKey": "0xb3ca896fdd9e7319a26e06cdf9ad5fee4e23f249bb4067c89d5b602acd22e06c",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "adapter": "0xc851aE7a8b7ec9AB0114eEDaC8ffe275d912240d",
+          "poolKey": "0x2b319360bfa2cecb92c4b0a460409a0f0428033f601300b8b3fcf99cf3602e87",
+          "protocolVersion": "v2"
+        }
+      ],
+      "spokes": [
+        {
+          "chainId": "4663",
+          "wormholeChainId": 72,
+          "spokeVault": "0x0000000000000000000000003962be64873eeca667b2934a1d6406bf75a529ee",
+          "spokeToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+          "spokeCap": "50000000",
+          "maxReportAge": 1600,
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "wormholeChainId": 1,
+          "spokeVault": "0x5cbb9f57bf34cdf36a9a912d70758041c1f4813662b9f885fba89beb2cc575d8",
+          "spokeToken": "0x06DcaCb276039C31D0c4d13c8D7b4D129B4E7253",
+          "spokeCap": "50000000",
+          "maxReportAge": 1600,
+          "protocolVersion": "v2"
+        }
+      ],
+      "bridgeAdapters": [
+        {
+          "spokeChainId": "4663",
+          "chainId": "42161",
+          "adapter": "0xcEaE18eb3EDC5683f8256b52e4D8054A423eF15A",
+          "protocolVersion": "v2"
+        },
+        {
+          "spokeChainId": "4663",
+          "chainId": "4663",
+          "adapter": "0x82Ec472B35Ed098E22eA878E30aA14bA084BECbc",
+          "protocolVersion": "v2"
+        },
+        {
+          "spokeChainId": "1",
+          "chainId": "42161",
+          "adapter": "0x4582BdFF695fc54f9634f5Acb591Edff8c7BcD5F",
+          "protocolVersion": "v2"
+        },
+        {
+          "spokeChainId": "1",
+          "chainId": "1",
+          "adapter": "0xCA25075Fc7C78A30792b865085507B1D9b48025b",
+          "protocolVersion": "v2"
+        }
+      ],
+      "operatingCash": [],
+      "payoutFeeBps": 200,
+      "minFirstDeposit": "50000000",
+      "performanceFeeBps": 1000,
+      "managementFeeBps": 500,
+      "protocolVersion": "v2"
+    },
+    "fees": {
+      "flowFeeBps": "25",
+      "payoutFeeBps": "200",
+      "performanceFeeBps": "1000",
+      "managementFeeBps": "500",
+      "standardPayoutTermSeconds": "259200",
+      "protocolVersion": "v2"
+    },
+    "spokes": [
+      {
+        "chainId": "4663",
+        "spokeVault": "0x3962BE64873eEcA667B2934A1d6406Bf75A529ee",
+        "uniswapV4Adapter": "0x505cE7B842bC2C6752cd3e66Dd8e3fc5672C1B4A",
+        "aaveV3Adapter": "0xe18877525064Eec04e5dCBB4002548A64185a7cf",
+        "acrossBridgeAdapter": "0x82Ec472B35Ed098E22eA878E30aA14bA084BECbc",
+        "uniswapV3SwapAdapter": "0x710Bc278f39f4aBC25E0b5f74050B6Cc29Cb92C5",
+        "status": "created",
+        "creationBlock": "87021994",
+        "positions": [],
+        "lastReport": {
+          "receiverIndex": 0,
+          "report": {
+            "sequence": "10",
+            "spokeChainId": "4663",
+            "timestamp": "1791855400",
+            "protocolVersion": "v2"
+          },
+          "wormholeSequence": "9",
+          "acceptedAt": "1791856369",
+          "ageSeconds": "1533",
+          "protocolVersion": "v2"
+        },
+        "reportFreshness": {
+          "receiverIndex": 0,
+          "hasReport": true,
+          "ageSeconds": "1533",
+          "maxReportAge": "1600",
+          "marginSeconds": 120,
+          "usable": false,
+          "protocolVersion": "v2"
+        },
+        "protocolVersion": "v2"
+      },
+      {
+        "chainId": "1",
+        "status": "created",
+        "solana": {
+          "program": "7PptZ653uyn5eoAFKqs4DXR1ijxH6sf49f2YAGMLTfCx",
+          "fund": "4fhgX4FhW8Gvq5cnt7QJq9d4uTDhQdYc8ZMRULWkRWnu",
+          "vault": "AXnN1ihCoy6bCwqcii6eDLT74abAwzDrn1AmgN57wNK6",
+          "usdcAta": "HEkWhruKWari9tepXfcKCTpS2YYfbYCWfoJtKmzqRw8b",
+          "protocolVersion": "v2"
+        },
+        "positions": [],
+        "lastReport": {
+          "receiverIndex": 1,
+          "report": {
+            "sequence": "28",
+            "spokeChainId": "1",
+            "timestamp": "1791856808",
+            "protocolVersion": "v2"
+          },
+          "wormholeSequence": "27",
+          "acceptedAt": "1791856871",
+          "ageSeconds": "125",
+          "protocolVersion": "v2"
+        },
+        "reportFreshness": {
+          "receiverIndex": 1,
+          "hasReport": true,
+          "ageSeconds": "125",
+          "maxReportAge": "1600",
+          "marginSeconds": 120,
+          "usable": true,
+          "protocolVersion": "v2"
+        },
+        "protocolVersion": "v2"
+      }
+    ],
+    "state": "Open",
+    "totalSupply": "53000000000000000000",
+    "hubPositions": [],
+    "spokePositions": [],
+    "positionsSummary": {
+      "protocolVersion": "v2",
+      "coreVault": "0x1E45E497a734b3BcD67e514F0681F161EC78a718",
+      "shareAssets": "53077774",
+      "shareAssetsUsd": "53.077774",
+      "valueUsd": "0",
+      "uncollectedIncomeUsd": "0",
+      "positions": [],
+      "chains": [
+        {
+          "chainId": "42161",
+          "spokeVault": "0xda86b057F6a76d20bCa9431868828979F18F229D",
+          "status": "created",
+          "positionCount": 0,
+          "valueUsd": "0",
+          "uncollectedIncomeUsd": "0",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "4663",
+          "spokeVault": "0x3962BE64873eEcA667B2934A1d6406Bf75A529ee",
+          "status": "created",
+          "positionCount": 0,
+          "valueUsd": "0",
+          "uncollectedIncomeUsd": "0",
+          "protocolVersion": "v2"
+        },
+        {
+          "chainId": "1",
+          "spokeVault": "0x7c4F5adf4BEBD6c5b135a1db624c58168aF26525",
+          "status": "pending",
+          "positionCount": 0,
+          "valueUsd": "0",
+          "uncollectedIncomeUsd": "0",
+          "protocolVersion": "v2"
+        }
+      ]
+    },
+    "lastReport": {
+      "receiverIndex": 0,
+      "report": {
+        "sequence": "10",
+        "spokeChainId": "4663",
+        "timestamp": "1791855400",
+        "protocolVersion": "v2"
+      },
+      "wormholeSequence": "9",
+      "acceptedAt": "1791856369",
+      "ageSeconds": "1533",
+      "protocolVersion": "v2"
+    },
+    "reportsUsable": false
+  }
+}

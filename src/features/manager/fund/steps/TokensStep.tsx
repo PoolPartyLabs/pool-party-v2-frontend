@@ -4,6 +4,7 @@
  * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2332 rules v1: Token access mode and the 100-slot basket)
+ * @implements-rules-version DEC-204 (POO-2262: the Solana stock tokens are listed and unavailable)
  * @analytics-events none, the shell emits `builder_mandate_token_mode_changed` for the Token access control
  *
  * POO-2124 [R13] / [R23] / [R24] / [R25] / [R26] / [R27] / [R28], epic POO-2119. Mandate step 3:
@@ -47,6 +48,13 @@
  * (R7). The mock catalog shows skeleton cards while it loads and a box with "Try again" on an error;
  * search and filters stay on and the list stays saved (R6). Real data mode keeps today's panel and
  * its 16 slots (R14). The view models live in `mandateTokenAccess.ts` (PP-MGR-LIB-079).
+ *
+ * ## DEC-204: listed, never selectable
+ *
+ * A catalog token with `unavailableReason` (the Solana stock tokens TSLAx and NVDAx) is in the
+ * default list, not only on search, so a manager sees it. Its card is the disabled `aria-disabled`
+ * card with an "Unavailable" badge and the reason as its description; the click reports
+ * `coming_soon`, "Add all" skips it, and `addToken` refuses it anyway.
  */
 "use client";
 
@@ -79,6 +87,7 @@ import {
   type TokenMode,
   tokenKey,
   tokenModeOf,
+  unavailableTokenKeys,
 } from "../mandateDraft";
 import {
   collapseRows,
@@ -117,6 +126,8 @@ interface CatalogGroup {
   symbol: string;
   name: string;
   priced: boolean;
+  /** DEC-204: set when the catalog lists this token but never lets it in. Never `priced` then. */
+  unavailableReason: MandateCatalogToken["unavailableReason"];
   /** The entry handed to {@link addToken}, which then adds every network's entry of this symbol. */
   first: MandateCatalogToken;
   /** The networks this card's dots show, and the slots an Add would cost. */
@@ -150,7 +161,9 @@ function groupCatalog(entries: MandateCatalogToken[]): CatalogGroup[] {
         id: tokenKey(entry),
         symbol: entry.symbol,
         name: entry.name,
-        priced: entry.priced || entry.visualEligible === true,
+        priced:
+          entry.unavailableReason === undefined && (entry.priced || entry.visualEligible === true),
+        unavailableReason: entry.unavailableReason,
         first: entry,
         networks: [entry.network],
         entries: [entry],
@@ -218,6 +231,8 @@ function addAllTokens(
 ): { next: MandateDraft; blocked: StepBlock | null } {
   let next = draft;
   for (const group of groups) {
+    // DEC-204: never part of the batch; `addToken` would refuse it and stop the whole batch.
+    if (group.unavailableReason !== undefined) continue;
     const result = addToken(next, group.first, catalog);
     if (isBlocked(result)) return { next, blocked: result.blocked };
     next = result;
@@ -301,13 +316,18 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   const visible = useMemo(
     () =>
       groups
-        .filter((group) => (trimmed ? matchesQuery(group, trimmed) : group.priced))
+        // DEC-204: an unavailable token is in the default list too, so a manager sees it.
+        .filter((group) =>
+          trimmed
+            ? matchesQuery(group, trimmed)
+            : group.priced || group.unavailableReason !== undefined,
+        )
         .filter((group) => network === ALL_NETWORKS || group.networks.includes(network))
         .sort((a, b) => a.symbol.localeCompare(b.symbol)),
     [groups, trimmed, network],
   );
   // "Add all" skips what it could never add, so the count on the button is a promise it can keep.
-  const addable = visible.filter((group) => group.priced);
+  const addable = visible.filter((group) => group.priced && group.unavailableReason === undefined);
 
   const mandateGroups = groupMandate(draft.tokens);
   const collapsed = collapseRows(
@@ -324,7 +344,11 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
       ? t("fundBuilder.common.noSlots")
       : ownBlock?.reason === "not_priced"
         ? t("fundBuilder.tokens.noPrice")
-        : null;
+        : ownBlock?.reason === "coming_soon" &&
+            ownBlock.rowId !== null &&
+            unavailableTokenKeys(catalog, draft.networks, draft.protocols).has(ownBlock.rowId)
+          ? t("fundBuilder.common.stockUnavailable")
+          : null;
 
   // Scroll the offending card into view when the shell points a block at this step.
   useEffect(() => {
@@ -361,6 +385,32 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   function catalogCard(group: CatalogGroup) {
     const shell =
       "flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors";
+
+    // DEC-204: listed, disabled, with its reason, and still reporting the click that asked for it.
+    if (group.unavailableReason !== undefined) {
+      return (
+        <button
+          key={group.id}
+          type="button"
+          aria-disabled="true"
+          aria-label={group.symbol}
+          title={t("fundBuilder.common.stockUnavailable")}
+          data-mandate-row={group.id}
+          onClick={() => onBlocked({ step: STEP, reason: "coming_soon", rowId: group.id })}
+          className={cn(
+            shell,
+            "cursor-not-allowed text-left opacity-60",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          )}
+        >
+          <TokenMark group={group} size={28} />
+          <CardText group={group} catalog={catalog} />
+          <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-muted-foreground text-xs">
+            {t("fundBuilder.common.unavailable")}
+          </span>
+        </button>
+      );
+    }
 
     // R28: listed, disabled, and still reporting the click that asked for it.
     if (!group.priced) {

@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 724 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 733 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1323,3 +1323,70 @@ POO-2351 changes these rows, which keep their numbers:
 - PP-MGR-LIB-031 gains `poolPickStatus`, and PP-MGR-CMP-061, PP-MGR-CMP-068 and PP-MGR-CMP-069 gain
   `emptyCaption`: Uniswap v4 with no mandate pool on its network shows an empty state that links to
   the Pools step (R2).
+## Solana Bootstrap Re-sync, 2026-10-07 (POO-2262)
+
+Renumbered from `PP-MGR-LIB-059` to `PP-MGR-LIB-099` on 2026-10-13 when the integration branch merged `main`: `main` had already given `PP-MGR-LIB-059` to SolanaPreviewModel (POO-2281).
+
+| ID | Artifact | Rules | Source |
+|---|---|---|---|
+| `PP-MGR-LIB-099` | Committed bootstrap manifest and signing guard | DEC-190, DEC-200, DEC-201 (unversioned founder rulings) | `src/lib/solana/bootstrap.ts` |
+
+The test-only bootstrap fixture and regression suite support this artifact; they do not claim separate executable components or invented business-rule versions.
+
+## Solana v6 launch through the API, 2026-10-13 (POO-2262)
+
+| ID | Artifact | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-ACT-015` | v2SolanaLaunchActions, session/Manager-checked server actions for every step of the API's v6 demo lifecycle (creation, bootstrap, CCTP send and transit, venues, Kamino, swap, Raydium, reports) | Action | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/lib/api/v2/solanaLaunchActions.ts` (DEC-188/190/191/195/203/204) |
+| `PP-MGR-LIB-100` | v2SolanaApi and v2SolanaSchemas, server-only transport keeping the API's stable refusal codes, and the strict wire contracts of the Solana routes | Lib | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/lib/api/v2/solanaFetch.ts`, `src/lib/api/v2/solanaSchemas.ts` |
+| `PP-MGR-LIB-101` | solanaV6Launch, durable v6 launch journal, creation request from Mandate/Build/Review and launch amounts, plan and transaction checks before signing | Lib | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/manager/fund/launch/solanaV6Launch.ts` |
+| `PP-MGR-HOK-025` | useSolanaV6Launch, runs the journal: EVM consents and transactions with the API gas, Solana transactions through sign, persist, broadcast | Hook | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/manager/fund/launch/useSolanaV6Launch.ts` |
+| `PP-MGR-CMP-108` | SolanaFundLaunch, the v6 launch page: wallets, typed launch amounts, sealed values, creation and Solana operation rows with explorer links | Component | n/a (integration page) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/manager/fund/launch/SolanaFundLaunch.tsx` |
+| `PP-MGR-SCR-010` | SolanaFundLaunchRoute, `/manager/fund-launch/solana/[draftId]`, flag-gated | Screen | n/a | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/app/[locale]/(auth)/(app)/manager/fund-launch/solana/[draftId]/page.tsx` |
+| `PP-CORE-SEC-004` | Solana RPC proxy route, session-gated, method allow-listed, server-side provider URL | Security | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/app/api/solana-rpc/route.ts` |
+
+Review (PP-MGR-CMP-077, PP-MGR-LIB-033, PP-MGR-CMP-080) routes a Hub + Robinhood + Solana plan to the
+v6 launch page when `solanaSpoke` is on; with the flag off the POO-2342 Solana launch reason is unchanged.
+`launchAuth.ts` keeps PP-MGR-ACT-013: the session/Manager checks moved out of `launchActions.ts` unchanged.
+
+## Solana stock tokens listed and unavailable, 2026-10-13 (POO-2262, DEC-204)
+
+TSLAx and NVDAx, and their Raydium CLMM pools, are visible in the Manager V2 builder and never
+selectable: their swaps stay off while the stock oracle is off. No row is added, so the Totals line
+does not change. These rows keep their numbers:
+
+- PP-MGR-LIB-018: `MandateCatalogToken` gains the optional `unavailableReason`
+  (`stockSwapsUnavailable`).
+- PP-MGR-LIB-075 lists TSLAx and NVDAx on Solana after WSOL (unpriced, not eligible, with
+  `unavailableReason`), pins the release Raydium pools (`RAYDIUM_RELEASE_POOLS`: SOL/USDC,
+  TSLAx/USDC, NVDAx/USDC) and puts them first in a Solana answer (`withRaydiumReleasePools`, deduped
+  by pool address). `solanaStockTokens.test.ts` keeps the list in step with `SOLANA_LP_CHOICES` and
+  the stock pools the v6 launch refuses (`RAYDIUM_STOCK_POOLS`).
+- PP-MGR-LIB-019: `addToken` and `addPool` refuse an unavailable token, or a pool that holds one,
+  with `coming_soon`; `poolSideAddable` never counts it; `validateStep` stops Tokens or Pools on a
+  stored one (`unavailableTokenKeys`, `poolHoldsUnavailableToken`).
+- PP-MGR-LIB-020 and PP-MGR-CMP-107: the Solana pool search answers the pinned release pools that
+  hold the searched mint first, then DEX Screener; when the DEX Screener read fails, the pinned pools stay
+  listed with the existing error and Try again.
+- PP-MGR-CMP-037: the Tokens step lists the stock tokens by default as disabled cards with an
+  "Unavailable" badge and the reason; Add all skips them.
+- PP-MGR-CMP-038: the Pools step draws a stock pool with the Unavailable refusal and the reason; it
+  is never addable, so Add all, the universe and R37 leave it out.
+
+The v6 launch (PP-MGR-LIB-101) seals only `usdc` and `wsol` and refuses a stock pool, so a stored
+draft cannot launch with a stock asset either.
+
+## Solana v6 Fund detail and investor report gate, 2026-10-13 (POO-2262)
+
+| ID | Artifact | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-STR-CMP-041` | FundNetworks, a v6 Fund's Hub Arbitrum, Robinhood and Solana rows: spoke report age and Usable or Refreshing, Solana program, Fund PDA, vault and USDC account linked to Solscan | Component | n/a (rows and badges in the existing frames) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/funds/FundNetworks.tsx` |
+
+Extended, same ids: PP-CORE-LIB-113 (fund reads accept the chain "1" Solana entry, `spokes`,
+`reportsUsable`, `factory`; route parameters stay EVM-only), PP-STR-LIB-025 (build `gas`),
+PP-STR-LIB-027 (stable refusal code and retry hint), PP-STR-LIB-024 (network rows, v6 report gate),
+PP-STR-LIB-028 (`refreshSolanaReportAction`, EVM-only balances), PP-STR-LIB-030 (v6 gate and 409
+report-wait retry), PP-STR-LIB-032 (padded gas sent as the limit), PP-STR-HOK-023, PP-STR-MOD-001
+and PP-STR-CMP-032 (report refreshing state), PP-STR-SCR-006 and PP-MGR-SCR-004 (networks on the
+investor and manager pages), PP-MGR-LIB-051, PP-MGR-LIB-056, PP-MGR-LIB-058, PP-STR-LIB-033,
+PP-STR-CMP-040 and the FundTechnicalDetail read view (Solana named, never read as an EVM chain).

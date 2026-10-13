@@ -4,6 +4,7 @@
  * @implements-rules-version v2 (POO-2274); v1 (POO-2226)
  * @implements-rules-version v1 (POO-2309 market-reference chart)
  * @implements-rules-version v1 (POO-2335 spine card copy, Explorer and View mandate)
+ * @implements-rules-version v1 (POO-2262 v6 Fund: spoke report badges, Solana accounts in the mandate)
  * @analytics-events strategy_manage_viewed, strategy_block_selected
  *
  * Controlled V2 shell. The authorized route loader supplies reads, and each identity keeps a
@@ -14,6 +15,8 @@ import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useBuildShellLayout } from "@/components/layout/BuildShellLayout";
 import { Button } from "@/components/ui/Button";
+import { FundNetworks, FundReportBadge } from "@/features/funds/FundNetworks";
+import { fundNetworkRows, hasSolanaSpoke } from "@/features/funds/fundModel";
 import { Link } from "@/i18n/navigation";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
@@ -68,6 +71,12 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
   const model = useMemo(() => normalizeManageModel(fund, balances), [fund, balances]);
   const snapshot = useMemo(() => deriveManageInspection(model), [model]);
   const links = manageStrategyLinks(model.core, model.hubChainId);
+  // POO-2262: only a v6 Fund shows per-spoke report freshness; an EVM-only Fund renders as before.
+  const v6 = hasSolanaSpoke(fund);
+  const spokeReports = useMemo(
+    () => new Map(v6 ? fundNetworkRows(fund).map((row) => [Number(row.chainId), row.report]) : []),
+    [v6, fund],
+  );
   const { track } = useAnalytics();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mandateOpen, setMandateOpen] = useState(false);
@@ -196,6 +205,7 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
                 <h3 className="text-muted-foreground text-xs">
                   {network.name} · {t(network.hub ? "inspection.hub" : "inspection.spoke")}
                 </h3>
+                <FundReportBadge report={spokeReports.get(network.chainId) ?? null} />
                 {network.nodes.map((node) => {
                   const position = node.kind === "position" ? node.position : null;
                   // R1 to R4 and R8: the spine card copy comes from the read model.
@@ -285,6 +295,11 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
                 <dt>{t("mandateHash")}</dt>
                 <dd className="break-all font-mono">{fund.mandateHash}</dd>
               </dl>
+              {v6 ? (
+                <div className="mt-3">
+                  <FundNetworks fund={fund} />
+                </div>
+              ) : null}
             </section>
           ) : null}
         </aside>

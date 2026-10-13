@@ -8,7 +8,7 @@
  * Ethereum and Solana keeps its Ethereum pools when DEX Screener is down, and the step shows an
  * error with Retry for the Solana part only.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/errors";
 import type { MandatePoolRef } from "./mandateDraft";
 import { settlePoolSearches, solanaFailureNetwork } from "./poolSearchSettle";
@@ -61,6 +61,37 @@ describe("R5: a failed network read keeps the pools of the other networks", () =
     ]);
     expect(result.pools).toEqual([eth]);
     expect(result.failedNetworks).toEqual([]);
+  });
+});
+
+describe("DEC-204: a failed read keeps its fallback pools and still counts as failed", () => {
+  it("lists the fallback pools in the failed job's place and names its network", async () => {
+    const eth = poolOf("eth-1", "arbitrum");
+    const pinned = poolOf("solana:pinned", "solana");
+    const result = await settlePoolSearches([
+      { network: "arbitrum", run: () => Promise.resolve([eth]) },
+      { network: "solana", run: unavailable, fallback: () => [pinned] },
+    ]);
+    expect(result.pools).toEqual([eth, pinned]);
+    expect(result.failedNetworks).toEqual(["solana"]);
+  });
+
+  it("answers the fallback pools instead of throwing when every read fails", async () => {
+    const pinned = poolOf("solana:pinned", "solana");
+    const result = await settlePoolSearches([
+      { network: "solana", run: unavailable, fallback: () => [pinned] },
+    ]);
+    expect(result).toEqual({ pools: [pinned], failedNetworks: ["solana"] });
+  });
+
+  it("never uses the fallback of a read that worked", async () => {
+    const found = poolOf("solana:found", "solana");
+    const fallback = vi.fn(() => [poolOf("solana:pinned", "solana")]);
+    const result = await settlePoolSearches([
+      { network: "solana", run: () => Promise.resolve([found]), fallback },
+    ]);
+    expect(result.pools).toEqual([found]);
+    expect(fallback).not.toHaveBeenCalled();
   });
 });
 

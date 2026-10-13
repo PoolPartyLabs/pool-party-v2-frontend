@@ -772,6 +772,8 @@
       "selectAll": "全选",
       "alwaysIncluded": "始终包含",
       "comingSoon": "即将推出",
+      "unavailable": "不可用",
+      "stockUnavailable": "股票兑换暂不可用",
       "clearAll": "取消全选",
       "add": "添加",
       "addAll": "添加全部 {count} 个",
@@ -1853,5 +1855,173 @@
     "unavailableBody": "此选择暂无价格历史。",
     "selectionPreserved": "已保留当前选择。",
     "back": "返回策略流程"
+  },
+  "solanaLaunch": {
+    "title": "在 Arbitrum、Robinhood Chain 和 Solana 上发布 {name}",
+    "subtitle": "每笔交易都由 Pool Party API 构建。Arbitrum 和 Robinhood 步骤由你的 EVM 钱包签名,Solana 步骤由你的 Solana 钱包签名。",
+    "walletsTitle": "钱包",
+    "evmWallet": "管理人 EVM 钱包",
+    "notSignedIn": "未登录",
+    "solanaWallet": "管理人 Solana 钱包",
+    "balanceUnknown": "无法读取 SOL 余额",
+    "solBalance": "{sol} SOL",
+    "connectSolana": "连接 Solana 钱包",
+    "walletsHint": "该 Solana 钱包将永久成为基金的管理人 Solana 密钥,并支付 Solana 账户租金(请保留约 0.1 SOL)。",
+    "amountsTitle": "基金金额",
+    "amountsHint": "以 USDC 填写。构建计划时写入基金并封存。",
+    "seedLabel": "种子资金(你的首笔存款)",
+    "seedHint": "至少 {floor} USDC(扣除流转费后至少一整份份额)。默认 {fallback} USDC。",
+    "minimumLabel": "最低首次存款",
+    "minimumHint": "从 {floor} USDC 到种子资金。默认 {fallback} USDC。",
+    "spokeCapLabel": "分支上限(每个分支)",
+    "spokeCapHint": "须大于零;Robinhood 和 Solana 各适用同一上限。默认 {fallback} USDC。",
+    "sealedTitle": "工厂封存的内容",
+    "sealedNetworks": "网络:Arbitrum(枢纽)、Robinhood Chain、Solana",
+    "sealedSeed": "种子资金:{amount} USDC",
+    "sealedMinimum": "最低首次存款:{amount} USDC",
+    "sealedSpokeCap": "分支上限:每个分支 {amount} USDC",
+    "sealedReportAge": "报告最长有效期:{seconds} 秒",
+    "sealedFees": "费用:管理费 {management}%,业绩费 {performance}%,即时赎回费 {payout}%",
+    "sealedVenues": "Solana 场所:{venues}",
+    "assetsTitle": "Solana 资产",
+    "unavailable": "不可用",
+    "stockUnavailable": "股票代币(TSLAx、NVDAx)会显示,但暂不可用于基金:它们的兑换仍处于关闭状态。",
+    "creationTitle": "创建基金",
+    "operationsTitle": "首批 Solana 操作",
+    "operationsHint": "基金创建后:把资金转到 Solana、存入 Kamino、兑换为 SOL 并开设 Raydium 仓位。金额以 USDC 计,每个步骤运行前都可修改。",
+    "amountSend": "转到 Solana",
+    "amountKamino": "存入 Kamino",
+    "amountSwap": "兑换为 SOL",
+    "amountRaydium": "Raydium 仓位(USDC 一侧)",
+    "operationsStepsTitle": "Solana 操作",
+    "working": "处理中。请保持此标签页打开并批准钱包请求。",
+    "allDone": "发布完成:基金在三条链上运行。",
+    "pause": "暂停",
+    "restart": "重新开始",
+    "resumeCreation": "继续创建",
+    "start": "创建基金",
+    "openFund": "打开基金",
+    "runOperations": "执行 Solana 操作",
+    "solanaTx": "Solana 交易 {index}",
+    "arbiscanTx": "在 Arbiscan 查看",
+    "blockscoutTx": "在 Robinhood 浏览器查看",
+    "accountCore": "基金(Arbitrum 核心)",
+    "accountRobinhood": "Robinhood 分支金库",
+    "accountFundPda": "Solana 基金账户",
+    "accountVault": "Solana 金库",
+    "accountUsdcAta": "Solana USDC 账户",
+    "accountsCreated": "基金账户",
+    "accountsPredicted": "基金账户(预测)",
+    "bindingExpiry": "Solana 引导必须在 {at} 之前完成。",
+    "draftMissing": "此浏览器中没有这个草稿。",
+    "notSolanaPlan": "此计划没有 Solana 分支。请从审核页发布。",
+    "backToManager": "返回管理人",
+    "reviewSummary": "发布会打开 Solana 流程:两次授权、Arbitrum 上的基金、Robinhood 分支和 Solana 分支,然后是首批 Solana 操作。",
+    "steps": {
+      "plan": {
+        "label": "构建计划",
+        "hint": "API 预测基金、各分支和 Solana 账户。"
+      },
+      "sign-binding": {
+        "label": "签署 Solana 绑定",
+        "hint": "EVM 签名(非交易):把你的 Solana 密钥绑定到此基金。"
+      },
+      "sign-policy": {
+        "label": "签署兑换策略",
+        "hint": "EVM 签名(非交易):封存的 SOL/USDC 兑换限制。"
+      },
+      "approve-seed": {
+        "label": "授权种子资金",
+        "hint": "Arbitrum:允许工厂提取种子资金的 USDC。"
+      },
+      "create-fund": {
+        "label": "创建基金",
+        "hint": "Arbitrum:带有封存授权和种子资金的基金核心。"
+      },
+      "create-spoke": {
+        "label": "创建 Robinhood 分支",
+        "hint": "Robinhood Chain:分支金库及其适配器。"
+      },
+      "discover": {
+        "label": "登记基金",
+        "hint": "API 为新基金建立索引。"
+      },
+      "bootstrap": {
+        "label": "创建 Solana 分支",
+        "hint": "Solana:暂存策略,然后初始化基金账户。"
+      },
+      "verify": {
+        "label": "检查三条链",
+        "hint": "基金显示 Arbitrum、Robinhood 和 Solana。"
+      },
+      "solana-report": {
+        "label": "首份 Solana 报告",
+        "hint": "Keeper 向枢纽报告 Solana 分支。"
+      },
+      "send-to-solana": {
+        "label": "把 USDC 转到 Solana",
+        "hint": "Arbitrum:通过 CCTP Fast 转入 Solana 金库。"
+      },
+      "arrival": {
+        "label": "Solana 入账",
+        "hint": "Circle 证明后,Keeper 记入 Solana 金库。"
+      },
+      "adapters": {
+        "label": "启用场所",
+        "hint": "Solana:初始化 Kamino 和 Raydium 适配器。"
+      },
+      "kamino-supply": {
+        "label": "存入 Kamino",
+        "hint": "Solana:把 USDC 存入 Kamino 储备。"
+      },
+      "swap": {
+        "label": "把 USDC 兑换为 SOL",
+        "hint": "Solana:经已准入池子的 API 签名路由。"
+      },
+      "raydium-open": {
+        "label": "开设 Raydium 仓位",
+        "hint": "Solana:SOL/USDC 集中流动性,价格上下约 5%。"
+      },
+      "final-report": {
+        "label": "报告仓位",
+        "hint": "枢纽接收 Solana 仓位。"
+      }
+    },
+    "status": {
+      "idle": "待处理",
+      "running": "进行中",
+      "submitted": "已发送,确认中",
+      "waiting": "等待中",
+      "done": "完成",
+      "skipped": "已跳过",
+      "failed": "失败"
+    },
+    "errors": {
+      "USER_REJECTED": "钱包请求被拒绝。继续即可重试。",
+      "SOLANA_WALLET_REQUIRED": "请连接将管理此基金的 Solana 钱包。",
+      "V2_WALLET_REQUIRED": "请连接你登录所用的管理人 EVM 钱包。",
+      "SOLANA_SEED_BALANCE_LOW": "管理人钱包在 Arbitrum 上没有足够的种子资金 USDC。",
+      "SOLANA_SEED_BELOW_MINIMUM": "种子资金低于最低值。",
+      "SOLANA_STOCK_UNAVAILABLE": "股票池暂不可用于基金。请选择 SOL/USDC 池。",
+      "SOLANA_POOL_NOT_ADMITTED": "此 Raydium 池未获准入。请选择 SOL/USDC 池。",
+      "CREATION_PLAN_STALE": "另一个基金占用了此创建编号。请重新开始以构建新计划。",
+      "CREATION_BINDING_EXPIRED": "已签署的绑定即将过期。请重新开始并再次签名。",
+      "SOLANA_PLAN_MISMATCH": "API 计划与你的钱包不符。尚未签署任何内容。",
+      "UNSAFE_SOLANA_TRANSACTION": "一笔 Solana 交易未通过安全检查。尚未发送任何内容。",
+      "SOLANA_BLOCKHASH_EXPIRED": "Solana 交易在签名前已过期。继续即可重新构建。",
+      "TRANSACTION_REVERTED": "交易在链上被回滚。",
+      "SOLANA_TRANSACTION_FAILED": "Solana 交易在链上失败。",
+      "SOLANA_BALANCE_EMPTY": "Solana 金库暂无可用于此步骤的余额。",
+      "V2_UNAUTHORIZED": "请使用管理人钱包重新登录。",
+      "SOLANA_DRAFT_UNAVAILABLE": "找不到已保存的草稿或其审核信息。",
+      "CREATION_AMOUNT_INVALID": "请以 USDC 填写每个金额。",
+      "CREATION_SEED_BELOW_ONE_SHARE": "种子资金必须至少铸造一整份份额(1.002506 USDC)。",
+      "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT": "最低首次存款不能高于种子资金。",
+      "CREATION_SPOKE_CAP_ZERO": "分支上限必须大于零。",
+      "CREATION_AMOUNT_ABOVE_MAX": "某个金额超过了上限。",
+      "generic": "此步骤失败({code})。继续即可重试。"
+    },
+    "chooseSolana": "选择将管理此基金的 Solana 钱包",
+    "evmBlocksNotice": "{count, plural, other {此计划还包含 # 个 Arbitrum 或 Robinhood 仓位区块。本次发布不会开立它们,请在发布后从基金中管理。}}"
   }
 }

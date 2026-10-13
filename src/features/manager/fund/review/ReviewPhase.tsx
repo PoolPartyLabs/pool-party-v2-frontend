@@ -3,6 +3,7 @@
  * @name ReviewPhase
  * @implements-rules-version v1
  * @implements-rules-version v1 (POO-2342 rules v1: Solana plans show a launch reason)
+ * @implements-rules-version DEC-188 (POO-2262: Solana plans launch through the v6 journey when enabled)
  * @analytics-events builder_review_view, builder_review_field_changed, builder_launch_clicked,
  *   builder_launch_blocked, builder_review_abandoned, builder_review_error
  * @i18n-namespace manager
@@ -15,12 +16,14 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useRouter } from "@/i18n/navigation";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
+import { isFeatureEnabled } from "@/lib/features";
 import { isMockMode } from "@/lib/services";
 import { planOf } from "../build/plan/buildPlan";
 import { validatePlan } from "../build/plan/planInvariants";
 import { planReadiness, type ReadinessTarget } from "../build/plan/planReadiness";
 import type { FundLaunchDraft, LaunchStepPreview } from "../launch/contracts";
 import { getLaunchSteps } from "../launch/journey";
+import { isSolanaV6Plan, loadSolanaLaunch } from "../launch/solanaV6Journal";
 import { startFundLaunch } from "../launch/startFundLaunch";
 import { useV2LaunchStatus } from "../launch/useV2LaunchStatus";
 import { useV2ReviewDraft } from "../launch/useV2ReviewDraft";
@@ -90,13 +93,30 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
   const violations = plan && draft ? validatePlan(plan, { draft, catalog: binding.catalog }) : null;
   // Next to the reason, the block to reveal on Build: the first one the execution checks refuse.
   const readiness = plan && violations ? planReadiness(plan, violations) : null;
-  const buildReason = plan && violations ? planBuildReason(plan, violations) : null;
+  // POO-2262: a Hub + Robinhood + Solana plan launches through the v6 journey (its own page).
+  const solanaLaunch = !!plan && isFeatureEnabled("solanaSpoke") && isSolanaV6Plan(plan);
+  const buildReason = plan && violations ? planBuildReason(plan, violations, solanaLaunch) : null;
+  let solanaStarted = false;
+  if (solanaLaunch && binding.manager)
+    try {
+      solanaStarted = !!loadSolanaLaunch(localStorage, binding.manager, draftId);
+    } catch {}
   let steps: LaunchStepPreview[] = [];
   if (draft?.plan)
     try {
       steps = getLaunchSteps({ ...draft, review: binding.review } as FundLaunchDraft);
     } catch {}
-  const reasons = listReviewReasons({ ...binding, buildReason });
+  const reasons = listReviewReasons({
+    ...binding,
+    buildReason,
+    // The EVM launch plan's BUILD_* gaps describe the EVM journey, not the v6 Solana one.
+    launchBlockers: solanaLaunch
+      ? binding.launchBlockers.filter(
+          (blocker) =>
+            !blocker.code.startsWith("BUILD_") && blocker.code !== "UNSUPPORTED_POSITION",
+        )
+      : binding.launchBlockers,
+  });
   const reason = reasons[0] ?? null;
   const errorFor = (field: string) => {
     const found = reasons.find((item) => item.field === field);
@@ -141,6 +161,11 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
         review_field: "draft",
         error_code: "REVIEW_DATA_UNAVAILABLE",
       });
+      return;
+    }
+    if (solanaLaunch) {
+      concluded.current = true;
+      router.push(`/manager/fund-launch/solana/${encodeURIComponent(draftId)}`);
       return;
     }
     started.current = true;
@@ -243,7 +268,10 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
             onEditMandate={onEditMandate}
             onEditBuild={() => onBackToBuild()}
           />
-          <ReviewLaunchPreview steps={steps} />
+          <ReviewLaunchPreview
+            steps={solanaLaunch ? [] : steps}
+            summary={solanaLaunch ? all("solanaLaunch.reviewSummary") : undefined}
+          />
         </div>
       </div>
       <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-border bg-background p-4">
@@ -261,7 +289,7 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
               {t("launchFailed")}
             </p>
           )}
-          {status ? (
+          {status && !solanaLaunch ? (
             <Button
               onClick={() => {
                 concluded.current = true;
@@ -273,7 +301,7 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
             </Button>
           ) : (
             <Button loading={busy} disabled={busy} onClick={() => void launch()}>
-              {t("launch")}
+              {solanaStarted ? t("resumeLaunch") : t("launch")}
             </Button>
           )}
         </div>

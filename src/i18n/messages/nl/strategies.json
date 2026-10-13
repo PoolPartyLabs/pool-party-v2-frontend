@@ -895,7 +895,21 @@
     "transitSend": "Verzending",
     "transitFill": "Uitvoering",
     "transitAcknowledgement": "Ontvangstbevestiging",
-    "decodedError": "Gedecodeerde fout: {name}"
+    "decodedError": "Gedecodeerde fout: {name}",
+    "reportRefreshing": "Rapport wordt vernieuwd. Het fonds heeft eerst een recent rapport van elk netwerk nodig, dat kan enkele minuten duren.",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "Rapport {minutes} min oud",
+      "noReport": "Nog geen rapport",
+      "usable": "Bruikbaar",
+      "refreshing": "Wordt vernieuwd",
+      "program": "Programma",
+      "fundAccount": "Fondsaccount",
+      "vault": "Vault",
+      "usdcAccount": "USDC-account",
+      "accountsUnavailable": "Solana-accounts niet beschikbaar"
+    }
   },
   "investV2": {
     "notAvailable": "Niet beschikbaar",

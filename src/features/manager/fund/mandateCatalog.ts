@@ -4,6 +4,7 @@
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2, + POO-2342 rules v1 (one V2 builder, Solana is a network)
  *   POO-2167 rules v4)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version DEC-204 (POO-2262: a token can be listed and unavailable, `unavailableReason`)
  * @analytics-events none, a data catalog. The builder shell (PP-MGR-SCR-002) owns every mandate
  *   event; nothing here touches the dataLayer.
  *
@@ -88,6 +89,12 @@ export interface MandateCatalogToken {
   priced: boolean;
   /** Local descriptor eligibility, independent of any price-feed capability. */
   visualEligible?: boolean;
+  /**
+   * DEC-204: the token is listed but never selectable, and this says why. The Tokens step shows it
+   * disabled with the reason, and every reducer refuses it (`coming_soon`). Today only the Solana
+   * stock tokens carry it: their swaps stay off while the stock oracle is off.
+   */
+  unavailableReason?: "stockSwapsUnavailable";
 }
 
 /** The whole catalog. It reads no feature flag (rules v2, POO-2142). */

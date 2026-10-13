@@ -6,11 +6,12 @@
  */
 
 import { V2DiscoveryPendingError } from "@/lib/api/v2/discovery";
-import type { LaunchStep } from "./plan";
+import type { ChainLaunchStep as LaunchStep } from "./plan";
 
 export interface Checkpoint {
   stepId: string;
-  chain: 42161 | 4663;
+  chain: LaunchStep["chain"];
+  chainKind?: "evm" | "svm";
   status: "idle" | "building" | "signing" | "submitted" | "waiting" | "confirmed" | "failed";
   txHash?: string;
   submissionAttempted?: boolean;
@@ -89,7 +90,10 @@ export function loadJournal(
     journal.steps.some(
       (step) =>
         typeof step.id !== "string" ||
-        ![42161, 4663].includes(step.chain) ||
+        ![42161, 4663, "solana:mainnet"].includes(step.chain) ||
+        (step.chainKind !== undefined &&
+          step.chainKind !== (step.chain === "solana:mainnet" ? "svm" : "evm")) ||
+        (step.chain === "solana:mainnet" && step.chainKind !== "svm") ||
         ![
           "approve",
           "create",
@@ -102,6 +106,15 @@ export function loadJournal(
           "arrival",
           "swap",
           "open",
+          "bind-solana",
+          "stage-solana-config",
+          "seal-solana-config",
+          "init-solana",
+          "cctp-fast",
+          "solana-arrival",
+          "kamino-supply",
+          "swap-to-ratio",
+          "raydium-open",
         ].includes(step.kind) ||
         !Array.isArray(step.dependencies) ||
         step.dependencies.some((id) => !ids.has(id)),
@@ -113,7 +126,9 @@ export function loadJournal(
       !checkpoint ||
       !ids.has(id) ||
       checkpoint.stepId !== id ||
-      ![42161, 4663].includes(checkpoint.chain) ||
+      ![42161, 4663, "solana:mainnet"].includes(checkpoint.chain) ||
+      (checkpoint.chainKind !== undefined &&
+        checkpoint.chainKind !== (checkpoint.chain === "solana:mainnet" ? "svm" : "evm")) ||
       checkpoint.chain !== journal.steps.find((step) => step.id === id)?.chain ||
       (checkpoint.submissionAttempted !== undefined &&
         typeof checkpoint.submissionAttempted !== "boolean") ||
@@ -153,27 +168,25 @@ export function createJournal(
   };
 }
 
-export interface LaunchDriver {
+export interface LaunchDriver<Step extends LaunchStep = LaunchStep> {
   build(
-    step: LaunchStep,
+    step: Step,
     journal: LaunchJournal,
   ): Promise<{ data?: Record<string, unknown>; transaction?: unknown; complete?: boolean }>;
-  send(
-    step: LaunchStep,
-    transaction: unknown,
-    onSubmitted?: (hash: string) => void,
-  ): Promise<string>;
+  send(step: Step, transaction: unknown, onSubmitted?: (hash: string) => void): Promise<string>;
   receipt(
-    chain: LaunchStep["chain"],
+    chain: Step["chain"],
     hash: string,
   ): Promise<{ status: "success" | "reverted" | "unknown"; data?: Record<string, unknown> }>;
-  reconcile(step: LaunchStep, checkpoint: Checkpoint, journal: LaunchJournal): Promise<boolean>;
-  complete(step: LaunchStep, checkpoint: Checkpoint, journal: LaunchJournal): Promise<void>;
+  reconcile(step: Step, checkpoint: Checkpoint, journal: LaunchJournal): Promise<boolean>;
+  complete(step: Step, checkpoint: Checkpoint, journal: LaunchJournal): Promise<void>;
 }
 
 export function hasUnresolvedSubmission(step: LaunchStep, checkpoint: Checkpoint): boolean {
   return (
-    !["profile", "discover", "report", "arrival"].includes(step.kind) &&
+    !["profile", "discover", "report", "arrival", "bind-solana", "solana-arrival"].includes(
+      step.kind,
+    ) &&
     !checkpoint.txHash &&
     checkpoint.status !== "confirmed" &&
     (checkpoint.submissionAttempted === true ||
@@ -204,6 +217,7 @@ export async function runLaunch(
     const checkpoint = journal.checkpoints[step.id] ?? {
       stepId: step.id,
       chain: step.chain,
+      ...(step.chainKind ? { chainKind: step.chainKind } : {}),
       status: "idle" as const,
       submissionAttempted: false,
     };
@@ -211,7 +225,7 @@ export async function runLaunch(
     if (checkpoint.retryAt && checkpoint.retryAt > Date.now()) continue;
     const unresolved = hasUnresolvedSubmission(step, checkpoint);
     if (readOnly && !checkpoint.txHash && checkpoint.status !== "waiting" && !unresolved) continue;
-    if (readOnly && !checkpoint.txHash && step.kind === "profile") continue;
+    if (readOnly && !checkpoint.txHash && ["profile", "bind-solana"].includes(step.kind)) continue;
     if (
       step.kind === "bridge" &&
       !checkpoint.txHash &&
@@ -250,6 +264,20 @@ export async function runLaunch(
         checkpoint.receiptStatus = receipt.status;
         checkpoint.data = { ...checkpoint.data, ...receipt.data };
         if (receipt.status === "unknown") {
+          if (
+            ["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind) &&
+            (await driver.reconcile(step, checkpoint, journal))
+          ) {
+            await driver.complete(step, checkpoint, journal);
+            checkpoint.status = "confirmed";
+            delete checkpoint.error;
+            delete checkpoint.waitReason;
+            delete checkpoint.retryAt;
+            delete checkpoint.retryAfterSeconds;
+            delete checkpoint.retryCount;
+            persist();
+            continue;
+          }
           checkpoint.status = "waiting";
           delete checkpoint.retryAt;
           persist();
@@ -362,7 +390,8 @@ export async function runLaunch(
         continue;
       }
       if (
-        ["discover", "report", "arrival"].includes(step.kind) &&
+        // F7 (2026-10-09 sweep): a throttled credit poll is a wait, not a failure.
+        ["discover", "report", "arrival", "solana-arrival"].includes(step.kind) &&
         error instanceof Error &&
         ["V2_DEFERRED", "V2_RATE_LIMITED"].includes(error.message)
       ) {
@@ -376,7 +405,13 @@ export async function runLaunch(
         error instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(error.message)
           ? error.message
           : "LAUNCH_STEP_FAILED";
-      if (!checkpoint.txHash && ["USER_REJECTED", "LAUNCH_CANCELLED"].includes(checkpoint.error))
+      // F5 (2026-10-09 sweep): a Solana signature is persisted BEFORE its broadcast, so an SVM
+      // failure without a persisted signature provably sent nothing and may be rebuilt.
+      if (
+        !checkpoint.txHash &&
+        (["USER_REJECTED", "LAUNCH_CANCELLED"].includes(checkpoint.error) ||
+          (step.chainKind === "svm" && checkpoint.error !== "SUBMISSION_RECONCILIATION_REQUIRED"))
+      )
         checkpoint.submissionAttempted = false;
       persist();
       if (step.kind !== "report" && !readOnly) return journal;

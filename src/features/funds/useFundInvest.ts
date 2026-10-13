@@ -1,4 +1,4 @@
-/** @id PP-STR-HOK-023 @name useFundInvest @implements-rules-version v1 (POO-2248) @analytics-events none, modal owns funnel events */
+/** @id PP-STR-HOK-023 @name useFundInvest @implements-rules-version v1 (POO-2248); v1 (POO-2262 v6 report gate) @analytics-events none, modal owns funnel events */
 "use client";
 import { useWallets } from "@privy-io/react-auth";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,11 +9,13 @@ import { findWalletForAddress, waitForReceipt } from "@/lib/tx/sendTransaction";
 import { withTimeout } from "@/lib/utils/withTimeout";
 import {
   buildFundAction,
+  type FundIntent,
   loadFundAction,
   pollFundReportAction,
+  refreshSolanaReportAction,
   startFundReportAction,
 } from "./fundActions";
-import { ensureFreshValuation } from "./fundFlow";
+import { ensureFreshValuation, retryReportWaits, solanaRefreshPort } from "./fundFlow";
 import {
   clearFundInvestJournal,
   type FundInvestJournal,
@@ -44,6 +46,8 @@ function normalizedCode(error: unknown): string {
   return fundTransactionCode(error);
 }
 type Snapshot = { fund: FundView; holder: FundHolder; wallet: string };
+const waitSeconds = (seconds: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, seconds * 1000));
 export function useFundInvest({
   core,
   enabled,
@@ -70,6 +74,8 @@ export function useFundInvest({
   const [budget, setBudget] = useState("");
   const [errorCode, setError] = useState<string | null>(null);
   const [records, setRecords] = useState<FundTransactionRecord[]>([]);
+  // §3.9: true while a build waits for a spoke report (v6 gate, a 409 report wait, or a report job).
+  const [reportRefreshing, setReportRefreshing] = useState(false);
   const active = useCallback(
     (id: number, ctx = identity) => run.current === id && liveIdentity.current === ctx,
     [identity],
@@ -120,6 +126,7 @@ export function useFundInvest({
     setBuilt(null);
     setPreview(null);
     setRecords([]);
+    setReportRefreshing(false);
     stored.current = null;
     locked.current = false;
     if (!enabled || !address || !isSignedIn) {
@@ -162,7 +169,9 @@ export function useFundInvest({
   async function fresh(id: number) {
     return ensureFreshValuation({
       active: () => active(id),
-      refreshing: () => {},
+      refreshing: () => {
+        if (active(id)) setReportRefreshing(true);
+      },
       read: async () => {
         const next = await read();
         if (active(id)) {
@@ -181,8 +190,31 @@ export function useFundInvest({
         if (!r.ok) throw new Error(r.error.code);
         return r.data.status;
       },
-      wait: () => new Promise((r) => setTimeout(r, 15000)),
+      wait: waitSeconds,
+      refreshSolana: solanaRefreshPort(() => refreshSolanaReportAction(core)),
     });
+  }
+  /** Fresh reports, then the build; a §3.9 report wait (409) is waited out and rebuilt. */
+  async function buildWhenReportsUsable(id: number, intent: FundIntent, ctx = identity) {
+    const live = () => active(id, ctx);
+    try {
+      return await retryReportWaits(
+        async () => {
+          await fresh(id);
+          if (!live()) throw new Error("V2_CANCELED");
+          return withTimeout(buildFundAction(core, intent), 30000, "V2_BUILD_TIMEOUT");
+        },
+        {
+          active: live,
+          wait: waitSeconds,
+          refreshing: () => {
+            if (live()) setReportRefreshing(true);
+          },
+        },
+      );
+    } finally {
+      if (live()) setReportRefreshing(false);
+    }
   }
   async function prepare(amountRaw: string) {
     if (locked.current) return;
@@ -214,20 +246,14 @@ export function useFundInvest({
         BigInt(amountRaw) < BigInt(next.fund.mandate.minFirstDeposit)
       )
         throw new Error("BelowMinFirstDeposit");
-      await fresh(id);
+      const data = await buildWhenReportsUsable(id, {
+        action: "deposit",
+        amount: amountRaw,
+        minShares: "0",
+      });
       if (!active(id)) return;
-      const r = await withTimeout(
-        buildFundAction(core, {
-          action: "deposit",
-          amount: amountRaw,
-          minShares: "0",
-        }),
-        30000,
-        "V2_BUILD_TIMEOUT",
-      );
-      if (!r.ok) throw new Error(r.error.code);
       const checked = validateFundDepositBuild(
-        r.data,
+        data,
         core,
         next.wallet,
         next.fund.mandate.usdc,
@@ -237,7 +263,7 @@ export function useFundInvest({
       if (!active(id)) return;
       setSnapshot(next);
       setBudget(amountRaw);
-      setBuilt(r.data);
+      setBuilt(data);
       setPreview(checked);
       setPhase("review");
     } catch (e) {
@@ -263,17 +289,15 @@ export function useFundInvest({
         return;
       }
       const next = await read();
-      await fresh(id);
-      if (!active(id, ctx)) return;
       const min = preview?.sharesMinted ?? "0";
-      const r = await withTimeout(
-        buildFundAction(core, { action: "deposit", amount: budget, minShares: min }),
-        30000,
-        "V2_BUILD_TIMEOUT",
+      const data = await buildWhenReportsUsable(
+        id,
+        { action: "deposit", amount: budget, minShares: min },
+        ctx,
       );
-      if (!r.ok) throw new Error(r.error.code);
+      if (!active(id, ctx)) return;
       const checked = validateFundDepositBuild(
-        r.data,
+        data,
         core,
         next.wallet,
         next.fund.mandate.usdc,
@@ -281,14 +305,14 @@ export function useFundInvest({
         min,
       );
       if (!active(id, ctx)) return;
-      if (!!r.data.nextAction !== !!built.nextAction) {
-        setBuilt(r.data);
+      if (!!data.nextAction !== !!built.nextAction) {
+        setBuilt(data);
         setPreview(checked);
         setPhase("review");
         return;
       }
-      if (!r.data.nextAction && (!preview || JSON.stringify(checked) !== JSON.stringify(preview))) {
-        setBuilt(r.data);
+      if (!data.nextAction && (!preview || JSON.stringify(checked) !== JSON.stringify(preview))) {
+        setBuilt(data);
         setPreview(checked);
         setPhase("review");
         return;
@@ -298,7 +322,7 @@ export function useFundInvest({
       await selected.switchChain(42161);
       const provider = await selected.getEthereumProvider();
       if (!active(id, ctx)) return;
-      const kind = r.data.nextAction ? "approve" : "deposit";
+      const kind = data.nextAction ? "approve" : "deposit";
       const journal: FundInvestJournal = {
         core,
         wallet: next.wallet,
@@ -309,7 +333,7 @@ export function useFundInvest({
       writeFundInvestJournal(journal);
       stored.current = journal;
       setPhase("pending");
-      const tx = r.data.transactions[0];
+      const tx = data.transactions[0];
       if (!tx) throw new Error("V2_INVALID_RESPONSE");
       await sendFundTransaction(provider, tx, next.wallet, kind, (record) => {
         journal.record = record;
@@ -430,6 +454,7 @@ export function useFundInvest({
           : ("idle" as const),
     preview: snapshotIdentity.current === identity ? preview : null,
     approvalRequired: snapshotIdentity.current === identity && !!built?.nextAction,
+    reportRefreshing: snapshotIdentity.current === identity && reportRefreshing,
     records: snapshotIdentity.current === identity ? records : [],
     errorCode: snapshotIdentity.current === identity ? errorCode : null,
     amountRaw: snapshotIdentity.current === identity ? budget : "",

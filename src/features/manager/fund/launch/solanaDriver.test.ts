@@ -1,0 +1,377 @@
+import { beforeEach, expect, it, vi } from "vitest";
+import { solanaBootstrapDigest } from "@/lib/solana/binding";
+import { bootstrapChunks } from "@/lib/solana/bootstrap";
+import {
+  bootstrapAuthorizationFixture,
+  bootstrapManifestFixture,
+} from "@/lib/solana/bootstrap.fixture";
+import { SOLANA_LP_CHOICES } from "@/lib/solana/lpChoices";
+import type { SolanaApiSignedQuote } from "@/lib/solana/swap";
+import { createJournal, type LaunchDriver } from "./journal";
+import type { LaunchStep, SolanaLaunchStep } from "./plan";
+import {
+  createChainLaunchDriver,
+  retrySolanaReceive,
+  type SolanaLaunchBackend,
+} from "./solanaDriver";
+
+const flags = vi.hoisted(() => ({ enabled: true }));
+const transport = vi.hoisted(() => ({ send: vi.fn() }));
+vi.mock("@/lib/features", () => ({ isFeatureEnabled: () => flags.enabled }));
+vi.mock("@/lib/solana/transaction", () => ({
+  SOLANA_MAINNET_GENESIS_HASH: "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
+  sendSolanaTransaction: transport.send,
+}));
+const arrival: SolanaLaunchStep = {
+  id: "solana:arrival",
+  kind: "solana-arrival",
+  chain: "solana:mainnet",
+  chainKind: "svm",
+  group: "solana",
+  dependencies: [],
+};
+function setup() {
+  const evm: LaunchDriver<LaunchStep> = {
+    build: vi.fn(async () => ({ complete: true })),
+    send: vi.fn(async () => "0xhash"),
+    receipt: vi.fn(async () => ({ status: "success" as const })),
+    reconcile: vi.fn(async () => false),
+    complete: vi.fn(async () => {}),
+  };
+  const backend: SolanaLaunchBackend = {
+    validateTransactionIntent: vi.fn(async () => true),
+    build: vi.fn(async () => ({
+      bytes: new Uint8Array(),
+      lifetime: { blockhash: "fresh", lastValidBlockHeight: BigInt(10) },
+    })),
+    credited: vi.fn(async () => ({ credited: false })),
+    reportReady: vi.fn(async () => false),
+    attestation: vi.fn(async () => ({ message: "0x01", attestation: "0x02" })),
+    receiveAndCredit: vi.fn(async () => {}),
+    complete: vi.fn(async () => {}),
+  };
+  const rpc = {
+    genesisHash: vi.fn(async () => "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d"),
+    blockHeight: vi.fn(async () => BigInt(1)),
+    send: vi.fn(),
+    status: vi.fn(async () => "unknown" as const),
+  };
+  const driver = createChainLaunchDriver({
+    evm,
+    backend,
+    rpc,
+    solanaAddress: "key",
+    signTransaction: vi.fn(),
+    verifyBinding: vi.fn(async () => {}),
+  });
+  return { driver, evm, backend, rpc, journal: createJournal("fund", "manager", {}, [arrival]) };
+}
+beforeEach(() => {
+  flags.enabled = true;
+  transport.send.mockReset();
+  transport.send.mockImplementation(async (input) => {
+    await input.build();
+    return "signature";
+  });
+});
+it("delegates EVM steps unchanged", async () => {
+  const { driver, evm, journal } = setup();
+  const step: LaunchStep = { id: "spoke", kind: "spoke", chain: 4663, dependencies: [] };
+  await driver.build(step, journal);
+  expect(evm.build).toHaveBeenCalledWith(step, journal);
+});
+it("keeps arrival pending until credit evidence exists", async () => {
+  const { driver, backend, journal } = setup();
+  expect((await driver.build(arrival, journal)).complete).toBe(false);
+  vi.mocked(backend.credited).mockResolvedValue({ credited: true, amount: "49990000" });
+  expect(await driver.build(arrival, journal)).toMatchObject({
+    complete: true,
+    data: { credited: "49990000" },
+  });
+});
+it("does not accept a mint or credit boolean without an amount", async () => {
+  const { driver, backend, journal } = setup();
+  vi.mocked(backend.credited).mockResolvedValue({ credited: true });
+  await expect(driver.build(arrival, journal)).rejects.toThrow("SOLANA_CREDIT_EVIDENCE_REQUIRED");
+});
+it("manual receive uses API evidence but does not mark arrival confirmed", async () => {
+  const { backend, journal } = setup();
+  await retrySolanaReceive(backend, journal);
+  expect(backend.receiveAndCredit).toHaveBeenCalledWith(journal, {
+    message: "0x01",
+    attestation: "0x02",
+  });
+  expect(journal.checkpoints).toEqual({});
+});
+it("rejects unavailable attestations without receiving", async () => {
+  const { backend, journal } = setup();
+  vi.mocked(backend.attestation).mockResolvedValue({ message: "", attestation: "PENDING" });
+  await expect(retrySolanaReceive(backend, journal)).rejects.toThrow("CCTP_ATTESTATION_REQUIRED");
+  expect(backend.receiveAndCredit).not.toHaveBeenCalled();
+});
+it("looks up historical SVM signatures rather than EVM receipts", async () => {
+  const { driver, evm, rpc } = setup();
+  expect(await driver.receipt("solana:mainnet", "signature")).toEqual({ status: "unknown" });
+  expect(rpc.status).toHaveBeenCalledWith("signature");
+  expect(evm.receipt).not.toHaveBeenCalled();
+});
+it("fails closed when the feature flag is off", async () => {
+  flags.enabled = false;
+  const { driver, journal } = setup();
+  await expect(driver.build(arrival, journal)).rejects.toThrow("SOLANA_DISABLED");
+});
+
+function bootstrapSetup() {
+  const state = setup();
+  const managerSolana = "11111111111111111111111111111111";
+  const chunk = bootstrapChunks(bootstrapManifestFixture)[0];
+  if (!chunk) throw new Error("FIXTURE_MISSING");
+  const step: SolanaLaunchStep = {
+    ...arrival,
+    id: "solana:stage:0",
+    kind: "stage-solana-config",
+    bootstrapChunk: chunk,
+  };
+  state.journal.frozen = {
+    solanaBootstrap: bootstrapManifestFixture,
+    solanaBinding: {
+      solanaAddress: managerSolana,
+      bootstrapAuthorization: bootstrapAuthorizationFixture,
+      bootstrapSignature: "0x01",
+    },
+  };
+  const onchain = {
+    policyHash: bootstrapManifestFixture.policyHash,
+    fundPda: bootstrapAuthorizationFixture.fundPda,
+    managerSolana,
+    totalLength: 1250,
+    payload: chunk.chunk,
+    sealed: false,
+    initialized: false,
+  };
+  state.backend.bootstrapState = vi.fn(async () => onchain);
+  const driver = createChainLaunchDriver({
+    evm: state.evm,
+    backend: state.backend,
+    rpc: state.rpc,
+    solanaAddress: managerSolana,
+    signTransaction: vi.fn(),
+    verifyBinding: vi.fn(async () => {}),
+  });
+  return { ...state, driver, step, onchain };
+}
+
+it("reconciles a matching staged prefix without signing or resending", async () => {
+  const { driver, step, journal, backend } = bootstrapSetup();
+  expect(await driver.build(step, journal)).toEqual({ complete: true });
+  expect(
+    await driver.reconcile(
+      step,
+      { stepId: step.id, chain: step.chain, status: "submitted" },
+      journal,
+    ),
+  ).toBe(true);
+  expect(backend.build).not.toHaveBeenCalled();
+  expect(transport.send).not.toHaveBeenCalled();
+});
+
+it.each([
+  "policyHash",
+  "fundPda",
+  "managerSolana",
+  "payload",
+] as const)("rejects substituted staged %s", async (field) => {
+  const { driver, step, journal, onchain } = bootstrapSetup();
+  onchain[field] = "0xchanged";
+  await expect(driver.build(step, journal)).rejects.toThrow("SOLANA_BOOTSTRAP_MISMATCH");
+});
+
+it("does not mark sealing complete from a full but unsealed payload", async () => {
+  const { driver, step, journal, onchain } = bootstrapSetup();
+  step.kind = "seal-solana-config";
+  step.bootstrapChunk = bootstrapChunks(bootstrapManifestFixture).at(-1);
+  onchain.payload = bootstrapManifestFixture.payload;
+  expect(
+    await driver.reconcile(
+      step,
+      { stepId: step.id, chain: step.chain, status: "submitted" },
+      journal,
+    ),
+  ).toBe(false);
+});
+
+it("reconciles initialized identity after the staging account has been consumed", async () => {
+  const { driver, step, journal, backend, onchain } = bootstrapSetup();
+  step.kind = "init-solana";
+  delete step.bootstrapChunk;
+  backend.bootstrapState = vi.fn(async () => ({
+    ...onchain,
+    payload: "0x",
+    totalLength: 0,
+    initialized: true,
+    bootstrapDigest: solanaBootstrapDigest(onchain.managerSolana, bootstrapAuthorizationFixture),
+  }));
+  expect(await driver.build(step, journal)).toEqual({ complete: true });
+});
+
+it("fails closed without an authoritative bootstrap account reader", async () => {
+  const { driver, step, journal, backend } = bootstrapSetup();
+  delete backend.bootstrapState;
+  await expect(driver.build(step, journal)).rejects.toThrow("SOLANA_BOOTSTRAP_READER_REQUIRED");
+});
+
+it("refuses initialize while the last chunk is not sealed", async () => {
+  const { driver, step, journal } = bootstrapSetup();
+  step.kind = "init-solana";
+  delete step.bootstrapChunk;
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("SOLANA_BOOTSTRAP_ORDER_REQUIRED");
+  expect(transport.send).not.toHaveBeenCalled();
+});
+
+it("rejects a matching prefix outside the frozen chunk boundaries", async () => {
+  const { driver, step, journal, onchain } = bootstrapSetup();
+  onchain.payload = `0x${"ab".repeat(601)}`;
+  await expect(driver.build(step, journal)).rejects.toThrow("SOLANA_BOOTSTRAP_MISMATCH");
+});
+
+it("rejects a substituted send-time reader response before preparing a transaction", async () => {
+  const { driver, backend, step, journal, onchain } = bootstrapSetup();
+  onchain.payload = "0x";
+  backend.bootstrapState = vi
+    .fn()
+    .mockResolvedValueOnce(onchain)
+    .mockResolvedValue({ ...onchain, managerSolana: "different" });
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("SOLANA_BOOTSTRAP_MISMATCH");
+  expect(backend.bootstrapState).toHaveBeenCalledTimes(2);
+  expect(backend.build).not.toHaveBeenCalled();
+  expect(transport.send).not.toHaveBeenCalled();
+});
+
+it("fails closed when the independent intent validator is absent or rejects", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  delete backend.validateTransactionIntent;
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("UNSAFE_SOLANA_TRANSACTION");
+  backend.validateTransactionIntent = vi.fn(async () => false);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("UNSAFE_SOLANA_TRANSACTION");
+});
+
+function swapSetup() {
+  const state = setup();
+  const pool = SOLANA_LP_CHOICES[2];
+  if (!pool) throw new Error("FIXTURE_MISSING");
+  const step: SolanaLaunchStep = {
+    ...arrival,
+    id: "solana:ratio",
+    kind: "swap-to-ratio",
+    config: { poolId: pool.poolId, maxPriceImpactBps: 100 },
+  };
+  const fund = "0x1111111111111111111111111111111111111111";
+  const quote: SolanaApiSignedQuote = {
+    version: 1,
+    poolId: pool.poolId,
+    fund,
+    solanaAddress: "key",
+    maxPriceImpactBps: 100,
+    tokenIn: pool.tokens[1].mint,
+    tokenOut: pool.tokens[0].mint,
+    amountIn: "1000000",
+    minAmountOut: "99",
+    referenceAmountOut: "100",
+    priceImpactBps: 100,
+    expiresAt: 2000000000,
+    signedPayload: "0x01",
+    signature: "0x02",
+  };
+  state.journal.frozen = {
+    solanaBinding: { manager: "manager", solanaAddress: "key", authorization: { fund } },
+    solanaSelection: { raydiumPool: pool.poolId, maxPriceImpactBps: 100 },
+  };
+  state.backend.quoteSwap = vi.fn(async () => quote);
+  state.backend.referencePrice = vi.fn(async () => ({
+    status: "available" as const,
+    expiresAt: 2000000000,
+    marketOpen: true,
+  }));
+  state.backend.verifySwapQuote = vi.fn(async () => true);
+  return { ...state, step, quote };
+}
+it("fetches and verifies the API quote immediately before building the unsigned swap", async () => {
+  const { driver, backend, journal, step, quote } = swapSetup();
+  await driver.build(step, journal);
+  expect(backend.quoteSwap).not.toHaveBeenCalled();
+  await driver.send(step, {}, vi.fn());
+  expect(backend.verifySwapQuote).toHaveBeenCalledBefore(vi.mocked(backend.build));
+  expect(backend.build).toHaveBeenCalledWith(step, journal, undefined, quote);
+});
+it.each([
+  "missing",
+  "stale",
+  "closed",
+])("blocks %s oracle data before swap building", async (failure) => {
+  const { driver, backend, journal, step } = swapSetup();
+  if (failure === "missing") backend.referencePrice = undefined;
+  else
+    backend.referencePrice = vi.fn(async () => ({
+      status: "available" as const,
+      expiresAt: failure === "stale" ? 1 : 2000000000,
+      marketOpen: failure !== "closed",
+    }));
+  if (failure === "closed" && step.config) step.config.poolId = SOLANA_LP_CHOICES[0]?.poolId;
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow();
+  expect(backend.quoteSwap).not.toHaveBeenCalled();
+  expect(backend.build).not.toHaveBeenCalled();
+});
+
+it("refuses an edited LP-open pool before building or signing", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  step.kind = "raydium-open";
+  if (step.config) step.config.poolId = SOLANA_LP_CHOICES[1]?.poolId;
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("STOCK_DATA_UNAVAILABLE");
+  expect(backend.build).not.toHaveBeenCalled();
+});
+
+it("builds the frozen LP-open selection without requesting a swap quote", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  step.kind = "raydium-open";
+  backend.quoteSwap = undefined;
+  backend.verifySwapQuote = undefined;
+  await driver.build(step, journal);
+  await driver.send(step, {}, vi.fn());
+  expect(backend.build).toHaveBeenCalledWith(step, journal, undefined, undefined);
+});
+
+it("prevents mutation of the verified quote during transaction building", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  vi.mocked(backend.build).mockImplementation(async (_step, _journal, _lifetime, quote) => {
+    if (quote) quote.amountIn = "999999999";
+    return new Uint8Array();
+  });
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow(TypeError);
+});
+it.each([
+  "missing",
+  "signature",
+  "impact",
+  "expiry",
+  "tampered-plan",
+  "rate-limit",
+])("fails closed on %s without building or signing the swap", async (failure) => {
+  const { driver, backend, journal, step, quote } = swapSetup();
+  if (failure === "missing") backend.quoteSwap = undefined;
+  if (failure === "signature" && backend.verifySwapQuote)
+    vi.mocked(backend.verifySwapQuote).mockResolvedValue(false);
+  if (failure === "impact") quote.priceImpactBps = 101;
+  if (failure === "expiry") quote.expiresAt = 1;
+  if (failure === "tampered-plan" && step.config) step.config.maxPriceImpactBps = 200;
+  if (failure === "rate-limit" && backend.quoteSwap)
+    vi.mocked(backend.quoteSwap).mockRejectedValue(new Error("SOLANA_API_RATE_LIMITED"));
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow();
+  expect(backend.build).not.toHaveBeenCalled();
+});

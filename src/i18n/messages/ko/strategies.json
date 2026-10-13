@@ -895,7 +895,21 @@
     "transitSend": "전송",
     "transitFill": "체결",
     "transitAcknowledgement": "수신 확인",
-    "decodedError": "해석된 오류: {name}"
+    "decodedError": "해석된 오류: {name}",
+    "reportRefreshing": "보고서 갱신 중입니다. 펀드는 먼저 모든 네트워크의 최신 보고서가 필요하며 몇 분 정도 걸릴 수 있습니다.",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "보고서 {minutes}분 전",
+      "noReport": "아직 보고서 없음",
+      "usable": "사용 가능",
+      "refreshing": "갱신 중",
+      "program": "프로그램",
+      "fundAccount": "펀드 계정",
+      "vault": "Vault",
+      "usdcAccount": "USDC 계정",
+      "accountsUnavailable": "Solana 계정을 사용할 수 없음"
+    }
   },
   "investV2": {
     "notAvailable": "사용할 수 없음",

@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-CMP-032 (POO-2175)
  * @name FundActionsPanel
- * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records)
+ * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records); v1 (POO-2262 v6 report gate)
  * Investor confirmation, authoritative previews and wallet receipt flow.
  */
 "use client";
@@ -22,9 +22,15 @@ import {
   type FundIntent,
   loadFundAction,
   pollFundReportAction,
+  refreshSolanaReportAction,
   startFundReportAction,
 } from "./fundActions";
-import { approveAndRebuild, ensureFreshValuation } from "./fundFlow";
+import {
+  approveAndRebuild,
+  ensureFreshValuation,
+  retryReportWaits,
+  solanaRefreshPort,
+} from "./fundFlow";
 import { estimateDeposit, fundErrorKey, rawAmount } from "./fundModel";
 import {
   fundTransactionCode,
@@ -119,11 +125,14 @@ function InvestorActions({
     setIntent(null);
     setPhase("idle");
   }, [amount, minShares, loss]);
+  const wait = (seconds: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, isMockMode ? 10 : seconds * 1000));
   async function fresh(active: () => boolean) {
     return ensureFreshValuation({
       active,
       refreshing: () => setPhase("refreshing"),
-      wait: () => new Promise((resolve) => setTimeout(resolve, isMockMode ? 10 : 15_000)),
+      wait,
+      refreshSolana: solanaRefreshPort(() => refreshSolanaReportAction(fund.coreVault)),
       read: async () => {
         const result = await loadFundAction(fund.coreVault);
         if (!result.ok) throw new Error(result.error.code);
@@ -164,17 +173,21 @@ function InvestorActions({
     });
   }
   async function build(input: FundIntent, active: () => boolean) {
-    if (
-      input.action !== "exit-closed-fund" &&
-      input.action !== "settle-income-withdrawal" &&
-      input.action !== "request-income-withdrawal"
-    )
-      await fresh(active);
-    if (!active()) throw new Error("V2_CANCELED");
-    setPhase("building");
-    const result = await buildFundAction(fund.coreVault, input);
-    if (!result.ok) throw new Error(result.error.code);
-    return result.data;
+    // §3.9: a 409 report wait from the builder is waited out and rebuilt, not a failure.
+    return retryReportWaits(
+      async () => {
+        if (
+          input.action !== "exit-closed-fund" &&
+          input.action !== "settle-income-withdrawal" &&
+          input.action !== "request-income-withdrawal"
+        )
+          await fresh(active);
+        if (!active()) throw new Error("V2_CANCELED");
+        setPhase("building");
+        return buildFundAction(fund.coreVault, input);
+      },
+      { active, wait, refreshing: () => setPhase("refreshing") },
+    );
   }
   async function prepare(action: FundIntent["action"], mode?: "Instant" | "Standard") {
     const id = ++run.current;

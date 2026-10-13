@@ -895,7 +895,21 @@
     "transitSend": "送信",
     "transitFill": "約定",
     "transitAcknowledgement": "受領確認",
-    "decodedError": "解析されたエラー: {name}"
+    "decodedError": "解析されたエラー: {name}",
+    "reportRefreshing": "レポートを更新中です。ファンドはまず各ネットワークの最新レポートが必要で、数分かかることがあります。",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "レポート {minutes} 分前",
+      "noReport": "レポートはまだありません",
+      "usable": "使用可能",
+      "refreshing": "更新中",
+      "program": "プログラム",
+      "fundAccount": "ファンドアカウント",
+      "vault": "Vault",
+      "usdcAccount": "USDC アカウント",
+      "accountsUnavailable": "Solana アカウントは利用できません"
+    }
   },
   "investV2": {
     "notAvailable": "利用できません",

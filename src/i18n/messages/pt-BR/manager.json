@@ -772,6 +772,8 @@
       "selectAll": "Selecionar tudo",
       "alwaysIncluded": "Sempre incluído",
       "comingSoon": "Em breve",
+      "unavailable": "Indisponível",
+      "stockUnavailable": "Os swaps de ações ainda não estão disponíveis",
       "clearAll": "Limpar tudo",
       "add": "Adicionar",
       "addAll": "Adicionar todos os {count}",
@@ -1853,5 +1855,173 @@
     "unavailableBody": "O histórico de preços não está disponível para esta seleção.",
     "selectionPreserved": "A seleção foi mantida.",
     "back": "Voltar ao fluxo da estratégia"
+  },
+  "solanaLaunch": {
+    "title": "Lançar {name} na Arbitrum, Robinhood Chain e Solana",
+    "subtitle": "A API da Pool Party monta cada transação. Sua carteira EVM assina as etapas da Arbitrum e da Robinhood, sua carteira Solana assina as etapas da Solana.",
+    "walletsTitle": "Carteiras",
+    "evmWallet": "Carteira EVM do gestor",
+    "notSignedIn": "Sem sessão",
+    "solanaWallet": "Carteira Solana do gestor",
+    "balanceUnknown": "Saldo de SOL indisponível",
+    "solBalance": "{sol} SOL",
+    "connectSolana": "Conectar carteira Solana",
+    "walletsHint": "A carteira Solana passa a ser, para sempre, a chave Solana do gestor do fundo. Ela paga o aluguel das contas na Solana (mantenha cerca de 0,1 SOL).",
+    "amountsTitle": "Valores do fundo",
+    "amountsHint": "Em USDC. Eles são selados no fundo quando o plano é montado.",
+    "seedLabel": "Capital inicial (seu primeiro depósito)",
+    "seedHint": "Pelo menos {floor} USDC (uma cota inteira após a taxa de fluxo). Padrão {fallback} USDC.",
+    "minimumLabel": "Primeiro depósito mínimo",
+    "minimumHint": "De {floor} USDC até o capital inicial. Padrão {fallback} USDC.",
+    "spokeCapLabel": "Limite por spoke (cada spoke)",
+    "spokeCapHint": "Maior que zero; um limite para a Robinhood e para a Solana. Padrão {fallback} USDC.",
+    "sealedTitle": "O que a factory sela",
+    "sealedNetworks": "Redes: Arbitrum (hub), Robinhood Chain, Solana",
+    "sealedSeed": "Capital inicial: {amount} USDC",
+    "sealedMinimum": "Primeiro depósito mínimo: {amount} USDC",
+    "sealedSpokeCap": "Limite por spoke: {amount} USDC",
+    "sealedReportAge": "Idade máxima do relatório: {seconds} s",
+    "sealedFees": "Taxas: gestão {management}%, performance {performance}%, resgate instantâneo {payout}%",
+    "sealedVenues": "Plataformas na Solana: {venues}",
+    "assetsTitle": "Ativos da Solana",
+    "unavailable": "Indisponível",
+    "stockUnavailable": "Os tokens de ações (TSLAx, NVDAx) aparecem, mas ainda não estão disponíveis para fundos: os swaps deles continuam desligados.",
+    "creationTitle": "Criação do fundo",
+    "operationsTitle": "Primeiras operações na Solana",
+    "operationsHint": "Depois que o fundo existir: enviar capital para a Solana, depositar na Kamino, trocar por SOL e abrir a posição na Raydium. Valores em USDC, editáveis antes de cada etapa.",
+    "amountSend": "Enviar para a Solana",
+    "amountKamino": "Depósito na Kamino",
+    "amountSwap": "Trocar por SOL",
+    "amountRaydium": "Posição na Raydium (lado USDC)",
+    "operationsStepsTitle": "Operações na Solana",
+    "working": "Em andamento. Mantenha esta aba aberta e aprove os pedidos da carteira.",
+    "allDone": "Lançamento concluído: o fundo opera em três redes.",
+    "pause": "Pausar",
+    "restart": "Recomeçar",
+    "resumeCreation": "Continuar a criação",
+    "start": "Criar o fundo",
+    "openFund": "Abrir o fundo",
+    "runOperations": "Executar as operações na Solana",
+    "solanaTx": "Transação Solana {index}",
+    "arbiscanTx": "Ver no Arbiscan",
+    "blockscoutTx": "Ver no explorador da Robinhood",
+    "accountCore": "Fundo (core na Arbitrum)",
+    "accountRobinhood": "Vault do spoke na Robinhood",
+    "accountFundPda": "Conta do fundo na Solana",
+    "accountVault": "Vault na Solana",
+    "accountUsdcAta": "Conta USDC na Solana",
+    "accountsCreated": "Contas do fundo",
+    "accountsPredicted": "Contas do fundo (previstas)",
+    "bindingExpiry": "O bootstrap da Solana precisa ser concluído antes de {at}.",
+    "draftMissing": "Este rascunho não está disponível neste navegador.",
+    "notSolanaPlan": "Este plano não tem spoke na Solana. Lance-o pela revisão.",
+    "backToManager": "Voltar ao gestor",
+    "reviewSummary": "O lançamento abre a jornada da Solana: dois consentimentos, o fundo na Arbitrum, o spoke da Robinhood e o spoke da Solana, depois as primeiras operações na Solana.",
+    "steps": {
+      "plan": {
+        "label": "Montar o plano",
+        "hint": "A API prevê o fundo, seus spokes e as contas na Solana."
+      },
+      "sign-binding": {
+        "label": "Assinar o vínculo com a Solana",
+        "hint": "Assinatura EVM (sem transação): vincula sua chave Solana a este fundo."
+      },
+      "sign-policy": {
+        "label": "Assinar a política de swap",
+        "hint": "Assinatura EVM (sem transação): os limites de swap SOL/USDC selados."
+      },
+      "approve-seed": {
+        "label": "Aprovar o capital inicial",
+        "hint": "Arbitrum: permite que a factory use os USDC do capital inicial."
+      },
+      "create-fund": {
+        "label": "Criar o fundo",
+        "hint": "Arbitrum: o core do fundo com o mandato selado e o capital inicial."
+      },
+      "create-spoke": {
+        "label": "Criar o spoke da Robinhood",
+        "hint": "Robinhood Chain: o vault do spoke e seus adaptadores."
+      },
+      "discover": {
+        "label": "Registrar o fundo",
+        "hint": "A API indexa o novo fundo."
+      },
+      "bootstrap": {
+        "label": "Criar o spoke da Solana",
+        "hint": "Solana: preparar a política e depois inicializar a conta do fundo."
+      },
+      "verify": {
+        "label": "Conferir as três redes",
+        "hint": "O fundo mostra Arbitrum, Robinhood e Solana."
+      },
+      "solana-report": {
+        "label": "Primeiro relatório da Solana",
+        "hint": "O keeper reporta o spoke da Solana ao hub."
+      },
+      "send-to-solana": {
+        "label": "Enviar USDC para a Solana",
+        "hint": "Arbitrum: transferência CCTP Fast para o vault da Solana."
+      },
+      "arrival": {
+        "label": "Crédito na Solana",
+        "hint": "A Circle atesta e o keeper credita o vault da Solana."
+      },
+      "adapters": {
+        "label": "Ativar as plataformas",
+        "hint": "Solana: inicializar os adaptadores da Kamino e da Raydium."
+      },
+      "kamino-supply": {
+        "label": "Depositar na Kamino",
+        "hint": "Solana: USDC na reserva da Kamino."
+      },
+      "swap": {
+        "label": "Trocar USDC por SOL",
+        "hint": "Solana: rota assinada pela API pelo pool admitido."
+      },
+      "raydium-open": {
+        "label": "Abrir a posição na Raydium",
+        "hint": "Solana: liquidez concentrada SOL/USDC, cerca de 5% em torno do preço."
+      },
+      "final-report": {
+        "label": "Reportar as posições",
+        "hint": "O hub recebe as posições da Solana."
+      }
+    },
+    "status": {
+      "idle": "Pendente",
+      "running": "Em andamento",
+      "submitted": "Enviado, confirmando",
+      "waiting": "Aguardando",
+      "done": "Concluído",
+      "skipped": "Ignorado",
+      "failed": "Falhou"
+    },
+    "errors": {
+      "USER_REJECTED": "O pedido da carteira foi recusado. Continue para tentar de novo.",
+      "SOLANA_WALLET_REQUIRED": "Conecte a carteira Solana que vai gerir este fundo.",
+      "V2_WALLET_REQUIRED": "Conecte a carteira EVM do gestor com a qual você entrou.",
+      "SOLANA_SEED_BALANCE_LOW": "A carteira do gestor não tem o capital inicial em USDC na Arbitrum.",
+      "SOLANA_SEED_BELOW_MINIMUM": "O capital inicial está abaixo do mínimo.",
+      "SOLANA_STOCK_UNAVAILABLE": "Pools de ações ainda não estão disponíveis para fundos. Escolha o pool SOL/USDC.",
+      "SOLANA_POOL_NOT_ADMITTED": "Este pool da Raydium não é admitido. Escolha o pool SOL/USDC.",
+      "CREATION_PLAN_STALE": "Outro fundo usou este número de criação. Recomece para montar um novo plano.",
+      "CREATION_BINDING_EXPIRED": "O vínculo assinado está prestes a expirar. Recomece para assinar de novo.",
+      "SOLANA_PLAN_MISMATCH": "O plano da API não corresponde às suas carteiras. Nada foi assinado.",
+      "UNSAFE_SOLANA_TRANSACTION": "Uma transação Solana falhou na verificação de segurança. Nada foi enviado.",
+      "SOLANA_BLOCKHASH_EXPIRED": "A transação Solana expirou antes da assinatura. Continue para montá-la de novo.",
+      "TRANSACTION_REVERTED": "A transação foi revertida na rede.",
+      "SOLANA_TRANSACTION_FAILED": "A transação Solana falhou na rede.",
+      "SOLANA_BALANCE_EMPTY": "O vault da Solana ainda não tem saldo disponível para esta etapa.",
+      "V2_UNAUTHORIZED": "Entre de novo com a carteira do gestor.",
+      "SOLANA_DRAFT_UNAVAILABLE": "O rascunho salvo ou a revisão dele não foi encontrado.",
+      "CREATION_AMOUNT_INVALID": "Digite cada valor em USDC.",
+      "CREATION_SEED_BELOW_ONE_SHARE": "O capital inicial precisa emitir pelo menos uma cota inteira (1,002506 USDC).",
+      "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT": "O primeiro depósito mínimo não pode passar do capital inicial.",
+      "CREATION_SPOKE_CAP_ZERO": "O limite por spoke precisa ser maior que zero.",
+      "CREATION_AMOUNT_ABOVE_MAX": "Um valor está acima do máximo.",
+      "generic": "A etapa falhou ({code}). Continue para tentar de novo."
+    },
+    "chooseSolana": "Escolha a carteira Solana que vai gerir este fundo",
+    "evmBlocksNotice": "{count, plural, one {Este plano também tem # bloco de posição na Arbitrum ou na Robinhood. Este lançamento não o abre: gerencie-o pelo fundo depois do lançamento.} other {Este plano também tem # blocos de posição na Arbitrum ou na Robinhood. Este lançamento não os abre: gerencie-os pelo fundo depois do lançamento.}}"
   }
 }

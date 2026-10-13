@@ -41,6 +41,7 @@ import {
   tokenKey,
   withNetworks,
 } from "../mandateDraft";
+import { buildSolanaBuilderCatalog } from "../solana-preview/solanaBuilderRuntime";
 import { TokensStep } from "./TokensStep";
 
 const catalog = buildMandateCatalog();
@@ -544,5 +545,94 @@ describe("TokensStep", () => {
     });
 
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+  });
+});
+
+describe("TokensStep: the Solana stock tokens are listed and unavailable (DEC-204)", () => {
+  const solana = buildSolanaBuilderCatalog();
+  const TSLAX = "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB";
+  const WSOL = "So11111111111111111111111111111111111111112";
+
+  /** Render the step on the Solana catalog; same contract as {@link renderStep}. */
+  function renderSolana(spokes: NetworkId[] = ["solana"], block: StepBlock | null = null) {
+    const draft = withNetworks(
+      createEmptyDraft("2026-10-13T00:00:00.000Z", "d-sol"),
+      spokes,
+      solana,
+    );
+    const update = vi.fn();
+    const onBlocked = vi.fn();
+    renderWithProviders(
+      <TokensStep
+        draft={draft}
+        catalog={solana}
+        update={update}
+        block={block}
+        onBlocked={onBlocked}
+      />,
+    );
+    const draftAfterUpdate = (): MandateDraft => {
+      const reducer = update.mock.calls.at(-1)?.[0] as (d: MandateDraft) => MandateDraft;
+      const next = reducer(draft);
+      if (isBlocked(next)) throw new Error("the reducer refused");
+      return next;
+    };
+    return { draft, update, onBlocked, draftAfterUpdate };
+  }
+
+  it("lists TSLAx and NVDAx with no search, disabled, with the Unavailable badge and the reason", () => {
+    renderSolana();
+
+    for (const symbol of ["TSLAx", "NVDAx"]) {
+      const card = screen.getByRole("button", { name: symbol });
+      expect(card).toHaveAttribute("aria-disabled", "true");
+      expect(card).toHaveAccessibleDescription("Stock swaps are not available yet");
+      expect(within(card).getByText("Unavailable")).toBeInTheDocument();
+      expect(within(card).queryByText("No price feed yet")).not.toBeInTheDocument();
+    }
+    // WSOL stays selectable.
+    const wsol = document.querySelector(`[data-mandate-row="solana:${WSOL}"]`) as HTMLElement;
+    expect(within(wsol).getByRole("button", { name: "Add" })).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("reports a press on a stock card as coming_soon and changes nothing", async () => {
+    const user = userEvent.setup();
+    const { update, onBlocked } = renderSolana();
+
+    await user.click(screen.getByRole("button", { name: "TSLAx" }));
+
+    expect(update).not.toHaveBeenCalled();
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "tokens",
+      reason: "coming_soon",
+      rowId: `solana:${TSLAX}`,
+    });
+  });
+
+  it("leaves the stock tokens out of Add all and adds WSOL with the hub tokens", async () => {
+    const user = userEvent.setup();
+    const { draftAfterUpdate } = renderSolana();
+
+    // The seven priced hub tokens and WSOL; the two stock cards are on screen and not counted.
+    await user.click(screen.getByRole("button", { name: "Add all 8" }));
+
+    const symbols = draftAfterUpdate().tokens.map((token) => token.symbol);
+    expect(symbols).toContain("WSOL");
+    expect(symbols).not.toContain("TSLAx");
+    expect(symbols).not.toContain("NVDAx");
+  });
+
+  it("names the stock reason in the notice of a coming_soon block on a stock token", () => {
+    renderSolana(["solana"], { step: "tokens", reason: "coming_soon", rowId: `solana:${TSLAX}` });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Stock swaps are not available yet");
+  });
+
+  it("keeps a mandate without Solana exactly as before", () => {
+    renderSolana([]);
+
+    expect(screen.queryByRole("button", { name: "TSLAx" })).not.toBeInTheDocument();
+    expect(catalogSymbols()).toEqual(["ARB", "DAI", "ETH", "LINK", "USDT", "WBTC", "wstETH"]);
+    expect(screen.getByRole("button", { name: "Add all 7" })).toBeInTheDocument();
   });
 });

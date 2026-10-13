@@ -1,20 +1,22 @@
 /**
  * @id PP-STR-LIB-033 (POO-2181)
  * @name fundListModel
- * @implements-rules-version v2
+ * @implements-rules-version v2; v6 Solana network name (POO-2262)
  * V2-only card projection; missing valuation is never zero.
  */
 import { formatUnits } from "viem";
 import type { z } from "zod";
 import type { fundRowSchema, fundViewSchema } from "@/lib/api/v2/fundSchemas";
+import { isEvmDeployment } from "@/lib/api/v2/schemas";
 import { formatUsdPrecise } from "@/lib/utils/format";
+import { fundChainNetwork } from "./fundModel";
 
 export type FundListEntry = z.infer<typeof fundRowSchema> & Partial<z.infer<typeof fundViewSchema>>;
 
 export function fundListModel(fund: FundListEntry) {
   const positions = fund.positionsSummary?.positions;
   const protocols = new Set(positions?.map((position) => position.adapterKind) ?? []);
-  for (const chain of fund.chains) {
+  for (const chain of fund.chains.filter(isEvmDeployment)) {
     if (chain.aaveV3Adapter) protocols.add("aave-v3");
     if (chain.uniswapV4Adapter) protocols.add("uniswap-v4");
   }
@@ -25,9 +27,7 @@ export function fundListModel(fund: FundListEntry) {
     image: fund.profile?.imageUrl || fund.profile?.image || null,
     manager: fund.manager,
     managerName: fund.profile?.managerDisplayName?.trim() || fund.manager,
-    chains: fund.chains.map((chain) =>
-      chain.chainId === "42161" ? "Arbitrum" : "Robinhood Chain",
-    ),
+    chains: fund.chains.map((chain) => fundChainNetwork(chain.chainId).name),
     protocols: [...protocols],
     sharePrice:
       fund.sharePrice === undefined

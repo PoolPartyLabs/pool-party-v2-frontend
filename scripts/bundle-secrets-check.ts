@@ -57,6 +57,9 @@ export const SERVER_ONLY_SECRET_NAMES = [
   // Aqua / Active Reserve (POO-1057 hackathon branch). The taker key signs settlement and
   // must never reach a bundle; there is no database in this feature.
   "TAKER_BOT_PRIVATE_KEY",
+  // POO-2262: the Solana RPC provider URL carries its API key in the path; only the
+  // /api/solana-rpc proxy reads it on the server.
+  "SOLANA_RPC_URL",
 ] as const;
 
 /**

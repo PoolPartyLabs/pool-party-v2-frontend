@@ -1,10 +1,14 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { type FundView, fundViewSchema } from "@/lib/api/v2/fundSchemas";
 import { mockFund, mockHolder } from "@/mocks/data/v2Funds";
+import fund6 from "./fixtures/fund6Detail.json";
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
   build: vi.fn(),
+  refresh: vi.fn(),
+  start: vi.fn(),
   send: vi.fn(),
   wallet: "",
   provider: { request: vi.fn() },
@@ -25,7 +29,8 @@ vi.mock("@privy-io/react-auth", () => ({
 vi.mock("./fundActions", () => ({
   loadFundAction: mocks.load,
   buildFundAction: mocks.build,
-  startFundReportAction: vi.fn(),
+  refreshSolanaReportAction: mocks.refresh,
+  startFundReportAction: mocks.start,
   pollFundReportAction: vi.fn(),
 }));
 vi.mock("./fundTransactions", async (importOriginal) => ({
@@ -497,4 +502,103 @@ it("[R5] reviews a changed same-kind preview before sending with updated exact s
   await act(async () => result.current.confirm());
   expect(mocks.send).toHaveBeenCalledTimes(1);
   expect(mocks.build.mock.calls.at(-1)?.[1].minShares).toBe(next.sharesMinted);
+});
+
+// POO-2262 (API contract §3.9): the live v6 Fund, Solana report stale, then a 409 on the build.
+it("[POO-2262] refreshes the Solana report, waits out a 409 report wait and reaches review", async () => {
+  localStorage.clear();
+  const live = fundViewSchema.parse(fund6.data);
+  mocks.wallet = mockFund.manager;
+  const v6 = (usable: boolean): FundView => ({
+    ...live,
+    reportsUsable: usable,
+    spokes: live.spokes?.map((spoke) =>
+      spoke.chainId === "1" && spoke.reportFreshness
+        ? { ...spoke, reportFreshness: { ...spoke.reportFreshness, usable } }
+        : spoke,
+    ),
+  });
+  // Mount read, prepare read, gate read (stale), gate re-read after the wait (usable, repeats).
+  const reads = [v6(false), v6(false), v6(false), v6(true)];
+  mocks.load.mockImplementation(async () => ({
+    ok: true,
+    data: {
+      wallet: mocks.wallet,
+      holder: mockHolder,
+      fund: reads.length > 1 ? reads.shift() : reads[0],
+    },
+  }));
+  mocks.refresh.mockReset().mockResolvedValue({
+    ok: true,
+    data: { usable: false, refreshing: true, retryAfterSeconds: 15, jobId: null },
+  });
+  mocks.start.mockReset();
+  const { encodeFunctionData } = await import("viem");
+  const { depositAbi } = await import("./fundInvestModel");
+  mocks.build
+    .mockReset()
+    .mockResolvedValueOnce({
+      ok: false,
+      error: { status: 409, code: "SOLANA_REPORT_REFRESHING", retryAfterSeconds: 5 },
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      data: {
+        protocolVersion: "v2",
+        transactions: [
+          {
+            protocolVersion: "v2",
+            chainId: 42161,
+            to: live.coreVault,
+            from: mocks.wallet,
+            value: "0",
+            gas: "1057965",
+            data: encodeFunctionData({
+              abi: depositAbi,
+              functionName: "deposit",
+              args: [BigInt("50000000"), BigInt("0")],
+            }),
+          },
+        ],
+        preview: {
+          sharesMinted: "49000000000000000000",
+          usdcCharged: "49100000",
+          flowFee: "125000",
+          refundToCaller: "900000",
+          sharePrice: "1000000000000000000000000",
+        },
+      },
+    });
+  const { result, unmount } = renderHook(() =>
+    useFundInvest({ core: live.coreVault, enabled: true }),
+  );
+  await waitFor(() => expect(result.current.snapshot).not.toBeNull());
+  vi.useFakeTimers();
+  try {
+    let prepared: Promise<void> | undefined;
+    await act(async () => {
+      prepared = result.current.prepare("50000000");
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.phase).toBe("building");
+    expect(result.current.reportRefreshing).toBe(true);
+    expect(mocks.refresh).toHaveBeenCalledWith(live.coreVault);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+    expect(mocks.build).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+      await prepared;
+    });
+    expect(mocks.build).toHaveBeenCalledTimes(2);
+    expect(result.current.phase).toBe("review");
+    expect(result.current.reportRefreshing).toBe(false);
+    expect(result.current.errorCode).toBeNull();
+    // Never the admin report broker for a v6 Fund.
+    expect(mocks.start).not.toHaveBeenCalled();
+  } finally {
+    unmount();
+    vi.useRealTimers();
+  }
 });

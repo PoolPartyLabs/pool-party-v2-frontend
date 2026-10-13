@@ -23,7 +23,7 @@ import {
   loadFundPositionAction,
   loadFundTransitAction,
 } from "./fundActions";
-import { fundErrorKey, reportFreshness } from "./fundModel";
+import { fundChainNetwork, fundErrorKey, reportFreshness } from "./fundModel";
 export interface FundTechnicalDetailProps {
   core: string;
 }
@@ -201,8 +201,12 @@ function FundTechnicalDetailData({ core }: FundTechnicalDetailProps) {
         />
         {fund.chains.map((chain) => (
           <div key={chain.chainId}>
-            {chain.chainId === "42161" ? "Arbitrum" : "Robinhood"}:{" "}
-            {chain.status === "created" ? t("created") : t("pending")}
+            {chain.chainId === "42161"
+              ? "Arbitrum"
+              : chain.chainId === "4663"
+                ? "Robinhood"
+                : fundChainNetwork(chain.chainId).name}
+            : {chain.status === "created" ? t("created") : t("pending")}
             <ReadOnlyFields value={chain} />
           </div>
         ))}

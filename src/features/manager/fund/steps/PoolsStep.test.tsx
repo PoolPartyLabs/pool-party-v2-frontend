@@ -78,6 +78,11 @@ import {
   withProtocols,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
+import {
+  buildSolanaBuilderCatalog,
+  RAYDIUM_RELEASE_POOLS,
+  withRaydiumReleasePools,
+} from "../solana-preview/solanaBuilderRuntime";
 import { PoolsStep } from "./PoolsStep";
 
 const catalog = buildMandateCatalog();
@@ -1628,5 +1633,115 @@ describe("PoolsStep: a failed Solana read (POO-2343)", () => {
     await waitFor(() => expect(onError).toHaveBeenCalled());
     expect(onError.mock.calls).toEqual([[{ code: "POOLS_FETCH_FAILED", network: "solana" }]]);
     expect(JSON.stringify(onError.mock.calls)).not.toContain(SOL);
+  });
+});
+
+describe("PoolsStep: the Raydium stock pools are listed and unavailable (DEC-204)", () => {
+  const solana = buildSolanaBuilderCatalog();
+  const [solUsdc, tslaxUsdc, nvdaxUsdc] = RAYDIUM_RELEASE_POOLS;
+  if (!solUsdc || !tslaxUsdc || !nvdaxUsdc) throw new Error("the release pools are missing");
+
+  /** Arbitrum and Solana with Raydium chosen, built by the real reducers on the Solana catalog. */
+  function raydiumDraft(): MandateDraft {
+    const base = withNetworks(
+      createEmptyDraft("2026-10-13T00:00:00.000Z", "d-ray"),
+      ["solana"],
+      solana,
+    );
+    return withProtocols(base, [...base.protocols, "raydium"]);
+  }
+
+  /** The Solana source as it answers when DEX Screener lists nothing: the pinned pools alone. */
+  function solanaAnswersPinned() {
+    vi.mocked(searchMandatePools).mockImplementation(async (input) =>
+      input.network === "solana"
+        ? withRaydiumReleasePools([], input.tokenAddress, input.secondTokenAddress)
+        : [],
+    );
+  }
+
+  it("lists SOL/USDC, TSLAx/USDC and NVDAx/USDC, with only SOL/USDC addable", async () => {
+    solanaAnswersPinned();
+    const { onUniverseCount } = renderStep(raydiumDraft(), { source: solana });
+
+    await waitFor(() =>
+      expect(resultCards().map((card) => card.getAttribute("data-mandate-row"))).toEqual([
+        solUsdc.id,
+        tslaxUsdc.id,
+        nvdaxUsdc.id,
+      ]),
+    );
+    expect(within(resultCard(solUsdc.id)).getByRole("button", { name: "Add" })).toBeInTheDocument();
+    for (const stock of [tslaxUsdc, nvdaxUsdc]) {
+      const control = within(resultCard(stock.id)).getByRole("button", { name: "Unavailable" });
+      expect(control).toHaveAttribute("aria-disabled", "true");
+      expect(control).toHaveAccessibleDescription("Stock swaps are not available yet");
+    }
+    // R31 / R13: only what can be added is offered and measured.
+    expect(screen.getByRole("button", { name: "Add all 1" })).toBeInTheDocument();
+    await waitFor(() => expect(onUniverseCount).toHaveBeenLastCalledWith(1));
+  });
+
+  it("keeps the pinned pools with the error and Retry when DEX Screener fails", async () => {
+    vi.mocked(searchMandatePools).mockImplementation(async (input) => {
+      if (input.network === "solana") throw new Error("mock: DEX Screener timed out");
+      return [];
+    });
+    const { onError, onUniverseCount } = renderStep(raydiumDraft(), { source: solana });
+
+    await waitFor(() =>
+      expect(resultCards().map((card) => card.getAttribute("data-mandate-row"))).toEqual([
+        solUsdc.id,
+        tslaxUsdc.id,
+        nvdaxUsdc.id,
+      ]),
+    );
+    expect(
+      screen.getByText("Couldn't load the pools. Check your connection and try again."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(within(resultCard(solUsdc.id)).getByRole("button", { name: "Add" })).toBeInTheDocument();
+    expect(
+      within(resultCard(tslaxUsdc.id)).getByRole("button", { name: "Unavailable" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    // R5 / R10: one failure event naming Solana, and no universe measured from a partial read.
+    expect(onError.mock.calls).toEqual([[{ code: "POOLS_FETCH_FAILED", network: "solana" }]]);
+    expect(onUniverseCount).not.toHaveBeenCalled();
+  });
+
+  it("reports a press on a stock pool as coming_soon and writes nothing", async () => {
+    const user = userEvent.setup();
+    solanaAnswersPinned();
+    const { update, onBlocked } = renderStep(raydiumDraft(), { source: solana });
+
+    const control = await waitFor(() =>
+      within(resultCard(tslaxUsdc.id)).getByRole("button", { name: "Unavailable" }),
+    );
+    await user.click(control);
+
+    expect(update).not.toHaveBeenCalled();
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "pools",
+      reason: "coming_soon",
+      rowId: tslaxUsdc.id,
+    });
+  });
+
+  it("names the stock reason in the notice of a stock pool, and keeps Coming soon for others", async () => {
+    solanaAnswersPinned();
+    const stock = renderStep(raydiumDraft(), {
+      source: solana,
+      block: { step: "pools", reason: "coming_soon", rowId: nvdaxUsdc.id },
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("Stock swaps are not available yet"),
+    );
+    stock.unmount();
+
+    renderStep(raydiumDraft(), {
+      source: solana,
+      block: { step: "pools", reason: "coming_soon", rowId: solUsdc.id },
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent("Coming soon");
   });
 });

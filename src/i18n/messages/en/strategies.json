@@ -895,7 +895,21 @@
     "transitSend": "Send",
     "transitFill": "Fill",
     "transitAcknowledgement": "Acknowledgement",
-    "decodedError": "Decoded error: {name}"
+    "decodedError": "Decoded error: {name}",
+    "reportRefreshing": "Report refreshing. The fund needs a fresh report from every network first, which can take a few minutes.",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "Report {minutes} min old",
+      "noReport": "No report yet",
+      "usable": "Usable",
+      "refreshing": "Refreshing",
+      "program": "Program",
+      "fundAccount": "Fund account",
+      "vault": "Vault",
+      "usdcAccount": "USDC account",
+      "accountsUnavailable": "Solana accounts unavailable"
+    }
   },
   "investV2": {
     "notAvailable": "Not available",

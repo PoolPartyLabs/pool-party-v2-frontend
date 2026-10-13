@@ -41,7 +41,10 @@ import { searchMandatePools } from "./mandatePoolSource";
 import { settlePoolSearches } from "./poolSearchSettle";
 import { type DexScreenerPair, raydiumPoolsFromPairs } from "./raydiumPools";
 import { getRaydiumPoolsAction } from "./raydiumPoolsAction";
-import { buildSolanaBuilderCatalog } from "./solana-preview/solanaBuilderRuntime";
+import {
+  buildSolanaBuilderCatalog,
+  RAYDIUM_RELEASE_POOLS,
+} from "./solana-preview/solanaBuilderRuntime";
 
 const SOL = "So11111111111111111111111111111111111111112";
 const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -97,7 +100,8 @@ describe("R4: the Pools step searches Raydium pools on Solana", () => {
       protocols: ["raydium"],
     });
 
-    expect(found).toEqual(pools);
+    // DEC-204: the pinned SOL/USDC release pool leads the answer; the action's pools follow it.
+    expect(found).toEqual([RAYDIUM_RELEASE_POOLS[0], ...pools]);
     expect(getRaydiumPoolsAction).toHaveBeenCalledWith({
       tokenAddress: SOL,
       secondTokenAddress: USDC,
@@ -221,6 +225,52 @@ describe("R4: the Pools step searches Raydium pools on Solana", () => {
     expect(isBlocked(refused) && refused.blocked.reason).toBe("not_priced");
     // The SOL side is in the Solana catalog, so only the unknown side is refused.
     expect(poolSideAddable(draft, pool, pool.token0, catalog())).toBe(true);
+  });
+});
+
+describe("DEC-204: the Solana search leads with the pinned Raydium release pools", () => {
+  const pinned = RAYDIUM_RELEASE_POOLS.map((pool) => pool.address);
+
+  it("answers a USDC search with SOL/USDC, TSLAx/USDC and NVDAx/USDC first, then DEX Screener", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({ ok: true, pools: [refOf("PoolA")] });
+
+    const found = await searchMandatePools({
+      network: "solana",
+      tokenAddress: USDC,
+      protocols: ["raydium"],
+    });
+
+    expect(found.map((pool) => pool.address)).toEqual([...pinned, "PoolA"]);
+  });
+
+  it("lists a pinned pool once, with the DEX Screener row and its liquidity in the pinned place", async () => {
+    const [solUsdc] = pinned;
+    if (!solUsdc) throw new Error("no pinned SOL/USDC pool");
+    const measured = refOf(solUsdc);
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: true,
+      pools: [refOf("PoolA"), measured],
+    });
+
+    const found = await searchMandatePools({
+      network: "solana",
+      tokenAddress: SOL,
+      protocols: ["raydium"],
+    });
+
+    expect(found).toEqual([measured, refOf("PoolA")]);
+    expect(found[0]?.tvlUsd).toBe(1000);
+  });
+
+  it("still throws when DEX Screener fails: the pinned pools never stand in for an error", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "unavailable", status: 503 },
+    });
+
+    await expect(
+      searchMandatePools({ network: "solana", tokenAddress: USDC, protocols: ["raydium"] }),
+    ).rejects.toBeInstanceOf(ApiError);
   });
 });
 
