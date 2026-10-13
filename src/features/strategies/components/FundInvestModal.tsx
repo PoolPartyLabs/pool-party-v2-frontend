@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-MOD-001
  * @name FundInvestModal, typed V2 branch of the shared Invest host
- * @implements-rules-version v1 (POO-2248)
+ * @implements-rules-version v1 (POO-2248); v1 (POO-2262 report refreshing state)
  * @analytics-events strategy_invest_started, strategy_invest_submitted, strategy_invest_completed,
  * strategy_invest_failed, tx_flow_abandoned, tx_amount_blocked, tx_signature_requested, tx_review_reached
  * PP-INTEGRATION-POINT: shared funding rail followed by the authenticated V2 deposit controller.
@@ -370,6 +370,11 @@ export function FundInvestModal({
         {!provisioning && (phase === "building" || phase === "pending") ? (
           <p role="status">
             {t(phase === "pending" ? "funds.confirmPrompt" : "investV2.preparing")}
+            {phase === "building" && controller.reportRefreshing ? (
+              <span data-report-refreshing="" className="mt-1 block">
+                {fundText("reportRefreshing")}
+              </span>
+            ) : null}
           </p>
         ) : null}
         {!provisioning && phase === "unknown" ? (

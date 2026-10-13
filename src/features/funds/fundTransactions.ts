@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-LIB-032 (POO-2179)
  * @name fundTransactions
- * @implements-rules-version v1
+ * @implements-rules-version v1; v1 (POO-2262 build gas limit)
  * PP-INTEGRATION-POINT: chain-checked broadcast, receipt observation and safe contract-error decoding.
  */
 import { decodeErrorResult, erc20Abi, type Hex, parseAbi } from "viem";
@@ -238,9 +238,12 @@ export async function sendFundTransaction(
   action: string,
   observe: (record: FundTransactionRecord) => void,
 ) {
+  // §3.9 (POO-2262): the padded `gas` of a deposit or payout build is the limit the wallet sends;
+  // without it a report-dependent mint/burn branch can run out of gas on a wallet's own estimate.
+  const tx = { ...transaction, gas: transaction.gas ?? undefined };
   const hash = await sendBuiltTransaction(
     provider,
-    { tx: transaction, chainId: transaction.chainId },
+    { tx, chainId: transaction.chainId },
     wallet,
     transaction.chainId,
   );

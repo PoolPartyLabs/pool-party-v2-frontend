@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-LIB-028 (POO-2175)
  * @name fundActions
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v2 (POO-2181); v1 (POO-2262 v6 report refresh and retry hints)
  * PP-INTEGRATION-POINT: serializable fund reads, simulations and report polling.
  */
 "use server";
@@ -26,7 +26,9 @@ import {
   readTransits,
 } from "@/lib/api/v2/funds";
 import { fundRequest } from "@/lib/api/v2/fundTransport";
-import { addressSchema } from "@/lib/api/v2/schemas";
+import { addressSchema, isEvmDeployment } from "@/lib/api/v2/schemas";
+import { solanaFetch } from "@/lib/api/v2/solanaFetch";
+import { reportFreshSchema } from "@/lib/api/v2/solanaSchemas";
 import { getAuthHeader, getSessionWallet } from "@/lib/auth/session";
 import { isFeatureEnabled } from "@/lib/features";
 import { isMockMode } from "@/lib/services";
@@ -47,11 +49,24 @@ async function resultOf<ResponseData>(read: () => Promise<ResponseData>) {
       throw new ApiError(404, "V2_UNAVAILABLE", "unavailable");
     return { ok: true as const, data: await read() };
   } catch (error) {
+    // §3.9 report waits carry the API's retry hint (`FundRequestError` / `V2SolanaApiError`
+    // `detail`, both already validated); nothing else of the upstream body crosses.
+    const detail: { retryAfterSeconds?: unknown; jobId?: unknown } =
+      error instanceof ApiError &&
+      "detail" in error &&
+      error.detail &&
+      typeof error.detail === "object"
+        ? error.detail
+        : {};
     return {
       ok: false as const,
       error: {
         status: error instanceof ApiError ? error.status : 502,
         code: error instanceof ApiError ? error.code : "V2_INVALID_RESPONSE",
+        ...(typeof detail.retryAfterSeconds === "number"
+          ? { retryAfterSeconds: detail.retryAfterSeconds }
+          : {}),
+        ...(typeof detail.jobId === "string" ? { jobId: detail.jobId } : {}),
       },
     };
   }
@@ -166,7 +181,9 @@ export async function loadFundManagerAction(core: string, cursor?: string) {
       };
     const transits = await readTransits(core, cursor);
     const balances = [];
-    for (const chain of fund.chains) balances.push(await readBalances(core, Number(chain.chainId)));
+    // POO-2262: the balances route takes an EVM chain; a v6 Fund's Solana spoke is not one.
+    for (const chain of fund.chains.filter(isEvmDeployment))
+      balances.push(await readBalances(core, Number(chain.chainId)));
     return { transits, balances };
   });
 }
@@ -264,5 +281,50 @@ export async function pollFundReportAction(core: string, jobId: string) {
       throw new ApiError(403, "V2_SESSION", "wrong fund");
     if (!cached) polls.set(jobId, { at: Date.now(), job });
     return job;
+  });
+}
+const solanaRefreshes = new Map<
+  string,
+  { at: number; fresh?: Awaited<ReturnType<typeof requestSolanaReport>> }
+>();
+async function requestSolanaReport(core: string) {
+  const fresh = await solanaFetch(
+    `/funds/${core}/solana/reports/fresh`,
+    "POST",
+    reportFreshSchema,
+    {},
+  );
+  return {
+    usable: fresh.usable,
+    refreshing: fresh.refreshing,
+    retryAfterSeconds: fresh.retryAfterSeconds,
+    jobId: fresh.jobId && z.string().uuid().safeParse(fresh.jobId).success ? fresh.jobId : null,
+  };
+}
+/**
+ * §3.9 / §9 step 9: the on-demand Solana report a v6 Fund needs before a deposit, payout request
+ * or claim. API key only (keeper-paid, never the admin key); any verified session wallet may ask,
+ * like the builders. One upstream call per Fund per 15 s, the API's own retry hint.
+ */
+export async function refreshSolanaReportAction(core: string) {
+  return resultOf(async () => {
+    await walletIdentity();
+    addressSchema.parse(core);
+    if (isMockMode)
+      return { usable: true, refreshing: false, retryAfterSeconds: null, jobId: null };
+    const key = core.toLowerCase();
+    const now = Date.now();
+    for (const [entry, value] of solanaRefreshes)
+      if (now - value.at > 15_000) solanaRefreshes.delete(entry);
+    const previous = solanaRefreshes.get(key);
+    if (previous) {
+      if (previous.fresh) return previous.fresh;
+      throw new ApiError(429, "V2_RATE_LIMITED", "rate limited");
+    }
+    if (solanaRefreshes.size >= 100) throw new ApiError(429, "V2_RATE_LIMITED", "rate limited");
+    solanaRefreshes.set(key, { at: now });
+    const fresh = await requestSolanaReport(core);
+    solanaRefreshes.set(key, { at: now, fresh });
+    return fresh;
   });
 }

@@ -298,3 +298,48 @@ describe("Manager V2 read and unavailable review [POO-2228]", () => {
     expect(JSON.stringify(result)).not.toContain("secret");
   });
 });
+
+describe("POO-2262 v6 Fund on the manager reads", () => {
+  const solana = {
+    ...version,
+    chainId: "1",
+    status: "created",
+    solana: {
+      ...version,
+      program: "7PptZ653uyn5eoAFKqs4DXR1ijxH6sf49f2YAGMLTfCx",
+      fund: "4fhgX4FhW8Gvq5cnt7QJq9d4uTDhQdYc8ZMRULWkRWnu",
+      vault: "AXnN1ihCoy6bCwqcii6eDLT74abAwzDrn1AmgN57wNK6",
+      usdcAta: "HEkWhruKWari9tepXfcKCTpS2YYfbYCWfoJtKmzqRw8b",
+    },
+  };
+  it("reads balances on the EVM chains only", async () => {
+    const fund = structuredClone(mockFund);
+    mocks.fund.mockResolvedValue({
+      ...fund,
+      manager: wallet,
+      chains: [...fund.chains, solana],
+    });
+    mocks.balances.mockRejectedValue(new ApiError(503, "UPSTREAM", "secret"));
+    expect(await loadManageFundAction(core)).toMatchObject({ ok: true });
+    expect(mocks.balances.mock.calls.map(([, chain]) => chain)).toEqual([42161, 4663]);
+  });
+  it("still opens a Robinhood position of a Fund whose chains include Solana", async () => {
+    mocks.read.mockImplementation(
+      async (path: string, schema: { parse(value: unknown): unknown }) =>
+        schema.parse(
+          path.endsWith(core)
+            ? {
+                ...version,
+                coreVault: core,
+                manager: wallet,
+                chains: [
+                  { ...version, chainId: "4663", spokeVault: vault, status: "created" },
+                  solana,
+                ],
+              }
+            : { ...version, position: live },
+        ),
+    );
+    expect(await loadManagePositionAction(core, 4663, key)).toMatchObject({ ok: true });
+  });
+});

@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-056 (POO-2228)
  * @name manageActions
  * @implements-rules-version v1
- * @implements-rules-version v1 (POO-2226 manager-only fund reads)
+ * @implements-rules-version v1 (POO-2226 manager-only fund reads); v6 Solana chain skipped (POO-2262)
  * @analytics-events none, server read boundary; Manage owns the blocked-intent event.
  * Review remains unavailable until principal provenance, costs and continuation are served.
  */
@@ -31,19 +31,33 @@ import {
   manageMoveRangeDraftSchema,
   managePositionDetailSchema,
 } from "./manageSchemas";
-import { addressSchema, chainIdSchema, poolIdSchema } from "./schemas";
+import {
+  addressSchema,
+  chainIdSchema,
+  isEvmDeployment,
+  poolIdSchema,
+  SOLANA_FUND_CHAIN_ID,
+} from "./schemas";
 
 const fundSchema = z.object({
   protocolVersion: z.literal("v2"),
   coreVault: addressSchema,
   manager: addressSchema,
   chains: z.array(
-    z.object({
-      protocolVersion: z.literal("v2"),
-      chainId: z.enum(["42161", "4663"]),
-      spokeVault: addressSchema,
-      status: z.enum(["created", "pending"]),
-    }),
+    z.discriminatedUnion("chainId", [
+      z.object({
+        protocolVersion: z.literal("v2"),
+        chainId: z.enum(["42161", "4663"]),
+        spokeVault: addressSchema,
+        status: z.enum(["created", "pending"]),
+      }),
+      // POO-2262: a v6 Fund's Solana spoke has no EVM vault and never hosts an EVM position.
+      z.object({
+        protocolVersion: z.literal("v2"),
+        chainId: z.literal(SOLANA_FUND_CHAIN_ID),
+        status: z.enum(["created", "pending"]),
+      }),
+    ]),
   ),
 });
 const same = (left: string, right: string) => left.toLowerCase() === right.toLowerCase();
@@ -125,7 +139,9 @@ async function authorizedPosition(
   // PP-INTEGRATION-POINT: exact v2 fund identity and chain-vault ownership, no mock metadata fallback.
   const fund = await v2Fetch(`/funds/${core}`, fundSchema);
   assertFundOwner(fund, core, wallet);
-  const vault = fund.chains.find((entry) => entry.chainId === String(chain));
+  const vault = fund.chains
+    .filter(isEvmDeployment)
+    .find((entry) => entry.chainId === String(chain));
   if (vault?.status !== "created")
     throw new ApiError(409, "V2_POSITION_UNAVAILABLE", "position unavailable");
   // PP-INTEGRATION-POINT: served position DTO carries canonical pool metadata and holdings.
@@ -194,6 +210,8 @@ export async function loadManageFundAction(
     // PP-INTEGRATION-POINT: a chain's missing balance cannot erase valid fund positions.
     const results = await Promise.allSettled(
       fund.chains
+        // POO-2262: the balances route takes an EVM chain; Solana balances are a Solana read.
+        .filter(isEvmDeployment)
         .filter((chain) => chain.status === "created")
         .map(async (chain) => {
           const balance = balancesSchema.parse(await readBalances(core, Number(chain.chainId)));

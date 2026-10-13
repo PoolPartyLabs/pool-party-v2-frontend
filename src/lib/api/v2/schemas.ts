@@ -1,8 +1,10 @@
 /**
  * @id PP-CORE-LIB-113 (POO-2133)
  * @name v2ApiSchemas
- * @implements-rules-version v1
- * Wire schemas from the October 3 catalog and fund API contracts.
+ * @implements-rules-version v1; v6 fund reads (POO-2262, pool-party-api `docs/SOLANA_API_CONTRACT.md` §3.8, §3.9)
+ * Wire schemas from the October 3 catalog and fund API contracts. Fund reads also accept a v6
+ * (Hub + Robinhood + Solana) Fund: Solana is chain "1" there, with its own entry shape and no EVM
+ * addresses. Route parameters (`chainIdSchema`) and the catalog stay EVM-only.
  */
 import { z } from "zod";
 
@@ -10,6 +12,10 @@ export const addressSchema = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 export const poolIdSchema = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
 export const chainIdSchema = z.union([z.literal(42161), z.literal(4663)]);
 const wireChain = z.enum(["42161", "4663"]);
+/** The wire id of the Solana spoke in v6 fund reads (API contract §3.8). Never a route parameter. */
+export const SOLANA_FUND_CHAIN_ID = "1";
+const fundWireChain = z.enum(["42161", "4663", SOLANA_FUND_CHAIN_ID]);
+const base58Account = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
 const uint = z.string().regex(/^\d+$/);
 const decimal = z.string().regex(/^-?\d+(\.\d+)?$/);
 const version = { protocolVersion: z.literal("v2") };
@@ -94,7 +100,7 @@ export const catalogReservesSchema = z.object({
   chainId: z.literal("42161"),
   reserves: z.array(catalogReserveSchema),
 });
-const chainDeployment = z.object({
+const evmChainDeployment = z.object({
   ...version,
   chainId: wireChain,
   spokeVault: addressSchema,
@@ -104,6 +110,25 @@ const chainDeployment = z.object({
   acrossBridgeAdapter: addressSchema.optional(),
   status: z.enum(["created", "pending"]),
 });
+/** §3.8: base58 accounts; `solana` is null while Solana is disabled or the Hub policy is unreadable. */
+const solanaChainDeployment = z.object({
+  ...version,
+  chainId: z.literal(SOLANA_FUND_CHAIN_ID),
+  status: z.enum(["created", "pending"]),
+  solana: z
+    .object({
+      ...version,
+      program: base58Account,
+      fund: base58Account,
+      vault: base58Account,
+      usdcAta: base58Account,
+    })
+    .nullable(),
+});
+const chainDeployment = z.discriminatedUnion("chainId", [
+  evmChainDeployment,
+  solanaChainDeployment,
+]);
 const profile = z
   .object({
     ...version,
@@ -124,10 +149,10 @@ export const fundIdentitySchema = z.object({
   chains: z.array(chainDeployment),
   profile: profile.nullable().optional(),
 });
-const adapter = z.object({ ...version, chainId: wireChain, adapter: addressSchema });
+const adapter = z.object({ ...version, chainId: fundWireChain, adapter: addressSchema });
 const spoke = z.object({
   ...version,
-  chainId: wireChain,
+  chainId: fundWireChain,
   wormholeChainId: z.number().int(),
   spokeVault: poolIdSchema,
   spokeToken: addressSchema,
@@ -140,18 +165,49 @@ export const mandateSchema = z.object({
   hubChainId: z.literal("42161"),
   hubWormholeChainId: z.number().int(),
   usdc: addressSchema,
-  tokens: z.array(z.object({ ...version, chainId: wireChain, token: addressSchema })).max(16),
+  tokens: z.array(z.object({ ...version, chainId: fundWireChain, token: addressSchema })).max(16),
   adapters: z.array(adapter),
   swapAdapters: z.array(adapter),
   pools: z.array(adapter.extend({ poolKey: poolIdSchema })),
   spokes: z.array(spoke),
-  bridgeAdapters: z.array(adapter.extend({ spokeChainId: wireChain })),
-  operatingCash: z.array(z.object({ ...version, chainId: wireChain, floor: uint, topUp: uint })),
+  bridgeAdapters: z.array(adapter.extend({ spokeChainId: fundWireChain })),
+  operatingCash: z.array(
+    z.object({ ...version, chainId: fundWireChain, floor: uint, topUp: uint }),
+  ),
   payoutFeeBps: z.number().int(),
   minFirstDeposit: uint,
   performanceFeeBps: z.number().int(),
   managementFeeBps: z.number().int(),
 });
+/** Seconds and indexes arrive as decimal strings or numbers; both normalize to a number. */
+const wireCount = z.preprocess(
+  (value) => (typeof value === "string" && /^\d{1,15}$/.test(value) ? Number(value) : value),
+  z.number().int().nonnegative(),
+) as z.ZodType<number>;
+/** §3.9: a spoke's report is usable when a transaction landing within the margin still sees it fresh. */
+const reportFreshness = z.object({
+  ...version,
+  receiverIndex: wireCount,
+  hasReport: z.boolean(),
+  ageSeconds: wireCount.nullable(),
+  maxReportAge: wireCount,
+  marginSeconds: wireCount,
+  usable: z.boolean(),
+});
+const spokeReportFields = {
+  lastReport: z
+    .object({ ...version, receiverIndex: wireCount, ageSeconds: wireCount })
+    .passthrough()
+    .nullable()
+    .optional(),
+  reportFreshness: reportFreshness.optional(),
+};
+/** `GET /funds/:core` spokes (every chain but the Hub), each with its own Hub-accepted report. */
+const fundSpoke = z.discriminatedUnion("chainId", [
+  evmChainDeployment.extend(spokeReportFields).passthrough(),
+  solanaChainDeployment.extend(spokeReportFields).passthrough(),
+]);
+const fundSpokes = z.array(fundSpoke).optional();
 export const fundsSchema = z.object({
   ...version,
   funds: z.array(fundIdentitySchema),
@@ -171,9 +227,26 @@ export const fundDetailSchema = fundIdentitySchema
     payoutReserve: uint,
     inFlightValue: uint,
     totalSupply: uint,
+    factory: addressSchema.optional(),
+    // Display and gating detail only: a spoke list this client cannot read is dropped, never fatal.
+    // The cast keeps input = output, which `v2Fetch(path, schema: ZodType<T>)` infers T from.
+    spokes: fundSpokes.catch(undefined) as unknown as typeof fundSpokes,
+    /** §3.9 deposit gate: every spoke's report is usable. Absent on an API without per-spoke reports. */
+    reportsUsable: z.boolean().optional(),
   })
   .passthrough();
 export type CatalogToken = z.infer<typeof catalogTokenSchema>;
 export type CatalogPool = z.infer<typeof catalogPoolSchema>;
 export type CatalogReserve = z.infer<typeof catalogReserveSchema>;
 export type V2ChainId = z.infer<typeof chainIdSchema>;
+export type FundChainDeployment = z.infer<typeof chainDeployment>;
+export type EvmChainDeployment = z.infer<typeof evmChainDeployment>;
+export type SolanaChainDeployment = z.infer<typeof solanaChainDeployment>;
+export type FundSpoke = z.infer<typeof fundSpoke>;
+export type FundReportFreshness = z.infer<typeof reportFreshness>;
+/** An EVM deployment (Hub or Robinhood): the only kind with a spoke vault, adapters and an RPC. */
+export function isEvmDeployment<Entry extends { chainId: string }>(
+  entry: Entry,
+): entry is Exclude<Entry, { chainId: typeof SOLANA_FUND_CHAIN_ID }> {
+  return entry.chainId !== SOLANA_FUND_CHAIN_ID;
+}

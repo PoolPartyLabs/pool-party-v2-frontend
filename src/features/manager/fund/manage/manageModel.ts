@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-051
  * @name manageModel
- * @implements-rules-version v2 (POO-2246; extends POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2246; extends POO-2226, POO-2232); v6 Solana network (POO-2262)
  * @analytics-events none, normalized read data consumed by ManageScreen.
  *
  * One read model for cards and panels. Position identity is independent of pool and plan identity.
@@ -80,7 +80,8 @@ export interface ManageModel {
 
 import Decimal from "decimal.js";
 import { formatUnits } from "viem";
-import { apiNetworkForChain, chainDisplayName, supportedChainMetas } from "@/lib/chains/config";
+import { fundChainNetwork } from "@/features/funds/fundModel";
+import { supportedChainMetas } from "@/lib/chains/config";
 
 export function available<T>(value: T, source: string): ManageRead<T> {
   return { status: "available", value, source };
@@ -147,7 +148,7 @@ function positionOf(core: string, source: FundPosition): ManagePosition {
           : source.adapterKind === "uniswap-v3"
             ? "Uniswap v3"
             : source.adapterKind,
-    network: apiNetworkForChain(chainId) ?? String(chainId),
+    network: fundChainNetwork(chainId).slug ?? String(chainId),
     tokens,
     valueUsd: decimalRead(
       source.currentValueUsd ?? source.valueUsd,
@@ -219,10 +220,12 @@ export function normalizeManageModel(fund: FundView, balances: FundBalances[] = 
       symbol: meta?.chain.nativeCurrency.symbol ?? "",
       decimals: meta?.chain.nativeCurrency.decimals ?? -1,
     };
+    // POO-2262: a v6 Fund's Solana spoke is chain 1 (never Ethereum here); named from the fund helper.
+    const network = fundChainNetwork(chainId);
     return {
       chainId,
-      network: apiNetworkForChain(chainId) ?? String(chainId),
-      name: chainDisplayName(chainId) ?? String(chainId),
+      network: network.slug ?? String(chainId),
+      name: network.name,
       hub,
       positions: positions.filter((position) => position.chainId === chainId),
       idle: { ...stable, amount: idleAmount },

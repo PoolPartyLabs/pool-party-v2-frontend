@@ -895,7 +895,21 @@
     "transitSend": "Envío",
     "transitFill": "Ejecución",
     "transitAcknowledgement": "Acuse de recibo",
-    "decodedError": "Error decodificado: {name}"
+    "decodedError": "Error decodificado: {name}",
+    "reportRefreshing": "Actualizando informe. El fondo necesita primero un informe reciente de cada red, lo que puede tardar unos minutos.",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "Informe de hace {minutes} min",
+      "noReport": "Aún sin informe",
+      "usable": "Utilizable",
+      "refreshing": "Actualizando",
+      "program": "Programa",
+      "fundAccount": "Cuenta del fondo",
+      "vault": "Vault",
+      "usdcAccount": "Cuenta USDC",
+      "accountsUnavailable": "Cuentas de Solana no disponibles"
+    }
   },
   "investV2": {
     "notAvailable": "No disponible",

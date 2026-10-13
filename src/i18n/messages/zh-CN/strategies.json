@@ -895,7 +895,21 @@
     "transitSend": "发送",
     "transitFill": "成交",
     "transitAcknowledgement": "接收确认",
-    "decodedError": "已解码的错误：{name}"
+    "decodedError": "已解码的错误：{name}",
+    "reportRefreshing": "报告更新中。基金需要先获得每个网络的最新报告，可能需要几分钟。",
+    "networks": {
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "reportAge": "报告 {minutes} 分钟前",
+      "noReport": "暂无报告",
+      "usable": "可用",
+      "refreshing": "更新中",
+      "program": "程序",
+      "fundAccount": "基金账户",
+      "vault": "Vault",
+      "usdcAccount": "USDC 账户",
+      "accountsUnavailable": "Solana 账户不可用"
+    }
   },
   "investV2": {
     "notAvailable": "暂不可用",
