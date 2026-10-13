@@ -1872,7 +1872,7 @@
     "minimumLabel": "Minimum first deposit",
     "minimumHint": "From {floor} USDC up to the seed. Default {fallback} USDC.",
     "spokeCapLabel": "Spoke cap (each spoke)",
-    "spokeCapHint": "At least {floor} raw unit; one cap for Robinhood and Solana. Default {fallback} USDC.",
+    "spokeCapHint": "Above zero; one cap for Robinhood and for Solana. Default {fallback} USDC.",
     "sealedTitle": "What the factory seals",
     "sealedNetworks": "Networks: Arbitrum (hub), Robinhood Chain, Solana",
     "sealedSeed": "Seed: {amount} USDC",

@@ -1872,7 +1872,7 @@
     "minimumLabel": "Khoản nạp đầu tối thiểu",
     "minimumHint": "Từ {floor} USDC đến vốn khởi tạo. Mặc định {fallback} USDC.",
     "spokeCapLabel": "Hạn mức spoke (mỗi spoke)",
-    "spokeCapHint": "Tối thiểu {floor} đơn vị gốc; một hạn mức cho Robinhood và Solana. Mặc định {fallback} USDC.",
+    "spokeCapHint": "Lớn hơn 0; một hạn mức cho Robinhood và cho Solana. Mặc định {fallback} USDC.",
     "sealedTitle": "Những gì factory niêm phong",
     "sealedNetworks": "Mạng: Arbitrum (hub), Robinhood Chain, Solana",
     "sealedSeed": "Vốn khởi tạo: {amount} USDC",

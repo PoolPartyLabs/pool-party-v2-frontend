@@ -1872,7 +1872,7 @@
     "minimumLabel": "Depósito inicial mínimo",
     "minimumHint": "Desde {floor} USDC hasta el capital inicial. Predeterminado {fallback} USDC.",
     "spokeCapLabel": "Límite por spoke (cada spoke)",
-    "spokeCapHint": "Al menos {floor} unidad mínima; un límite para Robinhood y Solana. Predeterminado {fallback} USDC.",
+    "spokeCapHint": "Mayor que cero; un límite para Robinhood y otro igual para Solana. Predeterminado {fallback} USDC.",
     "sealedTitle": "Lo que sella la factory",
     "sealedNetworks": "Redes: Arbitrum (hub), Robinhood Chain, Solana",
     "sealedSeed": "Capital inicial: {amount} USDC",

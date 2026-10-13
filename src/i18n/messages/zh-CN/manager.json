@@ -1872,7 +1872,7 @@
     "minimumLabel": "最低首次存款",
     "minimumHint": "从 {floor} USDC 到种子资金。默认 {fallback} USDC。",
     "spokeCapLabel": "分支上限(每个分支)",
-    "spokeCapHint": "至少 {floor} 个最小单位;Robinhood 和 Solana 共用一个上限。默认 {fallback} USDC。",
+    "spokeCapHint": "须大于零;Robinhood 和 Solana 各适用同一上限。默认 {fallback} USDC。",
     "sealedTitle": "工厂封存的内容",
     "sealedNetworks": "网络:Arbitrum(枢纽)、Robinhood Chain、Solana",
     "sealedSeed": "种子资金:{amount} USDC",

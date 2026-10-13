@@ -1872,7 +1872,7 @@
     "minimumLabel": "Mindesterstanlage",
     "minimumHint": "Von {floor} USDC bis zum Startkapital. Standard {fallback} USDC.",
     "spokeCapLabel": "Spoke-Limit (je Spoke)",
-    "spokeCapHint": "Mindestens {floor} Rohwert; ein Limit für Robinhood und Solana. Standard {fallback} USDC.",
+    "spokeCapHint": "Größer als null; ein Limit für Robinhood und für Solana. Standard {fallback} USDC.",
     "sealedTitle": "Was die Factory versiegelt",
     "sealedNetworks": "Netzwerke: Arbitrum (Hub), Robinhood Chain, Solana",
     "sealedSeed": "Startkapital: {amount} USDC",

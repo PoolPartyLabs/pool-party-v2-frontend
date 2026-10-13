@@ -1872,7 +1872,7 @@
     "minimumLabel": "Minimale eerste storting",
     "minimumHint": "Van {floor} USDC tot het startkapitaal. Standaard {fallback} USDC.",
     "spokeCapLabel": "Spoke-limiet (per spoke)",
-    "spokeCapHint": "Minstens {floor} ruwe eenheid; één limiet voor Robinhood en Solana. Standaard {fallback} USDC.",
+    "spokeCapHint": "Groter dan nul; één limiet voor Robinhood en voor Solana. Standaard {fallback} USDC.",
     "sealedTitle": "Wat de factory verzegelt",
     "sealedNetworks": "Netwerken: Arbitrum (hub), Robinhood Chain, Solana",
     "sealedSeed": "Startkapitaal: {amount} USDC",

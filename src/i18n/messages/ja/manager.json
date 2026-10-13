@@ -1872,7 +1872,7 @@
     "minimumLabel": "最低初回入金額",
     "minimumHint": "{floor} USDC からシード額まで。既定値 {fallback} USDC。",
     "spokeCapLabel": "スポーク上限(各スポーク)",
-    "spokeCapHint": "最低 {floor} 単位。Robinhood と Solana で共通の上限です。既定値 {fallback} USDC。",
+    "spokeCapHint": "0 より大きい値。Robinhood と Solana で共通の上限です。既定値 {fallback} USDC。",
     "sealedTitle": "ファクトリーが封印する内容",
     "sealedNetworks": "ネットワーク:Arbitrum(ハブ)、Robinhood Chain、Solana",
     "sealedSeed": "シード:{amount} USDC",

@@ -1872,7 +1872,7 @@
     "minimumLabel": "최소 첫 입금액",
     "minimumHint": "{floor} USDC부터 시드 금액까지. 기본값 {fallback} USDC.",
     "spokeCapLabel": "스포크 한도(스포크별)",
-    "spokeCapHint": "최소 {floor} 단위. Robinhood와 Solana에 공통 한도입니다. 기본값 {fallback} USDC.",
+    "spokeCapHint": "0보다 커야 합니다. Robinhood와 Solana에 공통 한도입니다. 기본값 {fallback} USDC.",
     "sealedTitle": "팩토리가 봉인하는 항목",
     "sealedNetworks": "네트워크: Arbitrum(허브), Robinhood Chain, Solana",
     "sealedSeed": "시드: {amount} USDC",
