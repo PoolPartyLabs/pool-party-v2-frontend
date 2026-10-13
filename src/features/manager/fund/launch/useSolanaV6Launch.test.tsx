@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
     discoverSolanaFundAction: vi.fn(),
     buildSolanaBootstrapAction: vi.fn(),
     readSolanaFundAction: vi.fn(),
-  } as Record<string, ReturnType<typeof vi.fn>>,
+  },
   send: vi.fn(),
   receipt: vi.fn(),
   signTypedData: vi.fn(),
