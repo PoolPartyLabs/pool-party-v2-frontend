@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-096
  * @name layoutMetrics tests
- * @implements-rules-version v2 (POO-2345)
+ * @implements-rules-version v1 (POO-2348); v2 (POO-2345)
  * @analytics-events none, a pure measuring module: nothing here is rendered or tracked.
  *
  * Unit tests of the metric on small hand-built layouts, and the R8 test that records the numbers
@@ -9,7 +9,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } from "@/mocks/data/buildCanvasFixtures";
+import {
+  BUILD_CANVAS_FIXTURES,
+  solanaBuildProblem,
+  solanaTwoChainReturn,
+} from "@/mocks/data/buildCanvasFixtures";
 import type { EdgeKind, EdgeNode, GraphLayout, Point } from "./graphTypes";
 import { LAYOUT } from "./layoutConstants";
 import { layoutGraph } from "./layoutGraph";
@@ -17,6 +21,7 @@ import {
   classifyCrossings,
   crossingLowerBound,
   findConflicts,
+  findGroupIntrusions,
   type LayoutMetrics,
   measureLayout,
 } from "./layoutMetrics";
@@ -512,12 +517,18 @@ describe("measureLayout: input checks", () => {
  * the least number of crossings that R2 forces. A test derives it from the layout with
  * `crossingLowerBound` and checks the record against it, so the record cannot drift from the rule.
  */
-const FIXTURES = { ...BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } as const;
+const FIXTURES = { ...BUILD_CANVAS_FIXTURES, solanaTwoChainReturn, solanaBuildProblem } as const;
 type Name = keyof typeof FIXTURES;
 
 const NO_GAP = Number.POSITIVE_INFINITY;
 
-const BASELINE: Record<Name, LayoutMetrics> = {
+type Routing = Omit<LayoutMetrics, "groupIntrusions">;
+
+/**
+ * The solanaBuildProblem row is new in POO-2348. It has no POO-2342 numbers, so it holds the numbers
+ * of origin/main 6212c38 (before this task), measured with this metric.
+ */
+const BASELINE: Record<Name, Routing> = {
   canvasA: { crossings: 29, overlaps: 22, totalBends: 54, maxBendsPerLeg: 3, minGap: 0 },
   canvasB: { crossings: 0, overlaps: 3, totalBends: 16, maxBendsPerLeg: 3, minGap: 0 },
   canvasC: { crossings: 2, overlaps: 1, totalBends: 8, maxBendsPerLeg: 3, minGap: 0 },
@@ -528,6 +539,27 @@ const BASELINE: Record<Name, LayoutMetrics> = {
   newSpokeNoChain: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3, minGap: 128.25 },
   hubEmptyWithSpoke: { crossings: 0, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3, minGap: 98 },
   solanaTwoChainReturn: { crossings: 5, overlaps: 1, totalBends: 19, maxBendsPerLeg: 3, minGap: 0 },
+  solanaBuildProblem: { crossings: 3, overlaps: 0, totalBends: 15, maxBendsPerLeg: 3, minGap: 12 },
+};
+
+/**
+ * @rule R3
+ * The group intrusions of the layout before POO-2348 (origin/main 6212c38), measured with this
+ * metric. Every fixture is at 0 now. The hub chain legs ran inside a spoke box, and so did the
+ * return line of a spoke chain that passed another spoke.
+ */
+const INTRUSIONS_BEFORE: Record<Name, number> = {
+  canvasA: 4,
+  canvasB: 4,
+  canvasC: 0,
+  canvasD: 0,
+  workedExample2: 2,
+  buildState3: 0,
+  buildState5: 0,
+  newSpokeNoChain: 0,
+  hubEmptyWithSpoke: 0,
+  solanaTwoChainReturn: 2,
+  solanaBuildProblem: 2,
 };
 
 const FORCED: Record<Name, number> = {
@@ -541,9 +573,10 @@ const FORCED: Record<Name, number> = {
   newSpokeNoChain: 0,
   hubEmptyWithSpoke: 0,
   solanaTwoChainReturn: 3,
+  solanaBuildProblem: 3,
 };
 
-const FINAL: Record<Name, LayoutMetrics> = {
+const FINAL: Record<Name, Routing> = {
   canvasA: { crossings: 19, overlaps: 0, totalBends: 48, maxBendsPerLeg: 3, minGap: 4.5 },
   canvasB: { crossings: 0, overlaps: 0, totalBends: 10, maxBendsPerLeg: 3, minGap: 18 },
   canvasC: { crossings: 2, overlaps: 0, totalBends: 8, maxBendsPerLeg: 3, minGap: 21 },
@@ -560,6 +593,7 @@ const FINAL: Record<Name, LayoutMetrics> = {
     maxBendsPerLeg: 3,
     minGap: 12,
   },
+  solanaBuildProblem: { crossings: 3, overlaps: 0, totalBends: 15, maxBendsPerLeg: 3, minGap: 12 },
 };
 
 /**
@@ -568,6 +602,86 @@ const FINAL: Record<Name, LayoutMetrics> = {
  * stay at the Figma positions. So canvas A uses a pitch of 4.5 px. This is above LANE_PITCH_MIN.
  */
 const BAND_SHORT: ReadonlySet<Name> = new Set<Name>(["canvasA"]);
+
+describe("findGroupIntrusions (POO-2348)", () => {
+  const group = (network: string, x: number, y: number, w: number, h: number) => ({
+    network,
+    rect: { x, y, w, h },
+    chipAnchor: { x, y },
+    hasChains: true,
+  });
+  const withGroups = (edges: EdgeNode[]): GraphLayout => ({
+    ...layoutOf(edges),
+    groups: [group("solana", 100, 100, 200, 200)],
+    blocks: [],
+  });
+
+  // @rule R3
+  it("counts a segment that runs inside the box of another group", () => {
+    const layout = withGroups([edge("principal:chain:hub", "principal", [50, 150], [250, 150])]);
+    expect(findGroupIntrusions(layout)).toEqual(["principal:chain:hub"]);
+    expect(measureLayout(layout).groupIntrusions).toBe(1);
+  });
+
+  // @rule R3
+  it("does not count a segment inside the box of its own group", () => {
+    const layout = withGroups([edge("bridge:solana", "principal", [120, 150], [250, 150])]);
+    expect(findGroupIntrusions(layout)).toEqual([]);
+  });
+
+  // @rule R3
+  it("does not count a segment that only touches the border or runs outside the box", () => {
+    const layout = withGroups([
+      edge("principal:chain:hub", "principal", [50, 100], [350, 100]),
+      edge("principal:chain:hub:leg:1", "principal", [300, 120], [300, 280]),
+      edge("income:block:hub", "income", [50, 320], [350, 320]),
+    ]);
+    expect(findGroupIntrusions(layout)).toEqual([]);
+  });
+
+  const blockAt = (id: string, network: string, x: number, y: number) => ({
+    id,
+    chainId: id,
+    network,
+    family: "position" as const,
+    kind: "pool",
+    auto: false,
+    rect: { x, y, w: 40, h: 20 },
+  });
+
+  // @rule R3
+  it("finds the owner by the box that holds the block, so a hub of the same network is foreign", () => {
+    const layout: GraphLayout = {
+      ...withGroups([
+        edge("principal:chain:hub", "principal", [50, 150], [250, 150]),
+        edge("principal:chain:own", "principal", [120, 200], [250, 200]),
+      ]),
+      blocks: [blockAt("hub", "solana", 0, 0), blockAt("own", "solana", 150, 120)],
+    };
+    expect(findGroupIntrusions(layout)).toEqual(["principal:chain:hub"]);
+  });
+
+  // @rule R3
+  it("keeps two spokes of one network apart when a block sits in the box of the other", () => {
+    const layout: GraphLayout = {
+      ...withGroups([edge("principal:chain:b", "principal", [420, 150], [480, 150])]),
+      groups: [group("solana", 100, 100, 200, 200), group("solana", 400, 100, 200, 200)],
+      blocks: [blockAt("b", "solana", 420, 120)],
+    };
+    expect(findGroupIntrusions(layout)).toEqual([]);
+    const crossing: GraphLayout = {
+      ...layout,
+      edges: [edge("principal:chain:b", "principal", [150, 150], [480, 150])],
+    };
+    expect(findGroupIntrusions(crossing)).toEqual(["principal:chain:b"]);
+  });
+
+  // @rule R3
+  it("counts a segment with no owner that runs inside a box, once per segment", () => {
+    const layout = withGroups([edge("a", "income", [50, 150], [250, 150])]);
+    expect(findGroupIntrusions(layout)).toEqual(["a"]);
+  });
+});
 
 describe("R8: the numbers of each layout fixture", () => {
   for (const [name, fixture] of Object.entries(FIXTURES)) {
@@ -613,8 +727,16 @@ describe("R8: the numbers of each layout fixture", () => {
           expect(now.minGap).toBeGreaterThanOrEqual(LAYOUT.LANE_PITCH);
         });
 
+      // @rule R3
+      it("has no segment inside the box of a group that is not its own", () => {
+        expect(now.groupIntrusions).toBe(0);
+        expect(findGroupIntrusions(layout)).toEqual([]);
+        expect(now.groupIntrusions).toBeLessThanOrEqual(INTRUSIONS_BEFORE[key]);
+      });
+
       it("records the numbers", () => {
-        expect(now).toEqual(FINAL[key]);
+        const { groupIntrusions: _none, ...routing } = now;
+        expect(routing).toEqual(FINAL[key]);
       });
     });
   }

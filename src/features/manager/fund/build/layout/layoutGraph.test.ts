@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph rule tests
- * @implements-rules-version v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
+ * @implements-rules-version v1 (POO-2348); v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * One test (or one table) per rule of the layout, tagged with its handoff id. The exact coordinates
@@ -15,7 +15,9 @@
  *   other chains and groups by one uniform dx only, and dx changes only when Idle output and Income
  *   decide the leftmost content), with the Build state 5 case explicit;
  * - A3 spacing, ST9 a new spoke, D10 a hub with no chain beside a spoke;
- * - L3 to L6 and L10 on every fixture.
+ * - L3 to L6 and L10 on every fixture;
+ * - POO-2348 rules v1: R1 a Solana spoke on the Build canvas has no Idle and no cash, R2 the return
+ *   lines start below the group boxes, R3 and R4 no line enters the box of another group.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -30,6 +32,8 @@ import {
   canvasD,
   hubEmptyWithSpoke,
   newSpokeNoChain,
+  solanaBuildProblem,
+  solanaTwoChainReturn,
   workedExample2,
 } from "@/mocks/data/buildCanvasFixtures";
 import { validateSemanticGraph } from "../graph/semanticGraph";
@@ -37,6 +41,7 @@ import * as planRules from "../plan/planRules";
 import type { GraphLayout, LayoutChain, LayoutInput, LayoutStep, Rect } from "./graphTypes";
 import { LAYOUT } from "./layoutConstants";
 import { layoutGraph } from "./layoutGraph";
+import { findGroupIntrusions } from "./layoutMetrics";
 import { horizontalRuns, labelKey, nodeRects, verticalsAt } from "./layoutTestKit";
 
 const real = vi.hoisted(() => ({
@@ -56,6 +61,8 @@ beforeEach(() => {
 });
 
 const EN = { startHereWidth: 420 };
+/** The option that gives a Solana spoke its Idle and cash context (Manage). Build leaves it off. */
+const EN_CTX = { startHereWidth: 420, spokeContext: true };
 const FIXTURES = Object.entries(BUILD_CANVAS_FIXTURES) as Array<[string, BuildCanvasFixture]>;
 const WITH_CHAINS = FIXTURES.filter(([, f]) => chainsOf(f.input).length > 0);
 
@@ -390,7 +397,8 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
   });
 
   // @rule L5
-  it("[L5] with no chain anywhere, draws no return line and starts Idle output 48 under", () => {
+  // @rule R2 (POO-2348): the 48 is counted from the bottom of the spoke box, not from its circle.
+  it("[L5, R2] with no chain anywhere, draws no return line and starts Idle output 48 under the box", () => {
     const input: LayoutInput = {
       hubNetwork: "arbitrum",
       hub: { chains: [] },
@@ -399,15 +407,23 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
     const layout = layoutGraph(input, EN);
     expect(layout.edges.some((e) => e.kind === "principal" || e.kind === "income")).toBe(false);
     expect(layout.emptyCaptions).toBeNull();
-    const deepest = bottom(circleOf(layout, "robinhood"));
+    const box = layout.groups.find((g) => g.network === "robinhood");
+    expect(box).toBeDefined();
+    expect(bottom(box?.rect ?? { x: 0, y: 0, w: 0, h: 0 })).toBe(
+      bottom(circleOf(layout, "robinhood")) + LAYOUT.GROUP_PAD,
+    );
+    const deepest = bottom(box?.rect ?? { x: 0, y: 0, w: 0, h: 0 });
     expect(spine(layout, "idleOutput").y).toBe(deepest + LAYOUT.EMPTY_OUTPUT_GAP);
   });
 
   // @rule L5
-  it("[L5] counts an empty spoke's circle as content when finding the deepest", () => {
+  // @rule R2 (POO-2348): the deepest is the bottom of the spoke box, 16 under the circle.
+  it("[L5, R2] counts an empty spoke's box as content when finding the deepest", () => {
     const layout = layoutGraph(newSpokeNoChain.input, EN);
-    const deepest = bottom(circleOf(layout, "robinhood"));
-    expect(deepest).toBe(LAYOUT.INNER_ROW_TOP + LAYOUT.CIRCLE);
+    const circle = bottom(circleOf(layout, "robinhood"));
+    expect(circle).toBe(LAYOUT.INNER_ROW_TOP + LAYOUT.CIRCLE);
+    const deepest = circle + LAYOUT.GROUP_PAD;
+    expect(layout.groups.map((g) => bottom(g.rect))).toEqual([deepest]);
     expect(horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length).toBe(1);
   });
 });
@@ -1228,9 +1244,9 @@ function segmentCrossesCard(a: { x: number; y: number }, b: { x: number; y: numb
   return true;
 }
 
-describe("[POO-2301 R3] Solana spoke context, told apart by the network", () => {
+describe("[POO-2301 R3] Solana spoke context, told apart by the network (the option spokeContext)", () => {
   it("places the Figma Build Idle236x62 and native cash144x96 with32gap inside fit bounds", () => {
-    const layout = layoutGraph(localSolanaInput(), EN);
+    const layout = layoutGraph(localSolanaInput(), EN_CTX);
     const context = layout.spokeContexts?.[0];
     expect(context).toBeDefined();
     if (!context) throw new Error("missing local context");
@@ -1270,7 +1286,7 @@ describe("[POO-2301 R3] Solana spoke context, told apart by the network", () => 
   });
 
   it("declares Bridge to Idle to each branch, while native cash has no financial ports or routes", () => {
-    const layout = layoutGraph(localSolanaInput(2), EN);
+    const layout = layoutGraph(localSolanaInput(2), EN_CTX);
     const graph = layout.semantic;
     expect(graph?.nodes.find((node) => node.id === "spoke-idle:solana")).toBeDefined();
     expect(graph?.nodes.some((node) => node.id === "operating-cash:solana")).toBe(false);
@@ -1302,7 +1318,7 @@ describe("[POO-2301 R3] Solana spoke context, told apart by the network", () => 
   it.each([
     0, 1, 3,
   ])("keeps all declared lines outside every card with %s Solana chains", (count) => {
-    const layout = layoutGraph(localSolanaInput(count), EN);
+    const layout = layoutGraph(localSolanaInput(count), EN_CTX);
     const context = layout.spokeContexts?.[0];
     expect(context).toBeDefined();
     const cards = [
@@ -1326,15 +1342,15 @@ describe("[POO-2301 R3] Solana spoke context, told apart by the network", () => 
   });
 
   it("keeps stable context ids across branch edits and removes them with the spoke", () => {
-    const one = layoutGraph(localSolanaInput(), EN);
-    const many = layoutGraph(localSolanaInput(3), EN);
+    const one = layoutGraph(localSolanaInput(), EN_CTX);
+    const many = layoutGraph(localSolanaInput(3), EN_CTX);
     expect(one.spokeContexts?.map((context) => [context.idle.id, context.cash.id])).toEqual([
       ["spoke-idle:solana", "operating-cash:solana"],
     ]);
     expect(many.spokeContexts?.map((context) => [context.idle.id, context.cash.id])).toEqual(
       one.spokeContexts?.map((context) => [context.idle.id, context.cash.id]),
     );
-    const removed = layoutGraph({ ...localSolanaInput(), spokes: [] }, EN);
+    const removed = layoutGraph({ ...localSolanaInput(), spokes: [] }, EN_CTX);
     expect(removed.spokeContexts).toBeUndefined();
     expect(removed.semantic?.nodes.some((node) => node.id === "spoke-idle:solana")).toBe(false);
   });
@@ -1361,7 +1377,7 @@ describe("[POO-2301 R3] Solana spoke context, told apart by the network", () => 
       steps: chain.steps.map((step) => ({ ...step, id: `hub:${step.id}` })),
     }));
     input.spokes = order === "before" ? [evm, solana] : [solana, evm];
-    const layout = layoutGraph(input, EN);
+    const layout = layoutGraph(input, EN_CTX);
     expect(layout.spokeContexts).toHaveLength(1);
     expect(layout.semantic && validateSemanticGraph(layout.semantic)).toEqual([]);
     for (let index = 1; index < layout.groups.length; index += 1) {
@@ -1393,6 +1409,111 @@ describe("[POO-2301 R3] Solana spoke context, told apart by the network", () => 
   it("[R5] leaves every fixture without a Solana spoke free of Solana context and gives a Solana spoke its context", () => {
     for (const [, fixture] of FIXTURES)
       expect(layoutGraph(fixture.input, EN)).not.toHaveProperty("spokeContexts");
-    expect(layoutGraph(localSolanaInput(), EN).spokeContexts).toHaveLength(1);
+    expect(layoutGraph(localSolanaInput(), EN_CTX).spokeContexts).toHaveLength(1);
+  });
+});
+
+/** The same Solana plan on a network that never had a context, to compare the Build geometry. */
+function withNetwork(input: LayoutInput, network: string): LayoutInput {
+  return { ...input, spokes: input.spokes.map((spoke) => ({ ...spoke, network })) };
+}
+
+describe("[POO-2348 R1] a Solana spoke on the Build canvas has no Idle and no cash", () => {
+  // @rule R1
+  it("draws no Idle, no cash and no context for a Solana spoke when the option is off", () => {
+    for (const count of [0, 1, 3]) {
+      const layout = layoutGraph(localSolanaInput(count), EN);
+      expect(layout).not.toHaveProperty("spokeContexts");
+      expect(layout.edges.some((edge) => edge.id.startsWith("idle:spoke:"))).toBe(false);
+      const ids = layout.semantic?.nodes.map((node) => node.id) ?? [];
+      expect(ids).not.toContain("spoke-idle:solana");
+      expect(ids).not.toContain("operating-cash:solana");
+      expect(layout.semantic && validateSemanticGraph(layout.semantic)).toEqual([]);
+    }
+  });
+
+  // @rule R1
+  it("lays a Solana spoke out like a Robinhood spoke: same boxes, same size", () => {
+    for (const count of [0, 1, 3]) {
+      const solana = layoutGraph(localSolanaInput(count), EN);
+      const robinhood = layoutGraph(withNetwork(localSolanaInput(count), "robinhood"), EN);
+      expect(solana.groups.map((g) => g.rect)).toEqual(robinhood.groups.map((g) => g.rect));
+      expect(solana.blocks.map((b) => b.rect)).toEqual(robinhood.blocks.map((b) => b.rect));
+      expect(solana.bridges.map((b) => b.rect)).toEqual(robinhood.bridges.map((b) => b.rect));
+      expect([solana.width, solana.height]).toEqual([robinhood.width, robinhood.height]);
+    }
+  });
+
+  // @rule R1
+  it("keeps the Idle and cash context when the option is on (the Manage presentation)", () => {
+    const layout = layoutGraph(localSolanaInput(), EN_CTX);
+    expect(layout.spokeContexts).toHaveLength(1);
+    expect(layout.edges.some((edge) => edge.id === "idle:spoke:solana")).toBe(true);
+  });
+});
+
+const RETURN_FIXTURES = [
+  ...FIXTURES,
+  ["solanaTwoChainReturn", solanaTwoChainReturn],
+  ["solanaBuildProblem", solanaBuildProblem],
+] as Array<[string, BuildCanvasFixture]>;
+
+describe("[POO-2348 R2] the return lines start below the box of each spoke group", () => {
+  // @rule R2
+  it.each(
+    RETURN_FIXTURES,
+  )("puts every return lane below every group box, with a margin (%s)", (_name, fixture) => {
+    const layout = layoutGraph(fixture.input, EN);
+    if (layout.groups.length === 0) return;
+    const lowestBox = Math.max(...layout.groups.map((g) => bottom(g.rect)));
+    const returns = layout.edges.filter(
+      (edge) =>
+        edge.id.includes(":returned:") &&
+        edge.points[0]?.y === edge.points[1]?.y &&
+        edge.points[0]?.x !== edge.points[1]?.x,
+    );
+    for (const run of returns)
+      expect(run.points[0]?.y ?? 0, run.id).toBeGreaterThanOrEqual(lowestBox + LAYOUT.LANE_MARGIN);
+  });
+
+  // @rule R2
+  it.each([
+    ["with a fee line", true],
+    ["with no fee line", false],
+  ])("moves Idle output down so that the lane band starts LANE_MARGIN under the lowest box, %s", (_name, fees) => {
+    const input = localSolanaInput(2);
+    if (!fees)
+      for (const spoke of input.spokes)
+        for (const chain of spoke.chains)
+          chain.steps = chain.steps.filter((step) => step.kind !== "collectFees");
+    const layout = layoutGraph(input, EN);
+    const lowestBox = Math.max(...layout.groups.map((g) => bottom(g.rect)));
+    const output = layout.spine.find((node) => node.role === "idleOutput");
+    expect(output).toBeDefined();
+    const band = fees ? LAYOUT.RETURN_BAND_INCOME : LAYOUT.RETURN_BAND;
+    expect(output?.rect.y).toBe(lowestBox + band);
+  });
+});
+
+describe("[POO-2348 R3] no line enters the box of a group that is not its source or target", () => {
+  // @rule R3
+  it.each(RETURN_FIXTURES)("finds no segment inside a foreign group box (%s)", (_name, fixture) => {
+    expect(findGroupIntrusions(layoutGraph(fixture.input, EN))).toEqual([]);
+  });
+
+  // @rule R4
+  it("the Build problem screen has an Arbitrum hub chain, a Raydium chain, a Kamino chain and a return Bridge", () => {
+    const { input } = solanaBuildProblem;
+    expect(input.hubNetwork).toBe("arbitrum");
+    expect(input.hub.chains).toHaveLength(1);
+    expect(input.spokes.map((s) => s.network)).toEqual(["solana"]);
+    const kinds = input.spokes[0]?.chains.flatMap((c) => c.steps.map((st) => st.kind)) ?? [];
+    expect(kinds).toContain("solanaRaydiumPool");
+    expect(kinds).toContain("solanaKaminoSupply");
+    const layout = layoutGraph(input, EN);
+    expect(layout.bridges.some((b) => b.network === "solana" && b.direction === "outbound")).toBe(
+      true,
+    );
+    expect(layout).not.toHaveProperty("spokeContexts");
   });
 });

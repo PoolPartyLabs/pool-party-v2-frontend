@@ -2,7 +2,7 @@
  * @id PP-MGR-CMP-059
  * @name useGraphLayout
  * @implements-rules-version v1 (POO-2156 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
- * @implements-rules-version v1 (POO-2301 local Solana context)
+ * @implements-rules-version v1 (POO-2348: the Build canvas has no Solana Idle and no cash context)
  * @analytics-events none, a layout hook: nothing here is rendered or tracked.
  *
  * The join between a plan and the pure layout, for the graph renderer ({@link BuildGraph}):

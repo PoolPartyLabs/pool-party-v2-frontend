@@ -9,13 +9,17 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } from "@/mocks/data/buildCanvasFixtures";
+import {
+  BUILD_CANVAS_FIXTURES,
+  solanaBuildProblem,
+  solanaTwoChainReturn,
+} from "@/mocks/data/buildCanvasFixtures";
 import type { BridgeNode, EdgeNode, GraphLayout, LayoutInput, Point } from "./graphTypes";
 import { layoutGraph } from "./layoutGraph";
 import { classifyCrossings, findConflicts } from "./layoutMetrics";
 
 const EN = { startHereWidth: 420 };
-const FIXTURES = { ...BUILD_CANVAS_FIXTURES, solanaTwoChainReturn };
+const FIXTURES = { ...BUILD_CANVAS_FIXTURES, solanaTwoChainReturn, solanaBuildProblem };
 
 const CASES = Object.entries(FIXTURES).map(
   ([name, fixture]) => [name, fixture.input, layoutGraph(fixture.input, EN)] as const,
