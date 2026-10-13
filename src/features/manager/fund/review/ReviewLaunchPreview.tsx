@@ -10,8 +10,10 @@ import type { LaunchStepPreview } from "../launch/contracts";
 export interface ReviewLaunchPreviewProps {
   steps: LaunchStepPreview[];
   unavailable?: string;
+  /** POO-2262: a v6 Solana launch has its own journey; this text replaces the EVM step list. */
+  summary?: string;
 }
-export function ReviewLaunchPreview({ steps, unavailable }: ReviewLaunchPreviewProps) {
+export function ReviewLaunchPreview({ steps, unavailable, summary }: ReviewLaunchPreviewProps) {
   const t = useTranslations("manager.fundBuilder.review");
   const all = useTranslations("manager");
   const transactions = steps.filter((step) => step.signer === "manager-wallet").length;
@@ -20,7 +22,9 @@ export function ReviewLaunchPreview({ steps, unavailable }: ReviewLaunchPreviewP
   return (
     <Card className="space-y-3 rounded-[20px] p-4">
       <h3 className="text-sm font-medium">{t("launchPreviewTitle")}</h3>
-      {unavailable ? (
+      {summary ? (
+        <p className="text-xs text-muted-foreground">{summary}</p>
+      ) : unavailable ? (
         <p role="status" className="text-xs text-muted-foreground">
           {unavailable}
         </p>
@@ -48,7 +52,7 @@ export function ReviewLaunchPreview({ steps, unavailable }: ReviewLaunchPreviewP
           ))}
         </>
       )}
-      {!steps.length && (
+      {!steps.length && !summary && (
         <p className="text-sm text-muted-foreground">{t("launchPreviewBlocked")}</p>
       )}
     </Card>

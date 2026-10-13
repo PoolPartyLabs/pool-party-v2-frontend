@@ -3,6 +3,7 @@
  * @name reviewForm
  * @implements-rules-version v1
  * @implements-rules-version v1 (POO-2342 rules v1: the Solana launch reason)
+ * @implements-rules-version DEC-188 (POO-2262: a Solana plan launches through the v6 journey when enabled)
  * @analytics-events none: pure helpers, the Review page emits.
  * Integer fee/USDC input handling and field-specific launch reasons in screen order.
  */
@@ -26,8 +27,11 @@ export const SOLANA_LAUNCH_REASON = {
 export function planBuildReason(
   plan: BuildPlan,
   violations: readonly PlanViolation[],
+  solanaLaunch = false,
 ): { code: string; messageKey: string } | null {
-  if (planHasSolana(plan)) return SOLANA_LAUNCH_REASON;
+  // POO-2262: with the Solana spoke enabled, a Hub + Robinhood + Solana plan launches through the
+  // v6 journey, which validates its own request against the API; the EVM readiness does not apply.
+  if (planHasSolana(plan)) return solanaLaunch ? null : SOLANA_LAUNCH_REASON;
   const readiness = planReadiness(plan, violations);
   if (readiness.ready) return null;
   return {
