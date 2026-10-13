@@ -23,7 +23,7 @@ import { validatePlan } from "../build/plan/planInvariants";
 import { planReadiness, type ReadinessTarget } from "../build/plan/planReadiness";
 import type { FundLaunchDraft, LaunchStepPreview } from "../launch/contracts";
 import { getLaunchSteps } from "../launch/journey";
-import { isSolanaV6Plan, loadSolanaLaunch } from "../launch/solanaV6Launch";
+import { isSolanaV6Plan, loadSolanaLaunch } from "../launch/solanaV6Journal";
 import { startFundLaunch } from "../launch/startFundLaunch";
 import { useV2LaunchStatus } from "../launch/useV2LaunchStatus";
 import { useV2ReviewDraft } from "../launch/useV2ReviewDraft";

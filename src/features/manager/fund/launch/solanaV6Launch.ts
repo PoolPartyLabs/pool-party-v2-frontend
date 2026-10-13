@@ -16,12 +16,27 @@ import {
   getCompiledTransactionMessageDecoder,
   getTransactionDecoder,
 } from "@solana/kit";
-import { z } from "zod";
+import { decodeFunctionData, erc20Abi, type Hex, keccak256, toHex } from "viem";
 import type { BuildCreation, EvmBuild, UnsignedSolanaBuild } from "@/lib/api/v2/solanaSchemas";
 import { SOLANA_SPOKE_PROGRAM } from "@/lib/solana/release";
 import type { SolanaBuiltTransaction } from "@/lib/solana/transaction";
 import type { BuildPlan, Chain } from "../build/plan/buildPlan";
 import { type ReviewDraft, rawUsdc } from "./review";
+import { SOLANA_LAUNCH_STEPS, type SolanaLaunchState } from "./solanaV6Journal";
+
+export {
+  isSolanaV6Plan,
+  loadSolanaLaunch,
+  SOLANA_CREATION_STEPS,
+  SOLANA_LAUNCH_STEPS,
+  SOLANA_OPERATION_STEPS,
+  type SolanaLaunchState,
+  type SolanaLaunchStepId,
+  type SolanaLaunchStepRecord,
+  type SolanaLaunchStepStatus,
+  saveSolanaLaunch,
+  solanaLaunchKey,
+} from "./solanaV6Journal";
 
 /** The pinned v6 factory (Arbitrum + Robinhood) the API refuses to build for any other. */
 export const SOLANA_V6_FACTORY = "0xe964f36Eb23E95e20049D97122f375FbFe6B40dE";
@@ -40,133 +55,8 @@ export const SOLANA_V6_SEED_FLOOR_RAW = BigInt(1_002_506);
 /** API #198 defaults when the Manager types nothing (creation-options `amounts`). */
 export const SOLANA_V6_DEFAULT_RAW = BigInt(50_000_000);
 const COMPUTE_BUDGET = "ComputeBudget111111111111111111111111111111";
-
-export const SOLANA_CREATION_STEPS = [
-  "plan",
-  "sign-binding",
-  "sign-policy",
-  "approve-seed",
-  "create-fund",
-  "create-spoke",
-  "discover",
-  "bootstrap",
-  "verify",
-] as const;
-export const SOLANA_OPERATION_STEPS = [
-  "solana-report",
-  "send-to-solana",
-  "arrival",
-  "adapters",
-  "kamino-supply",
-  "swap",
-  "raydium-open",
-  "final-report",
-] as const;
-export const SOLANA_LAUNCH_STEPS = [...SOLANA_CREATION_STEPS, ...SOLANA_OPERATION_STEPS] as const;
-export type SolanaLaunchStepId = (typeof SOLANA_LAUNCH_STEPS)[number];
-export type SolanaLaunchStepStatus =
-  | "idle"
-  | "running"
-  | "submitted"
-  | "waiting"
-  | "done"
-  | "skipped"
-  | "failed";
-
-const uint = z.string().regex(/^\d{1,78}$/);
-const base58 = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
-const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
-const stepRecordSchema = z.object({
-  status: z.enum(["idle", "running", "submitted", "waiting", "done", "skipped", "failed"]),
-  error: z.string().optional(),
-  /** EVM transaction hash or the LAST Solana signature of the step. */
-  txHash: z.string().optional(),
-  chain: z.union([z.literal(42161), z.literal(4663), z.literal("solana")]).optional(),
-  /** Every Solana signature the step persisted before its broadcast, in order. */
-  signatures: z.array(z.string()).optional(),
-  /** Solana only: the API blockhash's last valid block height; past it an unseen signature is dead. */
-  lastValid: z.string().optional(),
-  retryAt: z.number().optional(),
-  at: z.number().optional(),
-});
-export type SolanaLaunchStepRecord = z.infer<typeof stepRecordSchema>;
-
-const stateSchema = z.object({
-  version: z.literal(1),
-  draftId: z.string().min(1),
-  manager: address,
-  solanaKey: base58,
-  createdAt: z.number(),
-  request: z.object({
-    managementFeeBps: z.number().int(),
-    performanceFeeBps: z.number().int(),
-    payoutFeeBps: z.number().int(),
-    assets: z.array(z.enum(["usdc", "wsol"])),
-    venues: z.array(
-      z.union([
-        z.object({ kind: z.literal("kamino"), reserve: base58 }),
-        z.object({ kind: z.literal("raydium"), pool: base58 }),
-      ]),
-    ),
-    seedAmount: uint,
-    minFirstDeposit: uint,
-    spokeCap: uint,
-    bindingTtlSeconds: z.number().int(),
-  }),
-  plan: z
-    .object({
-      core: address,
-      fundId: z.string(),
-      creationNumber: uint,
-      bindingNonce: uint,
-      bindingExpiry: uint,
-      expiresAt: z.string(),
-      fundPda: base58,
-      vault: base58,
-      usdcAta: base58,
-      robinhoodSpokeVault: address,
-    })
-    .optional(),
-  signatures: z
-    .object({
-      binding: z.string().optional(),
-      swapPolicy: z.string().optional(),
-    })
-    .default({}),
-  bootstrapBody: z.record(z.unknown()).optional(),
-  amounts: z.object({
-    send: uint,
-    kamino: uint,
-    swap: uint,
-    raydiumUsdc: uint,
-  }),
-  transit: z.object({ transitId: z.string(), amountToArrive: uint }).optional(),
-  steps: z.record(stepRecordSchema),
-});
-export type SolanaLaunchState = z.infer<typeof stateSchema>;
-
-export function solanaLaunchKey(manager: string, draftId: string): string {
-  return `pp:v2:solana-launch:1:${manager.toLowerCase()}:${draftId}`;
-}
-export function loadSolanaLaunch(
-  storage: Pick<Storage, "getItem">,
-  manager: string,
-  draftId: string,
-): SolanaLaunchState | null {
-  const raw = storage.getItem(solanaLaunchKey(manager, draftId));
-  if (!raw) return null;
-  const parsed = stateSchema.safeParse(JSON.parse(raw));
-  if (!parsed.success) throw new Error("SOLANA_LAUNCH_STORAGE_INVALID");
-  return parsed.data;
-}
-export function saveSolanaLaunch(storage: Pick<Storage, "setItem">, state: SolanaLaunchState) {
-  storage.setItem(solanaLaunchKey(state.manager, state.draftId), JSON.stringify(state));
-}
-
-/** Whether the plan is a v6 Hub + Robinhood + Solana plan the API can create. */
-export function isSolanaV6Plan(plan: BuildPlan): boolean {
-  return plan.spokes.some((spoke) => spoke.network === "solana");
-}
+/** Ceiling on an API-set priority fee: 1,000,000 micro-lamports per CU (0.0014 SOL at 1.4M CU). */
+const MAX_MICRO_LAMPORTS_PER_CU = BigInt(1_000_000);
 
 function solanaChains(plan: BuildPlan): Chain[] {
   return plan.spokes.filter((spoke) => spoke.network === "solana").flatMap((spoke) => spoke.chains);
@@ -205,13 +95,23 @@ export function defaultCreationAmounts(review: ReviewDraft): SolanaCreationAmoun
   };
 }
 /** API #198 rules, checked before the API is asked (it answers the same codes with a 422). */
-export function creationAmountsError(amounts: SolanaCreationAmounts): string | null {
+export function creationAmountsError(
+  amounts: SolanaCreationAmounts,
+  maxima?: { seedAmount?: { max?: string }; spokeCap?: { max?: string } },
+): string | null {
   const values = [amounts.seedAmount, amounts.minFirstDeposit, amounts.spokeCap];
   if (values.some((value) => !/^\d{1,30}$/.test(value))) return "CREATION_AMOUNT_INVALID";
   const seed = BigInt(amounts.seedAmount);
   if (seed < SOLANA_V6_SEED_FLOOR_RAW) return "CREATION_SEED_BELOW_ONE_SHARE";
   if (BigInt(amounts.minFirstDeposit) > seed) return "CREATION_SEED_BELOW_MIN_FIRST_DEPOSIT";
   if (BigInt(amounts.spokeCap) < BigInt(1)) return "CREATION_SPOKE_CAP_ZERO";
+  const above = (value: string, max?: string) =>
+    !!max && /^\d{1,78}$/.test(max) && BigInt(value) > BigInt(max);
+  if (
+    above(amounts.seedAmount, maxima?.seedAmount?.max) ||
+    above(amounts.spokeCap, maxima?.spokeCap?.max)
+  )
+    return "CREATION_AMOUNT_ABOVE_MAX";
   return null;
 }
 
@@ -331,7 +231,7 @@ const same = (left: unknown, right: string) =>
  */
 export function verifyCreationPlan(
   plan: BuildCreation,
-  expected: { manager: string; solanaKey: string; core?: string },
+  expected: { manager: string; solanaKey: string; core?: string; seedAmount?: string },
 ): void {
   const binding = plan.binding.typedData;
   const policy = plan.swapPolicy.typedData;
@@ -351,20 +251,51 @@ export function verifyCreationPlan(
     String(binding.message.expiry) !== plan.binding.expiry
   )
     fail();
+  // The swap policy consent: this Fund's PDA, this binding, and the policy bytes the API sealed.
+  const encoded = plan.swapPolicy.encoded;
   if (
     policy.primaryType !== "SolanaSwapPolicy" ||
-    !same(policy.domain.verifyingContract, plan.core)
+    !same(policy.domain.verifyingContract, plan.core) ||
+    !same(policy.domain.salt, bytes32(SOLANA_SPOKE_PROGRAM)) ||
+    !same(policy.message.fund, bytes32(plan.solana.fundPda)) ||
+    !same(policy.message.bindingDigest, plan.binding.digest) ||
+    !same(policy.message.policyHash, plan.swapPolicy.hash) ||
+    !same(
+      keccak256(toHex(new Uint8Array(getBase64Encoder().encode(encoded)))),
+      plan.swapPolicy.hash,
+    )
   )
     fail();
   const { approve, createFund, createSpoke } = plan.transactions;
   const evm = (tx: EvmBuild | null, chainId: number, to: string) => {
     if (!tx) return;
-    if (tx.chainId !== chainId || !same(tx.to, to) || !same(tx.from, expected.manager)) fail();
+    if (
+      tx.chainId !== chainId ||
+      !same(tx.to, to) ||
+      !same(tx.from, expected.manager) ||
+      tx.value !== "0"
+    )
+      fail();
   };
   evm(approve, 42161, ARBITRUM_USDC);
   evm(createFund, 42161, SOLANA_V6_FACTORY);
   evm(createSpoke, 4663, SOLANA_V6_FACTORY);
-  if (approve && !approve.data.toLowerCase().startsWith("0x095ea7b3")) fail();
+  if (approve) {
+    // Only `approve(factory, seed)`: never an unlimited allowance or another spender.
+    try {
+      const decoded = decodeFunctionData({ abi: erc20Abi, data: approve.data as Hex });
+      const [spender, amount] = decoded.args as readonly [string, bigint];
+      if (
+        decoded.functionName !== "approve" ||
+        !same(spender, SOLANA_V6_FACTORY) ||
+        (expected.seedAmount !== undefined && amount !== BigInt(expected.seedAmount)) ||
+        amount !== BigInt(plan.seed.amount)
+      )
+        fail();
+    } catch {
+      fail();
+    }
+  }
 }
 
 /**
@@ -394,6 +325,22 @@ export function solanaBuildToSign(
     programs.some((program) => program !== COMPUTE_BUDGET && program !== SOLANA_SPOKE_PROGRAM)
   )
     throw new Error("UNSAFE_SOLANA_TRANSACTION");
+  // ComputeBudget: only a unit limit within the declared one and a bounded unit price, so a build
+  // cannot burn the Manager's SOL as fees (the API sets no priority fee today).
+  for (const instruction of message.instructions) {
+    if (message.staticAccounts[instruction.programAddressIndex] !== COMPUTE_BUDGET) continue;
+    const data = instruction.data ?? new Uint8Array();
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    const limit = data[0] === 2 && data.length === 5 ? view.getUint32(1, true) : null;
+    const price = data[0] === 3 && data.length === 9 ? view.getBigUint64(1, true) : null;
+    if (
+      instruction.accountIndices?.length ||
+      (limit === null && price === null) ||
+      (limit !== null && limit > Math.max(build.computeUnitLimit, 1_400_000)) ||
+      (price !== null && price > MAX_MICRO_LAMPORTS_PER_CU)
+    )
+      throw new Error("UNSAFE_SOLANA_TRANSACTION");
+  }
   return {
     bytes,
     lifetime: {
@@ -421,5 +368,8 @@ export function formatRawUnits(raw: string, decimals: number): string {
 
 /** The creation is past the point of no return once the Hub Fund exists. */
 export function creationLanded(state: SolanaLaunchState): boolean {
-  return state.steps["create-fund"]?.status === "done";
+  // A persisted hash or an unresolved wallet prompt may already have created the Fund: starting over
+  // then would plan the NEXT creation number and pull the seed a second time.
+  const record = state.steps["create-fund"];
+  return record?.status === "done" || !!record?.txHash || !!record?.attempted;
 }

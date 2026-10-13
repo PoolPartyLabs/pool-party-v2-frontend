@@ -1,6 +1,14 @@
 /**
  * @tests PP-MGR-LIB-101 (POO-2262)
  */
+import {
+  getBase64Decoder,
+  getCompiledTransactionMessageDecoder,
+  getCompiledTransactionMessageEncoder,
+  getTransactionDecoder,
+  getTransactionEncoder,
+} from "@solana/kit";
+import { encodeFunctionData, erc20Abi, type Hex, maxUint256 } from "viem";
 import { describe, expect, it } from "vitest";
 import {
   type BuildCreation,
@@ -18,6 +26,7 @@ import {
   RAYDIUM_SOL_USDC_POOL,
   raydiumRange,
   SOLANA_LAUNCH_STEPS,
+  SOLANA_V6_FACTORY,
   saveSolanaLaunch,
   solanaBuildToSign,
   solanaCreationRequest,
@@ -193,6 +202,43 @@ describe("plan verification before any signature", () => {
   });
 });
 
+describe("plan verification: what the consents and transactions really authorize", () => {
+  const verify = (plan: BuildCreation) =>
+    verifyCreationPlan(plan, { manager: MANAGER, solanaKey: SOLANA_KEY, seedAmount: "50000000" });
+  const approveData = (spender: string, amount: bigint) =>
+    encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [spender as Hex, amount] });
+  it("accepts only approve(factory, seed) with no value", () => {
+    expect(() => verify(livePlan())).not.toThrow();
+    for (const mutate of [
+      (plan: BuildCreation) => {
+        if (plan.transactions.approve)
+          plan.transactions.approve.data = approveData(SOLANA_V6_FACTORY, maxUint256);
+      },
+      (plan: BuildCreation) => {
+        if (plan.transactions.approve)
+          plan.transactions.approve.data = approveData(MANAGER, BigInt(50_000_000));
+      },
+      (plan: BuildCreation) => {
+        if (plan.transactions.approve) plan.transactions.approve.value = "1";
+      },
+    ]) {
+      const plan = livePlan();
+      mutate(plan);
+      expect(() => verify(plan)).toThrow("SOLANA_PLAN_MISMATCH");
+    }
+  });
+  it("binds the swap policy consent to this Fund, binding and sealed policy bytes", () => {
+    for (const field of ["fund", "bindingDigest", "policyHash"] as const) {
+      const plan = livePlan();
+      plan.swapPolicy.typedData.message[field] = `0x${"22".repeat(32)}`;
+      expect(() => verify(plan)).toThrow("SOLANA_PLAN_MISMATCH");
+    }
+    const encoded = livePlan();
+    encoded.swapPolicy.encoded = "AAAA";
+    expect(() => verify(encoded)).toThrow("SOLANA_PLAN_MISMATCH");
+  });
+});
+
 describe("Solana transactions before the wallet sees them", () => {
   const build = unsignedSolanaBuildSchema.parse(LIVE_KAMINO_BUILD);
   it("decodes the live API build with the API's own blockhash and lifetime", () => {
@@ -200,6 +246,36 @@ describe("Solana transactions before the wallet sees them", () => {
     expect(built.lifetime.blockhash).toBe(build.blockhash);
     expect(built.lifetime.lastValidBlockHeight).toBe(BigInt(build.lastValidBlockHeight));
     expect(built.bytes.length).toBe(build.transactionBytes);
+  });
+  it("refuses an API-set priority fee above the ceiling", () => {
+    const built = solanaBuildToSign(build, FUND_1_SOLANA_MANAGER);
+    const decoded = getTransactionDecoder().decode(built.bytes);
+    const message = getCompiledTransactionMessageDecoder().decode(decoded.messageBytes);
+    const compute = message.instructions.find(
+      (instruction) =>
+        message.staticAccounts[instruction.programAddressIndex] ===
+        "ComputeBudget111111111111111111111111111111",
+    );
+    expect(compute).toBeDefined();
+    const price = new Uint8Array(9);
+    price[0] = 3;
+    new DataView(price.buffer).setBigUint64(1, BigInt(50_000_000), true);
+    const tampered = {
+      ...message,
+      instructions: message.instructions.map((instruction) =>
+        instruction === compute ? { ...instruction, data: price } : instruction,
+      ),
+    };
+    const bytes = getTransactionEncoder().encode({
+      ...decoded,
+      messageBytes: getCompiledTransactionMessageEncoder().encode(tampered),
+    } as never);
+    expect(() =>
+      solanaBuildToSign(
+        { ...build, transaction: getBase64Decoder().decode(bytes) },
+        FUND_1_SOLANA_MANAGER,
+      ),
+    ).toThrow("UNSAFE_SOLANA_TRANSACTION");
   });
   it("refuses a build whose fee payer is not the Manager's Solana key", () => {
     expect(() => solanaBuildToSign(build, SOLANA_KEY)).toThrow("UNSAFE_SOLANA_TRANSACTION");

@@ -187,6 +187,8 @@ export const buildCreationSchema = z
       .passthrough(),
     swapPolicy: z
       .object({
+        /** Base64 of the sealed SolanaSwapPolicy bytes; `hash` must be their keccak-256. */
+        encoded: z.string().regex(/^[A-Za-z0-9+/]+={0,2}$/),
         hash: poolIdSchema,
         digest: poolIdSchema,
         typedData: typedDataSchema,
