@@ -384,7 +384,6 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
           }),
         );
         verifyCreationPlan(built, { manager: current.manager, solanaKey: current.solanaKey });
-        if (!built.seed.balanceSufficient) throw new StepFailure("SOLANA_SEED_BALANCE_LOW");
         planRef.current = built;
         commit((next) => {
           next.plan = {
@@ -431,7 +430,10 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
           await sendEvm("approve-seed", { chainId: 42161 } as EvmBuild, signal);
           return "done";
         }
-        const built = planRef.current ?? (await rebuildSigned());
+        // The signed rebuild proves both consents before any transaction and reads the live seed.
+        const built = await rebuildSigned();
+        if (built.status === "created") return "skipped";
+        if (!built.seed.balanceSufficient) throw new StepFailure("SOLANA_SEED_BALANCE_LOW");
         const approve = built.transactions.approve;
         if (!approve || !built.seed.approveRequired) return "skipped";
         if (approve.to.toLowerCase() !== ARBITRUM_USDC.toLowerCase())
