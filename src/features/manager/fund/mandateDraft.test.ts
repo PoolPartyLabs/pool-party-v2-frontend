@@ -35,10 +35,13 @@ import {
   MAX_TOKEN_SLOTS,
   type MandateDraft,
   type MandatePoolRef,
+  type MandateTokenRef,
   type NetworkId,
   nextStep,
   PROTOCOL_ORDER,
   type ProtocolId,
+  poolHoldsUnavailableToken,
+  poolSideAddable,
   previousStep,
   REQUIRED_PROTOCOLS,
   removePool,
@@ -53,6 +56,7 @@ import {
   stepIndex,
   tokenKey,
   UNAVAILABLE_PROTOCOLS,
+  unavailableTokenKeys,
   validateStep,
   visibleSteps,
   withNetworks,
@@ -65,6 +69,10 @@ import {
   withoutUnavailableProtocols,
   withProtocols,
 } from "./mandateDraft";
+import {
+  buildSolanaBuilderCatalog,
+  RAYDIUM_RELEASE_POOLS,
+} from "./solana-preview/solanaBuilderRuntime";
 
 const NOW = "2026-10-03T12:00:00.000Z";
 const catalog = buildMandateCatalog();
@@ -1468,5 +1476,118 @@ describe("withoutSolana", () => {
   // @rule R7
   it("keeps positionProtocolsByChain absent when the draft has none", () => {
     expect("positionProtocolsByChain" in withoutSolana(empty())).toBe(false);
+  });
+});
+
+describe("DEC-204: a catalog token listed as unavailable never enters a mandate", () => {
+  const solana = buildSolanaBuilderCatalog();
+  const TSLAX = "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB";
+  const NVDAX = "Xsc9qvGR1efVDFGLrVsmkzv3qi45LTBjeUKSPmx9qEh";
+
+  /** Arbitrum and Solana, with Raydium chosen, so the Pools step and the Raydium pools exist. */
+  function raydiumDraft(): MandateDraft {
+    const base = withNetworks(empty(), ["solana"], solana);
+    return withProtocols(base, [...base.protocols, "raydium"]);
+  }
+
+  function solanaEntry(symbol: string): MandateCatalogToken {
+    const found = solana.tokensFor(["solana"], []).find((token) => token.symbol === symbol);
+    if (!found) throw new Error(`no Solana catalog entry ${symbol}`);
+    return found;
+  }
+
+  function releasePool(index: number): MandatePoolRef {
+    const found = RAYDIUM_RELEASE_POOLS[index];
+    if (!found) throw new Error(`no release pool ${index}`);
+    return found;
+  }
+
+  /** The draft as old local storage could hold it: a stock token entered by hand. */
+  function holdingStock(draft: MandateDraft): MandateDraft {
+    const stock: MandateTokenRef = {
+      address: TSLAX,
+      symbol: "TSLAx",
+      name: "Tesla xStock",
+      network: "solana",
+      logoUrl: null,
+      locked: false,
+    };
+    return { ...draft, tokens: [...draft.tokens, stock] };
+  }
+
+  it("names the stock tokens of the selected networks, and nothing on an EVM-only mandate", () => {
+    expect([...unavailableTokenKeys(solana, ["arbitrum", "solana"], [])]).toEqual([
+      `solana:${TSLAX}`,
+      `solana:${NVDAX}`,
+    ]);
+    expect(unavailableTokenKeys(solana, ["arbitrum", "robinhood"], []).size).toBe(0);
+    expect(unavailableTokenKeys(catalog, ["arbitrum", "robinhood"], []).size).toBe(0);
+  });
+
+  it("refuses TSLAx and NVDAx with coming_soon, unchanged, and still adds WSOL", () => {
+    const draft = raydiumDraft();
+    const before = structuredClone(draft);
+
+    for (const symbol of ["TSLAx", "NVDAx"]) {
+      const entry = solanaEntry(symbol);
+      expect(addToken(draft, entry, solana)).toEqual({
+        blocked: { step: "tokens", reason: "coming_soon", rowId: tokenKey(entry) },
+      });
+    }
+    expect(draft).toEqual(before);
+    const added = addToken(draft, solanaEntry("WSOL"), solana);
+    if (isBlocked(added)) throw new Error("WSOL was refused");
+    expect(added.tokens.map((token) => token.symbol)).toContain("WSOL");
+  });
+
+  it("refuses a stock token even when the object handed in lost its reason", () => {
+    const { unavailableReason: _dropped, ...bare } = solanaEntry("TSLAx");
+    const refused = addToken(raydiumDraft(), { ...bare, visualEligible: true }, solana);
+    expect(isBlocked(refused) && refused.blocked.reason).toBe("coming_soon");
+  });
+
+  it("refuses the TSLAx/USDC and NVDAx/USDC pools and adds the SOL/USDC pool", () => {
+    const draft = raydiumDraft();
+    for (const index of [1, 2]) {
+      const pool = releasePool(index);
+      expect(addPool(draft, pool, solana)).toEqual({
+        blocked: { step: "pools", reason: "coming_soon", rowId: pool.id },
+      });
+      expect(poolSideAddable(draft, pool, pool.token0, solana)).toBe(false);
+    }
+    const added = addPool(draft, releasePool(0), solana);
+    if (isBlocked(added)) throw new Error("SOL/USDC was refused");
+    expect(added.pools.map((pool) => pool.address)).toEqual([releasePool(0).address]);
+  });
+
+  it("refuses a stock pool when a stored draft already holds the stock token", () => {
+    const draft = holdingStock(raydiumDraft());
+    const pool = releasePool(1);
+
+    expect(poolSideAddable(draft, pool, pool.token0, solana)).toBe(false);
+    expect(isBlocked(addPool(draft, pool, solana))).toBe(true);
+  });
+
+  it("stops Tokens and Pools on a stored stock token or stock pool, and nothing else", () => {
+    const clean = raydiumDraft();
+    expect(validateStep(clean, "tokens", solana)).toBeNull();
+
+    const stored = holdingStock(clean);
+    expect(validateStep(stored, "tokens", solana)).toEqual({
+      step: "tokens",
+      reason: "coming_soon",
+      rowId: `solana:${TSLAX}`,
+    });
+
+    const withPool: MandateDraft = { ...clean, pools: [releasePool(2)] };
+    expect(
+      poolHoldsUnavailableToken(releasePool(2), unavailableTokenKeys(solana, ["solana"], [])),
+    ).toBe(true);
+    expect(validateStep(withPool, "pools", solana)).toEqual({
+      step: "pools",
+      reason: "coming_soon",
+      rowId: releasePool(2).id,
+    });
+    expect(validateStep({ ...clean, pools: [releasePool(0)] }, "pools", solana)).toBeNull();
   });
 });

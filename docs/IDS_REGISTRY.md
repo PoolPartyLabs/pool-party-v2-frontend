@@ -1348,3 +1348,29 @@ The test-only bootstrap fixture and regression suite support this artifact; they
 Review (PP-MGR-CMP-077, PP-MGR-LIB-033, PP-MGR-CMP-080) routes a Hub + Robinhood + Solana plan to the
 v6 launch page when `solanaSpoke` is on; with the flag off the POO-2342 Solana launch reason is unchanged.
 `launchAuth.ts` keeps PP-MGR-ACT-013: the session/Manager checks moved out of `launchActions.ts` unchanged.
+
+## Solana stock tokens listed and unavailable, 2026-10-13 (POO-2262, DEC-204)
+
+TSLAx and NVDAx, and their Raydium CLMM pools, are visible in the Manager V2 builder and never
+selectable: their swaps stay off while the stock oracle is off. No row is added, so the Totals line
+does not change. These rows keep their numbers:
+
+- PP-MGR-LIB-018: `MandateCatalogToken` gains the optional `unavailableReason`
+  (`stockSwapsUnavailable`).
+- PP-MGR-LIB-075 lists TSLAx and NVDAx on Solana after WSOL (unpriced, not eligible, with
+  `unavailableReason`), pins the release Raydium pools (`RAYDIUM_RELEASE_POOLS`: SOL/USDC,
+  TSLAx/USDC, NVDAx/USDC) and puts them first in a Solana answer (`withRaydiumReleasePools`, deduped
+  by pool address). `solanaStockTokens.test.ts` keeps the list in step with `SOLANA_LP_CHOICES` and
+  the stock pools the v6 launch refuses (`RAYDIUM_STOCK_POOLS`).
+- PP-MGR-LIB-019: `addToken` and `addPool` refuse an unavailable token, or a pool that holds one,
+  with `coming_soon`; `poolSideAddable` never counts it; `validateStep` stops Tokens or Pools on a
+  stored one (`unavailableTokenKeys`, `poolHoldsUnavailableToken`).
+- PP-MGR-LIB-020 and PP-MGR-CMP-107: the Solana pool search answers the pinned release pools that
+  hold the searched mint first, then DEX Screener; a failed DEX Screener read still throws.
+- PP-MGR-CMP-037: the Tokens step lists the stock tokens by default as disabled cards with an
+  "Unavailable" badge and the reason; Add all skips them.
+- PP-MGR-CMP-038: the Pools step draws a stock pool with the Unavailable refusal and the reason; it
+  is never addable, so Add all, the universe and R37 leave it out.
+
+The v6 launch (PP-MGR-LIB-101) seals only `usdc` and `wsol` and refuses a stock pool, so a stored
+draft cannot launch with a stock asset either.

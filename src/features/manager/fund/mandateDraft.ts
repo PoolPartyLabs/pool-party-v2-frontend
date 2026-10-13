@@ -5,6 +5,7 @@
  *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 R4: the last swap and the last bridge are locked)
+ * @implements-rules-version DEC-204 (POO-2262: an unavailable catalog token, and a pool holding one, is refused)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -429,6 +430,34 @@ export function isPricedSymbol(symbol: string): boolean {
   return PRICED_SYMBOLS.has(symbol.toLowerCase());
 }
 
+/**
+ * DEC-204: the {@link tokenKey}s of the tokens the catalog lists on these networks but never lets
+ * into a mandate (`unavailableReason`, the Solana stock tokens today). Data, not a branch: a token
+ * leaves this set the day the catalog stops marking it.
+ */
+export function unavailableTokenKeys(
+  catalog: MandateCatalog,
+  networks: readonly NetworkId[],
+  protocols: ProtocolId[],
+): Set<string> {
+  return new Set(
+    catalog
+      .tokensFor([...networks], protocols)
+      .filter((token) => token.unavailableReason !== undefined)
+      .map(tokenKey),
+  );
+}
+
+/** DEC-204: whether a side of this pool is a token the catalog lists as unavailable. */
+export function poolHoldsUnavailableToken(
+  pool: Pick<MandatePoolRef, "network" | "token0" | "token1">,
+  unavailable: ReadonlySet<string>,
+): boolean {
+  return [pool.token0, pool.token1].some((side) =>
+    unavailable.has(tokenKey({ network: pool.network, address: side.address })),
+  );
+}
+
 /** Slots consumed: one per token ENTRY, so the locked deposit rows count too (R27). */
 export function slotsUsed(draft: MandateDraft): number {
   return draft.tokens.length;
@@ -703,6 +732,8 @@ export function effectiveCap(
  * Networks, Protocols and Tokens never block in mock mode. USDC alone remains a valid token list
  * while selecting, but POO-2197 requires another positively allowed token before leaving Limits.
  * The slot ceiling is enforced when a token is ADDED (R27), not when the step is left, so there is nothing left to check here.
+ * The one exception (DEC-204): a stored draft that holds a token, or a pool with a token, that the
+ * catalog lists as unavailable stops Tokens (or Pools) with `coming_soon` on that row.
  *
  * POO-2332: on Limits in mock mode a row with no stored cap reads as its start value (R8), so
  * `cap_missing` is gone there. An enabled 0% token cap, or an enabled 0% All tokens cap, stops Next
@@ -770,6 +801,19 @@ export function validateStep(
           return { step, reason: "nothing_selected", rowId: network };
         }
       }
+    }
+  }
+  // DEC-204: a token or pool the catalog lists as unavailable never completes a mandate. The
+  // reducers refuse both, so only a draft stored before they did (or edited by hand) can hold one;
+  // the step names it with `coming_soon` and the manager removes it there.
+  if (step === "tokens" || step === "pools") {
+    const unavailable = unavailableTokenKeys(catalog, draft.networks, draft.protocols);
+    if (unavailable.size > 0) {
+      const token = draft.tokens.find((entry) => unavailable.has(tokenKey(entry)));
+      if (step === "tokens" && token)
+        return { step, reason: "coming_soon", rowId: tokenKey(token) };
+      const pool = draft.pools.find((entry) => poolHoldsUnavailableToken(entry, unavailable));
+      if (step === "pools" && pool) return { step, reason: "coming_soon", rowId: pool.id };
     }
   }
   if (step === "pools") {
@@ -1217,8 +1261,9 @@ function refFromCatalog(token: MandateCatalogToken): MandateTokenRef {
  * {@link removeToken} takes a single entry back out, and {@link removeTokenSymbol} takes the whole
  * row out, so the UI can offer either without this function changing.
  *
- * Refuses an unpriced token (R28) and refuses to pass the slot ceiling (R27), changing nothing in
- * either case. Adding a token already in the draft is a no-op, not a refusal.
+ * Refuses a token the catalog lists as unavailable (DEC-204, `coming_soon`), an unpriced token
+ * (R28) and a pass of the slot ceiling (R27), changing nothing in any case. Adding a token already in
+ * the draft is a no-op, not a refusal.
  */
 export function addToken(
   draft: MandateDraft,
@@ -1226,6 +1271,15 @@ export function addToken(
   catalog: MandateCatalog,
 ): MandateReducerResult {
   const rowId = tokenKey(token);
+  const entries = catalog.tokensFor(draft.networks, draft.protocols);
+  // DEC-204: listed, never selectable. The catalog is asked too, so a token object that lost the
+  // field on its way here still cannot bring a stock token in.
+  if (
+    token.unavailableReason !== undefined ||
+    entries.some((entry) => entry.unavailableReason !== undefined && tokenKey(entry) === rowId)
+  ) {
+    return { blocked: { step: "tokens", reason: "coming_soon", rowId } };
+  }
   // POO-2342 R4: a Solana token needs only its local descriptor (no price feed); every other
   // network keeps its pricing rule.
   const accepts = (entry: MandateCatalogToken): boolean =>
@@ -1238,10 +1292,10 @@ export function addToken(
     return { blocked: { step: "tokens", reason: "not_priced", rowId } };
   }
   const wanted = token.symbol.toLowerCase();
-  const refs = catalog
-    .tokensFor(draft.networks, draft.protocols)
+  const refs = entries
     .filter(
       (t) =>
+        t.unavailableReason === undefined &&
         (t.network === SOLANA_NETWORK ? t.visualEligible === true : t.priced) &&
         t.symbol.toLowerCase() === wanted,
     )
@@ -1298,7 +1352,8 @@ export function clearTokens(draft: MandateDraft): MandateDraft {
  *
  * An EVM token must have a price (R28). A Solana token has no price feed (POO-2342 R4) and enters
  * only from the Solana catalog, by its exact mint. The Pools step uses this for the row refusal and
- * for the counts, so they agree with {@link addPool}.
+ * for the counts, so they agree with {@link addPool}. A Solana token the catalog lists as unavailable
+ * (DEC-204, a stock) is never addable, not even when a stored draft already holds it.
  */
 export function poolSideAddable(
   draft: MandateDraft,
@@ -1307,16 +1362,15 @@ export function poolSideAddable(
   catalog: MandateCatalog,
 ): boolean {
   const key = tokenKey({ network: pool.network, address: side.address });
-  if (draft.tokens.some((token) => tokenKey(token) === key)) return true;
-  if (pool.network === SOLANA_NETWORK)
-    return catalog
+  if (pool.network === SOLANA_NETWORK) {
+    const entry = catalog
       .tokensFor([SOLANA_NETWORK], draft.protocols)
-      .some(
-        (token) =>
-          token.network === SOLANA_NETWORK &&
-          token.address === side.address &&
-          token.visualEligible === true,
-      );
+      .find((token) => token.network === SOLANA_NETWORK && token.address === side.address);
+    if (entry?.unavailableReason !== undefined) return false;
+    if (draft.tokens.some((token) => tokenKey(token) === key)) return true;
+    return entry?.visualEligible === true;
+  }
+  if (draft.tokens.some((token) => tokenKey(token) === key)) return true;
   return catalog.dataMode === "real"
     ? catalog
         .tokensFor([pool.network], draft.protocols)
@@ -1380,8 +1434,9 @@ function ensurePoolToken(
  * R33/R34/R38: put a pool in the mandate, pulling in whichever of its tokens is missing.
  *
  * Refusals, in order: a Uniswap v4 hook (not supported), a pool on a network the mandate does not
- * name, a pool on a PROTOCOL the mandate does not name or the product cannot operate (R20 v3), then
- * whatever adding its tokens refuses (no price feed, no slots left). The protocol check exists
+ * name, a pool on a PROTOCOL the mandate does not name or the product cannot operate (R20 v3), a
+ * pool with a token the catalog lists as unavailable (DEC-204, `coming_soon`), then whatever adding
+ * its tokens refuses (no price feed, no slots left). The protocol check exists
  * because a pasted address reaches this function without passing a protocol filter first, and a
  * mandate holding a position on a protocol it never named is exactly as invalid as one on a network
  * it never named. The unavailable check reads the catalog, as `withNetworks` does, and covers a draft
@@ -1417,6 +1472,12 @@ export function addPool(
     draft.dataMode === "real" &&
     pool.network !== SOLANA_NETWORK &&
     !draft.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4")
+  )
+    return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
+  // DEC-204: a pool with a token the catalog lists as unavailable (TSLAx/USDC, NVDAx/USDC) is
+  // refused even when a stored draft already holds that token, which would skip `addToken` below.
+  if (
+    poolHoldsUnavailableToken(pool, unavailableTokenKeys(catalog, [pool.network], draft.protocols))
   )
     return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
 

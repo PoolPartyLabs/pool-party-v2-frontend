@@ -772,6 +772,8 @@
       "selectAll": "Alles selecteren",
       "alwaysIncluded": "Altijd inbegrepen",
       "comingSoon": "Binnenkort",
+      "unavailable": "Niet beschikbaar",
+      "stockUnavailable": "Aandelenswaps zijn nog niet beschikbaar",
       "clearAll": "Alles wissen",
       "add": "Toevoegen",
       "addAll": "Alle {count} toevoegen",

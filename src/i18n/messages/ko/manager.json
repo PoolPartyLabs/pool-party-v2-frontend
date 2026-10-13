@@ -772,6 +772,8 @@
       "selectAll": "전체 선택",
       "alwaysIncluded": "항상 포함됨",
       "comingSoon": "출시 예정",
+      "unavailable": "사용 불가",
+      "stockUnavailable": "주식 스왑은 아직 사용할 수 없습니다",
       "clearAll": "전체 해제",
       "add": "추가",
       "addAll": "전체 {count}개 추가",

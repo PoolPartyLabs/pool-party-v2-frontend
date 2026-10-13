@@ -772,6 +772,8 @@
       "selectAll": "全選",
       "alwaysIncluded": "永遠包含",
       "comingSoon": "即將推出",
+      "unavailable": "無法使用",
+      "stockUnavailable": "股票兌換暫時無法使用",
       "clearAll": "取消全選",
       "add": "新增",
       "addAll": "新增全部 {count} 個",

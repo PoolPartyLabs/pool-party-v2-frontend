@@ -14,6 +14,8 @@
  *
  * The Solana search (Raydium, POO-2343) has no mock: it calls the real DEX Screener action in mock
  * mode too, so a mock session on Solana needs the network and shows the error state when it is down.
+ * DEC-204 (POO-2262): the pinned Raydium release pools (SOL/USDC, TSLAx/USDC, NVDAx/USDC) lead every
+ * Solana answer that names their mints, deduped by pool address against DEX Screener.
  *
  * Real mode reads the v2 catalog only: eligible Uniswap v4 pools identified by bytes32 PoolId.
  * PoolKey and catalog token metadata are retained, and unavailable metrics stay null.
@@ -41,6 +43,7 @@ import {
 } from "./mandateDraft";
 import { isSolanaMint } from "./raydiumPools";
 import { getRaydiumPoolsAction } from "./raydiumPoolsAction";
+import { withRaydiumReleasePools } from "./solana-preview/solanaBuilderRuntime";
 
 /** What the Pools step asks for. One network, one or two tokens, the mandate's DEX protocols. */
 export interface PoolSearchInput {
@@ -297,6 +300,10 @@ export function mapV2Pool(pool: CatalogPool): MandatePoolRef {
  *
  * An address that is not a Solana mint cannot name a pool here: it is the token of another network,
  * and a pair across two networks has no pool. Both answer an empty list and no read is sent.
+ *
+ * DEC-204: the pinned release pools that hold the searched mint(s) come first, then the DEX Screener
+ * pools, so the stock pools are listed (and refused by the step) even when DEX Screener omits them.
+ * A failed read still throws: the pinned pools never stand in for an error.
  */
 async function searchSolana(input: PoolSearchInput): Promise<MandatePoolRef[]> {
   if (!input.protocols.includes("raydium")) return [];
@@ -312,7 +319,7 @@ async function searchSolana(input: PoolSearchInput): Promise<MandatePoolRef[]> {
       `RAYDIUM_${result.error.code.toUpperCase()}`,
       "raydium pools unavailable",
     );
-  return result.pools;
+  return withRaydiumReleasePools(result.pools, input.tokenAddress, input.secondTokenAddress);
 }
 
 /**
