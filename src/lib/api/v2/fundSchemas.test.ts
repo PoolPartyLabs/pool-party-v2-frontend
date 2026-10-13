@@ -168,4 +168,15 @@ describe("POO-2262 v6 fund reads", () => {
     expect(fund.spokes).toBeUndefined();
     expect(fund.chains).toHaveLength(3);
   });
+  it("keeps the padded gas of a deposit build", () => {
+    const built = mockFundBuild({ action: "deposit" });
+    const transaction = { ...built.transactions[0], gas: "1057965" };
+    expect(
+      fundBuildSchema.parse({ ...built, transactions: [transaction] }).transactions[0]?.gas,
+    ).toBe("1057965");
+    expect(
+      fundBuildSchema.safeParse({ ...built, transactions: [{ ...transaction, gas: "0x1" }] })
+        .success,
+    ).toBe(false);
+  });
 });

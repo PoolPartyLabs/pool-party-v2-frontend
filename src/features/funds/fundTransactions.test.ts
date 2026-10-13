@@ -124,4 +124,24 @@ describe("fund receipt observation", () => {
       "TX_CONFIRMATION_UNKNOWN",
     );
   });
+  // POO-2262 (API contract §3.9): the padded estimate is the limit the wallet sends.
+  it("forwards a deposit build's padded gas to the sender, and no gas when the build has none", async () => {
+    mocks.receipt.mockResolvedValue({ blockNumber: 1 });
+    await sendFundTransaction(
+      { request: vi.fn() },
+      { ...tx, gas: "1057965" },
+      mockWallet,
+      "deposit",
+      vi.fn(),
+    );
+    expect(mocks.send.mock.calls[0]?.[1]).toMatchObject({ tx: { gas: "1057965" }, chainId: 42161 });
+    await sendFundTransaction(
+      { request: vi.fn() },
+      { ...tx, gas: null },
+      mockWallet,
+      "approve",
+      vi.fn(),
+    );
+    expect(mocks.send.mock.calls[1]?.[1].tx.gas).toBeUndefined();
+  });
 });
