@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 732 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 733 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1348,3 +1348,18 @@ The test-only bootstrap fixture and regression suite support this artifact; they
 Review (PP-MGR-CMP-077, PP-MGR-LIB-033, PP-MGR-CMP-080) routes a Hub + Robinhood + Solana plan to the
 v6 launch page when `solanaSpoke` is on; with the flag off the POO-2342 Solana launch reason is unchanged.
 `launchAuth.ts` keeps PP-MGR-ACT-013: the session/Manager checks moved out of `launchActions.ts` unchanged.
+
+## Solana v6 Fund detail and investor report gate, 2026-10-13 (POO-2262)
+
+| ID | Artifact | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-STR-CMP-041` | FundNetworks, a v6 Fund's Hub Arbitrum, Robinhood and Solana rows: spoke report age and Usable or Refreshing, Solana program, Fund PDA, vault and USDC account linked to Solscan | Component | n/a (rows and badges in the existing frames) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/funds/FundNetworks.tsx` |
+
+Extended, same ids: PP-CORE-LIB-113 (fund reads accept the chain "1" Solana entry, `spokes`,
+`reportsUsable`, `factory`; route parameters stay EVM-only), PP-STR-LIB-025 (build `gas`),
+PP-STR-LIB-027 (stable refusal code and retry hint), PP-STR-LIB-024 (network rows, v6 report gate),
+PP-STR-LIB-028 (`refreshSolanaReportAction`, EVM-only balances), PP-STR-LIB-030 (v6 gate and 409
+report-wait retry), PP-STR-LIB-032 (padded gas sent as the limit), PP-STR-HOK-023, PP-STR-MOD-001
+and PP-STR-CMP-032 (report refreshing state), PP-STR-SCR-006 and PP-MGR-SCR-004 (networks on the
+investor and manager pages), PP-MGR-LIB-051, PP-MGR-LIB-056, PP-MGR-LIB-058, PP-STR-LIB-033,
+PP-STR-CMP-040 and the FundTechnicalDetail read view (Solana named, never read as an EVM chain).
