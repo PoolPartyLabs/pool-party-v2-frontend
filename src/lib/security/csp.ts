@@ -155,7 +155,8 @@ const directives: Record<string, string[]> = {
     "https://polygon-bor-rpc.publicnode.com",
     // PP-SECURITY [R3] (POO-1776): Robinhood Chain RPC. Explorer deliberately absent, see `csp.test.ts`.
     "https://rpc.mainnet.chain.robinhood.com",
-    "https://api.mainnet-beta.solana.com",
+    // POO-2262: Solana HTTP JSON-RPC goes through the same-origin /api/solana-rpc proxy ('self').
+    // Only Privy's configured subscription socket remains a direct browser connection.
     "wss://api.mainnet-beta.solana.com",
     // Third-party services
     "https://api.hyperliquid.xyz",
