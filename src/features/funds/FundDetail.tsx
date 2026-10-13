@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-006
  * @name FundDetail
- * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2223); v1 (POO-2224)
+ * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2223); v1 (POO-2224); v1 (POO-2262 v6 chain names)
  * @analytics-events strategy_detail_viewed, app_cta_blocked, app_error_shown
  * Investor V2 projection in the existing Details frame; authorized manager canvas is separate.
  */
@@ -19,6 +19,7 @@ import { StrategyDetailFrame } from "@/features/strategies/components/StrategyDe
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
 import type { FundView } from "@/lib/api/v2/fundSchemas";
+import { isEvmDeployment, SOLANA_FUND_CHAIN_ID } from "@/lib/api/v2/schemas";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useSiweSession } from "@/lib/auth/useSiweSession";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
@@ -190,7 +191,13 @@ export function FundDetailsPresenter({
   const fundLogo = fund.profile?.imageUrl || fund.profile?.image || undefined;
   const managerName = fund.profile?.managerDisplayName?.trim() || fund.manager;
   const chainName = (id: string) =>
-    id === "42161" ? "Arbitrum" : id === "4663" ? "Robinhood" : id;
+    id === "42161"
+      ? "Arbitrum"
+      : id === "4663"
+        ? "Robinhood"
+        : id === SOLANA_FUND_CHAIN_ID
+          ? "Solana"
+          : id;
   const tokenName = (chainId: string, address: string) =>
     fund.positionsSummary?.positions
       .filter((position) => position.chainId === chainId)
@@ -198,7 +205,8 @@ export function FundDetailsPresenter({
       .find((token) => token.address.toLowerCase() === address.toLowerCase())?.symbol ||
     `${address.slice(0, 6)}…${address.slice(-4)}`;
   const protocolName = (chainId: string, address: string) => {
-    const chain = fund.chains.find((chain) => chain.chainId === chainId);
+    // Solana (chain "1") has no EVM adapter addresses: its venues stay a shortened identity.
+    const chain = fund.chains.filter(isEvmDeployment).find((chain) => chain.chainId === chainId);
     if (chain?.uniswapV4Adapter?.toLowerCase() === address.toLowerCase()) return "Uniswap v4";
     if (chain?.uniswapV3SwapAdapter?.toLowerCase() === address.toLowerCase()) return "Uniswap v3";
     if (chain?.aaveV3Adapter?.toLowerCase() === address.toLowerCase()) return "Aave v3";

@@ -5,6 +5,8 @@
  * @analytics-events none, focused read normalization tests.
  */
 import { describe, expect, it } from "vitest";
+import fund6 from "@/features/funds/fixtures/fund6Detail.json";
+import { fundViewSchema } from "@/lib/api/v2/fundSchemas";
 import { supportedChainMetas } from "@/lib/chains/config";
 import { mockFund, mockSpokeBalances } from "@/mocks/data/v2Funds";
 import { manageProtocolMark, normalizeManageModel } from "./manageModel";
@@ -170,4 +172,17 @@ it("POO-2246 [R4] rejects mismatched stable identity and accepts case-insensitiv
     amount: { status: "available" },
   });
   expect(known.positions[1]?.tokens.map((t) => t.symbol)).toEqual(["USDC", "WETH"]);
+});
+
+describe("POO-2262 v6 Fund", () => {
+  it("[POO-2262] names a v6 Fund's Solana spoke Solana, never chain 1 or Ethereum", () => {
+    const model = normalizeManageModel(fundViewSchema.parse(fund6.data));
+    expect(
+      model.chains.map((chain) => [chain.chainId, chain.network, chain.name, chain.hub]),
+    ).toEqual([
+      [42161, "arbitrum", "Arbitrum", true],
+      [4663, "robinhood", "Robinhood Chain", false],
+      [1, "solana", "Solana", false],
+    ]);
+  });
 });

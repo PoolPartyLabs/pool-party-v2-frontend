@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-LIB-028 (POO-2175)
  * @name fundActions
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v2 (POO-2181); v1 (POO-2262 EVM-only balances)
  * PP-INTEGRATION-POINT: serializable fund reads, simulations and report polling.
  */
 "use server";
@@ -26,7 +26,7 @@ import {
   readTransits,
 } from "@/lib/api/v2/funds";
 import { fundRequest } from "@/lib/api/v2/fundTransport";
-import { addressSchema } from "@/lib/api/v2/schemas";
+import { addressSchema, isEvmDeployment } from "@/lib/api/v2/schemas";
 import { getAuthHeader, getSessionWallet } from "@/lib/auth/session";
 import { isFeatureEnabled } from "@/lib/features";
 import { isMockMode } from "@/lib/services";
@@ -166,7 +166,9 @@ export async function loadFundManagerAction(core: string, cursor?: string) {
       };
     const transits = await readTransits(core, cursor);
     const balances = [];
-    for (const chain of fund.chains) balances.push(await readBalances(core, Number(chain.chainId)));
+    // POO-2262: the balances route takes an EVM chain; a v6 Fund's Solana spoke is not one.
+    for (const chain of fund.chains.filter(isEvmDeployment))
+      balances.push(await readBalances(core, Number(chain.chainId)));
     return { transits, balances };
   });
 }

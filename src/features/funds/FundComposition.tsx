@@ -32,6 +32,8 @@ const PROTOCOLS: Partial<Record<string, { id: ProtocolId; name: string }>> = {
 const NETWORKS: Record<string, { slug: string; name: string }> = {
   "42161": { slug: "arbitrum", name: "Arbitrum" },
   "4663": { slug: "robinhood", name: "Robinhood" },
+  // POO-2262: the Solana spoke of a v6 Fund is chain "1" in fund reads.
+  "1": { slug: "solana", name: "Solana" },
 };
 const percent = (value: number) => formatPercent(value, Number.isInteger(value) ? 0 : 2);
 export interface FundCompositionProps {

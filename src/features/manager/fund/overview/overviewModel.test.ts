@@ -81,4 +81,20 @@ describe("Overview strategy row POO-2335", () => {
       tone: "muted",
     });
   });
+  it("[POO-2262] names the Solana network of a v6 Fund row", () => {
+    const chains = [
+      ...mockFund.chains,
+      {
+        protocolVersion: "v2" as const,
+        chainId: "1" as const,
+        status: "created" as const,
+        solana: null,
+      },
+    ];
+    expect(overviewStrategyRow({ ...mockFund, chains }).networks).toEqual([
+      { chainId: "42161", slug: "arbitrum", name: "Arbitrum" },
+      { chainId: "4663", slug: "robinhood", name: "Robinhood Chain" },
+      { chainId: "1", slug: "solana", name: "Solana" },
+    ]);
+  });
 });

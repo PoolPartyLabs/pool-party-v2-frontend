@@ -1,6 +1,6 @@
 /** @id PP-MGR-LIB-058 @name overviewModel @implements-rules-version v1 (POO-2245) @implements-rules-version v1 (POO-2335) */
 import type { FundListEntry } from "@/features/funds/fundListModel";
-import { apiNetworkForChain, chainDisplayName } from "@/lib/chains/config";
+import { fundChainNetwork } from "@/features/funds/fundModel";
 import { initialsFor } from "@/lib/utils/initials";
 import type { LaunchJourney } from "../launch/contracts";
 import { launchStatus } from "../launch/journey";
@@ -73,7 +73,8 @@ export interface OverviewStrategyRow {
   };
   networks: Array<{ chainId: string; slug: string | null; name: string }>;
 }
-/** R9 (POO-2335): the strategy row parts of Figma 8427:2829. Network names come from chain config. */
+/** R9 (POO-2335): the strategy row parts of Figma 8427:2829. Network names come from chain config
+ * (Solana, chain "1" of a v6 Fund, from the fund network helper). */
 export function overviewStrategyRow(fund: FundListEntry): OverviewStrategyRow {
   const name = fund.profile?.name?.trim() || `PP-${fund.creationNumber}`;
   const status: OverviewStrategyRow["status"] =
@@ -89,13 +90,9 @@ export function overviewStrategyRow(fund: FundListEntry): OverviewStrategyRow {
     initials: initialsFor(name),
     logoUrl: fund.profile?.imageUrl || fund.profile?.image || null,
     status,
-    networks: fund.chains.map((chain) => {
-      const id = Number(chain.chainId);
-      return {
-        chainId: chain.chainId,
-        slug: apiNetworkForChain(id) ?? null,
-        name: chainDisplayName(id) ?? chain.chainId,
-      };
-    }),
+    networks: fund.chains.map((chain) => ({
+      chainId: chain.chainId,
+      ...fundChainNetwork(chain.chainId),
+    })),
   };
 }
