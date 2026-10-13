@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 725 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 732 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1332,3 +1332,19 @@ Renumbered from `PP-MGR-LIB-059` to `PP-MGR-LIB-099` on 2026-10-13 when the inte
 | `PP-MGR-LIB-099` | Committed bootstrap manifest and signing guard | DEC-190, DEC-200, DEC-201 (unversioned founder rulings) | `src/lib/solana/bootstrap.ts` |
 
 The test-only bootstrap fixture and regression suite support this artifact; they do not claim separate executable components or invented business-rule versions.
+
+## Solana v6 launch through the API, 2026-10-13 (POO-2262)
+
+| ID | Artifact | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-ACT-015` | v2SolanaLaunchActions, session/Manager-checked server actions for every step of the API's v6 demo lifecycle (creation, bootstrap, CCTP send and transit, venues, Kamino, swap, Raydium, reports) | Action | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/lib/api/v2/solanaLaunchActions.ts` (DEC-188/190/191/195/203/204) |
+| `PP-MGR-LIB-100` | v2SolanaApi and v2SolanaSchemas, server-only transport keeping the API's stable refusal codes, and the strict wire contracts of the Solana routes | Lib | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/lib/api/v2/solanaFetch.ts`, `src/lib/api/v2/solanaSchemas.ts` |
+| `PP-MGR-LIB-101` | solanaV6Launch, durable v6 launch journal, creation request from Mandate/Build/Review and launch amounts, plan and transaction checks before signing | Lib | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/manager/fund/launch/solanaV6Launch.ts` |
+| `PP-MGR-HOK-025` | useSolanaV6Launch, runs the journal: EVM consents and transactions with the API gas, Solana transactions through sign, persist, broadcast | Hook | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/manager/fund/launch/useSolanaV6Launch.ts` |
+| `PP-MGR-CMP-108` | SolanaFundLaunch, the v6 launch page: wallets, typed launch amounts, sealed values, creation and Solana operation rows with explorer links | Component | n/a (integration page) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/features/manager/fund/launch/SolanaFundLaunch.tsx` |
+| `PP-MGR-SCR-010` | SolanaFundLaunchRoute, `/manager/fund-launch/solana/[draftId]`, flag-gated | Screen | n/a | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/app/[locale]/(auth)/(app)/manager/fund-launch/solana/[draftId]/page.tsx` |
+| `PP-CORE-SEC-004` | Solana RPC proxy route, session-gated, method allow-listed, server-side provider URL | Security | n/a (code) | In Review | [POO-2262](https://linear.app/yeildbay/issue/POO-2262) | `src/app/api/solana-rpc/route.ts` |
+
+Review (PP-MGR-CMP-077, PP-MGR-LIB-033, PP-MGR-CMP-080) routes a Hub + Robinhood + Solana plan to the
+v6 launch page when `solanaSpoke` is on; with the flag off the POO-2342 Solana launch reason is unchanged.
+`launchAuth.ts` keeps PP-MGR-ACT-013: the session/Manager checks moved out of `launchActions.ts` unchanged.
