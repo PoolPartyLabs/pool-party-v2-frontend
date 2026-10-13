@@ -6,6 +6,30 @@ EVM SIWE identity, embedded Ethereum wallets and existing launch journeys remain
 Rules: DEC-188, DEC-190, DEC-191, DEC-192, DEC-193, DEC-195, DEC-196, DEC-197, DEC-198,
 DEC-199, DEC-202, DEC-203, DEC-204.
 
+## v6 launch through the API (POO-2262, 2026-10-13)
+
+This section supersedes the TODO(interface) seams below for the product path. The API now builds every
+step (pool-party-api `docs/SOLANA_API_CONTRACT.md` §3, §9), so the launch no longer needs the cost
+manifests, `bootstrapState`, the acceptance codec or a local transaction builder.
+
+- Review sends a Hub + Robinhood + Solana plan to `/manager/fund-launch/solana/[draftId]` when
+  `solanaSpoke` is on (`SolanaFundLaunch`, `useSolanaV6Launch`, `solanaV6Launch.ts`).
+- Server actions (`src/lib/api/v2/solanaLaunchActions.ts`) hold the API key, check the SIWE session and,
+  once the Fund exists, that the session wallet is its Manager. `solanaFetch` keeps the API's stable
+  refusal codes (`CREATION_PLAN_STALE`, `SOLANA_REPORT_REFRESHING`, `SOLANA_LOOKUP_TABLE_WARMING`, ...).
+- Creation: `build-creation` unsigned, the two EIP-712 consents, the signed rebuild (consents proven,
+  seed balance read), approve, `createFundV6Committed` and the Robinhood `createSpoke` with the API's
+  `gas`, discovery, then the Solana bootstrap one transaction at a time (each final before the next).
+  The Manager types the seed, the minimum first deposit and the spoke cap (API #198).
+- First operations: Solana report, `send-to-solana` + `transits/track` + transit status (credited),
+  venue adapters, Kamino supply, API-signed swap, Raydium open (fresh NFT mint co-signs), final report.
+- Before any signature the plan is checked against the Manager's two keys, the pinned factory and
+  program; each Solana build is decoded (v0, fee payer, signers, blockhash, only ComputeBudget + the
+  spoke program). The API owns the blockhash; `sendSolanaTransaction` persists the signature before
+  the broadcast and classifies every earlier failure as not submitted.
+- Browser Solana RPC goes through `/api/solana-rpc` (session, method allow-list, `SOLANA_RPC_URL`).
+- Stock tokens stay visible and unavailable (DEC-204); the launch never seals a stock or a stock pool.
+
 ## Production interface (POO-2262)
 
 Program identity is pinned to `7PptZ653uyn5eoAFKqs4DXR1ijxH6sf49f2YAGMLTfCx`
