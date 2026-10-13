@@ -6,12 +6,9 @@
  */
 "use server";
 import { z } from "zod";
-import { apiFetch } from "@/lib/api/client";
-import { getAuthHeader, getSessionWallet } from "@/lib/auth/session";
-import { isFeatureEnabled } from "@/lib/features";
 import { ApiError } from "../errors";
-import { V2DiscoveryPendingError } from "./discovery";
 import { launchFetch } from "./launch";
+import { launchManager, launchResult, launchSession } from "./launchAuth";
 import {
   balancesSchema,
   createRequestSchema,
@@ -37,59 +34,9 @@ const launchFundReadSchema = versionedRecordSchema.extend({
 });
 
 const reportTriggers = new Map<string, number>();
-async function result<ResponseData>(work: () => Promise<ResponseData>) {
-  try {
-    return { ok: true as const, data: await work() };
-  } catch (error) {
-    return {
-      ok: false as const,
-      error: {
-        status: error instanceof ApiError ? error.status : 400,
-        code: error instanceof ApiError ? error.code : "V2_INVALID_REQUEST",
-        ...(error instanceof V2DiscoveryPendingError
-          ? {
-              ...(error.retryAfterSeconds !== undefined
-                ? { retryAfterSeconds: error.retryAfterSeconds }
-                : {}),
-              ...(error.progress ? { progress: error.progress } : {}),
-            }
-          : {}),
-      },
-    };
-  }
-}
-async function session(from?: string): Promise<string> {
-  if (!isFeatureEnabled("fundContracts"))
-    throw new ApiError(404, "V2_UNAVAILABLE", "not available");
-  const wallet = await getSessionWallet();
-  if (!wallet || (from && wallet !== from.toLowerCase()))
-    throw new ApiError(401, "V2_UNAUTHORIZED", "unauthorized");
-  const headers = await getAuthHeader();
-  if (!headers.Authorization) throw new ApiError(401, "V2_UNAUTHORIZED", "unauthorized");
-  try {
-    const owner = await apiFetch("users/me", {
-      headers,
-      schema: z.object({ walletAddress: addressSchema }),
-    });
-    if (!owner || owner.walletAddress.toLowerCase() !== wallet)
-      throw new Error("identity mismatch");
-  } catch {
-    throw new ApiError(401, "V2_UNAUTHORIZED", "unauthorized");
-  }
-  return wallet;
-}
-async function manager(core: string): Promise<string> {
-  addressSchema.parse(core);
-  const wallet = await session();
-  const fund = await launchFetch(
-    `/funds/${core}`,
-    "GET",
-    versionedRecordSchema.extend({ manager: addressSchema }),
-  );
-  if (fund.manager.toLowerCase() !== wallet)
-    throw new ApiError(403, "V2_NOT_MANAGER", "not manager");
-  return wallet;
-}
+const result = launchResult;
+const session = launchSession;
+const manager = launchManager;
 function cleanMetadata(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(cleanMetadata);
   if (value !== null && typeof value === "object")
