@@ -8,8 +8,9 @@
  * @linear https://linear.app/yeildbay/issue/POO-2309
  * @linear https://linear.app/yeildbay/issue/POO-2336
  * @linear https://linear.app/yeildbay/issue/POO-2338
+ * @linear https://linear.app/yeildbay/issue/POO-2350
  * @i18n-namespace manager.marketChart
- * @implements-rules-version v1 (POO-2309), v1 (POO-2336), v1 (POO-2338) + POO-2342 rules v1 (one V2 builder, Solana is a network)
+ * @implements-rules-version v1 (POO-2309), v1 (POO-2336), v1 (POO-2338) + POO-2342 rules v1 (one V2 builder, Solana is a network), v1 (POO-2350)
  * @analytics-events manager_chart_viewed, manager_chart_closed, manager_chart_blocked,
  *   manager_chart_failed, manager_chart_retried
  */
@@ -22,7 +23,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { cn } from "@/lib/utils/cn";
 import type { ChartSelection } from "./chartContext";
-import { buildChartUrl, type ChartMarket, chartAnalyticsMarket, chartPageUrl } from "./chartModel";
+import {
+  buildChartUrl,
+  CHART_FRAME_MIN_HEIGHT_PX,
+  type ChartMarket,
+  chartAnalyticsMarket,
+  chartFrameMinHeight,
+  chartPageUrl,
+} from "./chartModel";
 import {
   type ChartFailure,
   type ChartTab,
@@ -108,7 +116,12 @@ function ChartFrame({
   };
   const failed = status === "load_timeout";
   return (
-    <div className="relative min-h-24 min-w-0 flex-1" aria-busy={status === "loading"}>
+    <div
+      // POO-2350 R1, R2: the minimum height fits the embed; the iframe fills this box.
+      style={{ minHeight: chartFrameMinHeight(market) }}
+      className="relative min-w-0 flex-1"
+      aria-busy={status === "loading"}
+    >
       {/* PP-INTEGRATION-POINT: isolated public DEX Screener chart; only the chain slug and the public pool or token address are sent. */}
       <iframe
         data-chart-frame=""
@@ -169,6 +182,8 @@ export function StrategyChartSurface({
   const marketId = chartAnalyticsMarket(availability);
   const widgetKey = JSON.stringify([identity, market ? buildChartUrl(market) : null]);
   const chartsVisible = tab === "charts";
+  // POO-2350 R1, R3: a taller frame scrolls the panel, so the header and the footer stay whole.
+  const tallFrame = market !== null && chartFrameMinHeight(market) > CHART_FRAME_MIN_HEIGHT_PX.base;
   const visited = chartsVisible || visitedIdentity === widgetKey;
   const frameKey = `${widgetKey}:${attempt}`;
   // R4, R5: a provider failure belongs to one frame instance; a new key starts with none.
@@ -263,7 +278,8 @@ export function StrategyChartSurface({
           inert={!chartsVisible || undefined}
           tabIndex={chartsVisible ? 0 : -1}
           className={cn(
-            "absolute inset-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden border border-border bg-surface",
+            "absolute inset-0 flex h-full min-h-0 min-w-0 flex-col border border-border bg-surface",
+            tallFrame ? "scrollbar-dark overflow-y-auto overflow-x-hidden" : "overflow-hidden",
             // Figma 8682-3253: the unavailable panel uses the 16px radius token.
             panel.kind === "unavailable" ? "rounded-lg" : "rounded-xl",
             !chartsVisible && "invisible pointer-events-none",
@@ -271,7 +287,12 @@ export function StrategyChartSurface({
         >
           {panel.kind === "chart" ? (
             <>
-              <header className="scrollbar-dark min-h-0 shrink space-y-1 overflow-y-auto border-b border-border px-3 py-2">
+              <header
+                className={cn(
+                  "scrollbar-dark space-y-1 overflow-y-auto border-b border-border px-3 py-2",
+                  tallFrame ? "shrink-0" : "min-h-0 shrink",
+                )}
+              >
                 <h3 className="font-semibold text-sm text-foreground">
                   {t(panel.market.kind === "pool" ? "poolTitle" : "assetTitle")}
                 </h3>
