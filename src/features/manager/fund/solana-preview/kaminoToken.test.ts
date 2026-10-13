@@ -46,12 +46,20 @@ describe("POO-2351 R4: the token select of the Kamino Lend panel", () => {
   });
 
   // @rule R4
-  it("[R4] adds SOL when the mandate has WSOL on Solana, by mint or by symbol", () => {
+  it("[R4] adds SOL when the mandate has WSOL on Solana, by the WSOL mint", () => {
     expect(kaminoTokenOptions(draftWith(token("WSOL", WSOL_MINT)))).toEqual(["USDC", "SOL"]);
-    expect(kaminoTokenOptions(draftWith(token("SOL", "native-sol")))).toEqual(["USDC", "SOL"]);
+    expect(kaminoTokenOptions(draftWith(token("SOL", WSOL_MINT)))).toEqual(["USDC", "SOL"]);
     expect(
       kaminoTokenOptions(draftWith(token("USDC", USDC_MINT), token("WSOL", WSOL_MINT))),
     ).toEqual(["USDC", "SOL"]);
+  });
+
+  // @rule R4
+  it("[R4] does not treat a token with the symbol SOL and another address as SOL", () => {
+    const fake = "FakeSo1111111111111111111111111111111111111";
+    expect(kaminoTokenOptions(draftWith(token("SOL", fake)))).toEqual(["USDC"]);
+    expect(kaminoTokenOptions(draftWith(token("WSOL", fake)))).toEqual(["USDC"]);
+    expect(kaminoTokenOptions(draftWith(token("sol", fake)))).toEqual(["USDC"]);
   });
 
   // @rule R4

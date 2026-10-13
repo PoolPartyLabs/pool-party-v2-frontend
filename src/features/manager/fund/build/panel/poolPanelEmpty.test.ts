@@ -7,7 +7,8 @@
  * Rules under test (POO-2351 rules v1):
  *   [R1] the Build screen has no "unavailable" panel bodies for the EVM kinds
  *   [R2] the empty Uniswap v4 panel has its own caption in all locales
- *   [R8] the new texts exist in all locales, have no em dash and pt-BR has its own text
+ *   [R4] the Kamino token select has its own title in all locales, with the token, and its list
+ *        reuses the token search and no-result texts of the Build panels
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -20,7 +21,10 @@ const source = (path: string) => readFileSync(join(FUND, path), "utf8");
 const locales = readdirSync(MESSAGES).filter((name) => !name.startsWith("."));
 const manager = (locale: string) =>
   JSON.parse(readFileSync(join(MESSAGES, locale, "manager.json"), "utf8")) as {
-    fundBuilder: { canvas: { panel: { pool: Record<string, string> } } };
+    fundBuilder: {
+      canvas: { panel: { pool: Record<string, string> } };
+      build: { supplyPanel: Record<string, string> };
+    };
     solanaPreview: Record<string, string>;
   };
 const EM_DASH = String.fromCharCode(0x2014);
@@ -35,7 +39,7 @@ describe("POO-2351 R1: the EVM panels work with Solana in the mandate", () => {
   });
 });
 
-describe("POO-2351 R2 and R8: the new texts", () => {
+describe("POO-2351 R2 and R4: the new texts", () => {
   // @rule R2
   it("has a caption for the empty Uniswap v4 panel in all locales, with the network", () => {
     expect(locales.length).toBeGreaterThanOrEqual(11);
@@ -46,25 +50,47 @@ describe("POO-2351 R2 and R8: the new texts", () => {
     }
   });
 
-  // @rule R8
+  // @rule R4
   it("has the Kamino token title in all locales, with the token", () => {
     for (const locale of locales) {
       expect(manager(locale).solanaPreview.supplyToken, locale).toContain("{token}");
     }
   });
 
-  // @rule R8
-  it("uses no em dash, and pt-BR has its own text", () => {
+  // @rule R2
+  it("uses no em dash in the empty caption, and pt-BR has its own text", () => {
     for (const locale of locales) {
       const data = manager(locale);
       expect(data.fundBuilder.canvas.panel.pool.emptyCaption).not.toContain(EM_DASH);
-      expect(data.solanaPreview.supplyToken).not.toContain(EM_DASH);
     }
     const en = manager("en");
     const pt = manager("pt-BR");
     expect(pt.fundBuilder.canvas.panel.pool.emptyCaption).not.toBe(
       en.fundBuilder.canvas.panel.pool.emptyCaption,
     );
-    expect(pt.solanaPreview.supplyToken).not.toBe(en.solanaPreview.supplyToken);
+  });
+
+  // @rule R4
+  it("uses no em dash in the Kamino token title, and pt-BR has its own text", () => {
+    for (const locale of locales) {
+      expect(manager(locale).solanaPreview.supplyToken).not.toContain(EM_DASH);
+    }
+    expect(manager("pt-BR").solanaPreview.supplyToken).not.toBe(
+      manager("en").solanaPreview.supplyToken,
+    );
+  });
+
+  // @rule R4
+  it("gives the Kamino list a token search and a real no-result text, not the pair or the name", () => {
+    const bodies = source("solana-preview/SolanaBuilderPanelBodies.tsx");
+    expect(bodies).not.toContain("title: () => (kamino ? name");
+    expect(bodies).toContain("fundBuilder.build.supplyPanel.filter");
+    expect(bodies).toContain("fundBuilder.build.supplyPanel.noMatch");
+    for (const locale of locales) {
+      const supply = manager(locale).fundBuilder.build.supplyPanel;
+      expect(supply.filter, locale).toBeTruthy();
+      expect(supply.noMatch, locale).toContain("{typed}");
+      expect(supply.noMatchCaption, locale).toBeTruthy();
+    }
   });
 });

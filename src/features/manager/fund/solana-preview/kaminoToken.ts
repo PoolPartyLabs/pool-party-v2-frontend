@@ -7,7 +7,8 @@
  * @analytics-events none, pure helpers.
  *
  * R4. The token select of the Kamino Lend panel always offers USDC. It offers SOL when the mandate
- * has SOL or WSOL on Solana.
+ * has SOL or WSOL on Solana. The WSOL mint is the only identity of SOL: a token with the symbol SOL
+ * and another address is not SOL.
  *
  * R5. The block keeps its token in `config.token`. The card shows the token, not the pair. An older
  * block has no `token`: its pair reads as a token (the first symbol of the pair), so "USDC / SOL"
@@ -23,12 +24,10 @@ export type KaminoToken = NonNullable<SolanaLocalBlockConfig["token"]>;
 /** The catalog id of the Kamino block. `SOLANA_LOCAL_CONFIGS` holds the same value. */
 export const KAMINO_CATALOG_ID = "solana:mainnet-beta:kamino-supply";
 
-/** R4: USDC always, and SOL when the mandate has SOL or WSOL on Solana. */
+/** R4: USDC always, and SOL when the mandate has the WSOL mint on Solana. */
 export function kaminoTokenOptions(draft: Pick<MandateDraft, "tokens">): KaminoToken[] {
   const hasSol = draft.tokens.some(
-    (token) =>
-      token.network === "solana" &&
-      (token.address === WSOL_MINT || ["SOL", "WSOL"].includes(token.symbol.toUpperCase())),
+    (token) => token.network === "solana" && token.address === WSOL_MINT,
   );
   return hasSol ? ["USDC", "SOL"] : ["USDC"];
 }

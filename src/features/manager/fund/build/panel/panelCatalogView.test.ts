@@ -670,6 +670,39 @@ describe("POO-2351 pool pick list with Solana in the mandate", () => {
     expect(rows.some((row) => row.rowId === solana.id)).toBe(false);
   });
 
+  // @rule R1
+  it("lists the Aave reserves of the network of the block, and a Solana token changes nothing (P1)", () => {
+    const usdc = "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
+    const arbitrumToken = (address: string, symbol: string) =>
+      ({
+        address,
+        symbol,
+        name: symbol,
+        network: "arbitrum",
+        logoUrl: null,
+        locked: false,
+      }) as MandateTokenRef;
+    const solanaToken = {
+      address: "So11111111111111111111111111111111111111112",
+      symbol: "WSOL",
+      name: "Wrapped SOL",
+      network: "solana",
+      logoUrl: null,
+      locked: false,
+    } as unknown as MandateTokenRef;
+    const arbitrumTokens = [arbitrumToken(usdc, "USDC")];
+    const without = selectPanelReserves(panelReserveFixtures(), arbitrumTokens, 42161);
+    const withSolana = selectPanelReserves(
+      panelReserveFixtures(),
+      [...arbitrumTokens, solanaToken],
+      42161,
+    );
+    expect(without.map((row) => row.token.symbol)).toEqual(["USDC"]);
+    expect(withSolana).toEqual(without);
+    expect(withSolana.some((row) => row.token.symbol === "WSOL")).toBe(false);
+    expect(selectPanelReserves(panelReserveFixtures(), [solanaToken], 42161)).toEqual([]);
+  });
+
   // @rule R2
   it("gives a network with no mandate pool an empty list, and a Solana pool does not fill it", () => {
     expect(panelPoolsFor({ pools: [solana] }, 42161)).toEqual([]);

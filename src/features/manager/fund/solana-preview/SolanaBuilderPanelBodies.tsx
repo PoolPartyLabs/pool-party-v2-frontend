@@ -228,14 +228,18 @@ const body: PanelBodyDefinition<SolanaLocalBlockConfig> = {
     return {
       heading: name,
       count: rows.length,
-      filterPlaceholder: t("solanaPreview.pair"),
+      filterPlaceholder: kamino
+        ? t("fundBuilder.build.supplyPanel.filter")
+        : t("solanaPreview.pair"),
       rows,
       caption,
       link: { prompt: "", label: t("fundBuilder.canvas.menu.link.protocols"), step: "protocols" },
-      noMatch: {
-        title: () => (kamino ? name : t("solanaPreview.marketUnavailable")),
-        caption,
-      },
+      noMatch: kamino
+        ? {
+            title: (typed) => t("fundBuilder.build.supplyPanel.noMatch", { typed }),
+            caption: t("fundBuilder.build.supplyPanel.noMatchCaption"),
+          }
+        : { title: () => t("solanaPreview.marketUnavailable"), caption },
       emptyTitle: kamino ? name : t("solanaPreview.marketUnavailable"),
     };
   },
