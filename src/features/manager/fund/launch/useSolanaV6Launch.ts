@@ -20,7 +20,7 @@ import {
   partiallySignTransaction,
 } from "@solana/kit";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createWalletClient, custom, type Hex } from "viem";
+import { createPublicClient, createWalletClient, custom, type Hex, http } from "viem";
 import { arbitrum } from "viem/chains";
 import { getSessionAction } from "@/features/auth/siweActions";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
@@ -41,10 +41,12 @@ import {
   trackSolanaTransitAction,
 } from "@/lib/api/v2/solanaLaunchActions";
 import type { BuildCreation, EvmBuild, UnsignedSolanaBuild } from "@/lib/api/v2/solanaSchemas";
+import { getChainById } from "@/lib/chains";
 import { createManagerSolanaRpc, readSolanaConfirmation } from "@/lib/solana/rpc";
 import { validateSolanaApiQuote } from "@/lib/solana/swap";
 import { isSolanaNotSubmitted, sendSolanaTransaction } from "@/lib/solana/transaction";
 import { useManagerSolanaWallet } from "@/lib/solana/useManagerSolanaWallet";
+import { isUserRejection, sendBuiltTransaction } from "@/lib/tx/sendTransaction";
 import { useEnsureWalletChain } from "@/lib/tx/useEnsureWalletChain";
 import { planOf } from "../build/plan/buildPlan";
 import type { MandateDraft } from "../mandateDraft";
@@ -69,7 +71,6 @@ import {
   solanaBuildToSign,
   verifyCreationPlan,
 } from "./solanaV6Launch";
-import { useV2LaunchWallet } from "./useV2LaunchWallet";
 
 /** A refusal the journey waits out instead of failing (API contract §1, §3, §4). */
 const WAIT_CODES = new Set([
@@ -143,7 +144,6 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
   const stateRef = useRef<SolanaLaunchState | null>(null);
   const planRef = useRef<BuildCreation | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const evm = useV2LaunchWallet();
   const { wallets } = useWallets();
   const ensureChain = useEnsureWalletChain();
   const solana = useManagerSolanaWallet(state?.solanaKey);
@@ -204,8 +204,8 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
     const wallet = wallets.find(
       (candidate) => candidate.address.toLowerCase() === stateRef.current?.manager,
     );
-    if (!wallet || !evm.wallet) throw new StepFailure("V2_WALLET_REQUIRED");
-    return { wallet, binding: evm.wallet };
+    if (!wallet) throw new StepFailure("V2_WALLET_REQUIRED");
+    return { wallet };
   };
   const signTypedData = async (typedData: BuildCreation["binding"]["typedData"]) => {
     const { wallet } = evmWallet();
@@ -235,24 +235,38 @@ export function useSolanaV6Launch(draftId: string): SolanaV6LaunchView {
     const record = stateRef.current?.steps[step];
     let hash = record?.status === "submitted" ? record.txHash : undefined;
     if (!hash) {
-      const { binding } = evmWallet();
-      hash = await binding.send(
-        {
-          from: tx.from,
-          to: tx.to,
-          chainId: tx.chainId,
-          data: tx.data,
-          value: tx.value,
-          ...(tx.gas ? { gas: tx.gas } : {}),
-        } as Parameters<typeof binding.send>[0],
-        (submitted) => setStep(step, { status: "submitted", txHash: submitted, chain: tx.chainId }),
-        signal,
-      );
+      if (signal.aborted) throw new StepFailure("LAUNCH_CANCELLED");
+      // The exact Manager wallet, never `wallets[0]`: an embedded wallet may sit first in the list.
+      const { wallet } = evmWallet();
+      const provider = await ensureChain(wallet, tx.chainId);
+      try {
+        hash = await sendBuiltTransaction(
+          provider,
+          {
+            tx: {
+              from: tx.from,
+              to: tx.to,
+              data: tx.data,
+              value: tx.value,
+              ...(tx.gas ? { gas: tx.gas } : {}),
+            },
+            chainId: tx.chainId,
+          },
+          wallet.address,
+          tx.chainId,
+        );
+      } catch (failure) {
+        throw new StepFailure(
+          isUserRejection(failure) ? "USER_REJECTED" : "SUBMISSION_RECONCILIATION_REQUIRED",
+        );
+      }
       setStep(step, { status: "submitted", txHash: hash, chain: tx.chainId });
     }
-    const { binding } = evmWallet();
+    const chain = getChainById(tx.chainId);
+    if (!chain) throw new StepFailure("V2_UNAVAILABLE");
+    const client = createPublicClient({ chain, transport: http() });
     for (let attempt = 0; attempt < 200 && !signal.aborted; attempt += 1) {
-      const receipt = await binding.receipt(tx.chainId, hash);
+      const receipt = await client.getTransactionReceipt({ hash: hash as Hex }).catch(() => null);
       if (receipt?.status === "success") return hash;
       if (receipt?.status === "reverted") throw new StepFailure("TRANSACTION_REVERTED");
       await sleep(3000, signal);
