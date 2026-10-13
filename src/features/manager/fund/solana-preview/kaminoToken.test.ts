@@ -71,15 +71,13 @@ describe("POO-2351 R4: the token select of the Kamino Lend panel", () => {
 describe("POO-2351 R5: the token that the Kamino block keeps", () => {
   // @rule R5
   it("[R5] reads a saved pair as its first token", () => {
-    expect(kaminoTokenOf({ catalogId: KAMINO_CATALOG_ID, pair: "USDC / SOL" })).toBe("USDC");
-    expect(kaminoTokenOf({ catalogId: KAMINO_CATALOG_ID, pair: "SOL / USDC" })).toBe("SOL");
+    expect(kaminoTokenOf({ pair: "USDC / SOL" })).toBe("USDC");
+    expect(kaminoTokenOf({ pair: "SOL / USDC" })).toBe("SOL");
   });
 
   // @rule R5
   it("[R5] reads the saved token before the pair, and a block without config as USDC", () => {
-    expect(kaminoTokenOf({ catalogId: KAMINO_CATALOG_ID, pair: "USDC / SOL", token: "SOL" })).toBe(
-      "SOL",
-    );
+    expect(kaminoTokenOf({ pair: "USDC / SOL", token: "SOL" })).toBe("SOL");
     expect(kaminoTokenOf(null)).toBe("USDC");
   });
 

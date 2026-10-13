@@ -483,6 +483,7 @@ describe("POO-2351 R5: the Kamino card shows the token", () => {
       name: symbol,
       network: "solana" as const,
       logoUrl: null,
+      locked: false,
     });
     return {
       ...withProtocols(base, [...base.protocols, "kamino"]),
