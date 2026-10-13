@@ -772,6 +772,8 @@
       "selectAll": "すべて選択",
       "alwaysIncluded": "常に含まれる",
       "comingSoon": "近日公開",
+      "unavailable": "利用不可",
+      "stockUnavailable": "株式のスワップはまだ利用できません",
       "clearAll": "すべて解除",
       "add": "追加",
       "addAll": "{count}件すべて追加",

@@ -772,6 +772,8 @@
       "selectAll": "Alle auswählen",
       "alwaysIncluded": "Immer enthalten",
       "comingSoon": "Demnächst",
+      "unavailable": "Nicht verfügbar",
+      "stockUnavailable": "Aktien-Swaps sind noch nicht verfügbar",
       "clearAll": "Alle abwählen",
       "add": "Hinzufügen",
       "addAll": "Alle {count} hinzufügen",

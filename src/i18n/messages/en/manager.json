@@ -772,6 +772,8 @@
       "selectAll": "Select all",
       "alwaysIncluded": "Always included",
       "comingSoon": "Coming soon",
+      "unavailable": "Unavailable",
+      "stockUnavailable": "Stock swaps are not available yet",
       "clearAll": "Clear all",
       "add": "Add",
       "addAll": "Add all {count}",

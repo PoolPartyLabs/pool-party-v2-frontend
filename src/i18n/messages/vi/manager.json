@@ -772,6 +772,8 @@
       "selectAll": "Chọn tất cả",
       "alwaysIncluded": "Luôn được bao gồm",
       "comingSoon": "Sắp ra mắt",
+      "unavailable": "Không khả dụng",
+      "stockUnavailable": "Giao dịch hoán đổi cổ phiếu chưa khả dụng",
       "clearAll": "Bỏ chọn tất cả",
       "add": "Thêm",
       "addAll": "Thêm tất cả {count}",
