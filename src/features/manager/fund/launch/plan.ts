@@ -4,6 +4,8 @@
  * @implements-rules-version v2 (POO-2181); POO-2204 rules v1
  * Owned structural adapter for the canvas BuildPlan v1.
  */
+
+import type { SolanaBootstrapChunk } from "@/lib/solana/bootstrap";
 import { isConfigFor } from "../build/plan/blockConfig";
 
 export interface CanvasPlan {
@@ -57,6 +59,7 @@ export interface LaunchStep {
     | "swap"
     | "open";
   chain: 42161 | 4663;
+  chainKind?: "evm" | "svm";
   dependencies: string[];
   sharePct?: number;
   shareDenominator?: number;
@@ -64,6 +67,30 @@ export interface LaunchStep {
   blockId?: string;
   protocol?: "aave-v3" | "uniswap-v4";
   config?: { poolId?: string; assetKey?: string } & ExecutionConfig;
+}
+
+export interface SolanaLaunchStep extends Omit<LaunchStep, "kind" | "chain"> {
+  config?: LaunchStep["config"] & { maxPriceImpactBps?: number };
+  bootstrapChunk?: SolanaBootstrapChunk;
+  kind:
+    | "bind-solana"
+    | "stage-solana-config"
+    | "seal-solana-config"
+    | "init-solana"
+    | "cctp-fast"
+    | "solana-arrival"
+    | "kamino-supply"
+    | "swap-to-ratio"
+    | "raydium-open"
+    | "report";
+  chain: 42161 | "solana:mainnet";
+  chainKind: "evm" | "svm";
+  group: "solana";
+}
+export type ChainLaunchStep = LaunchStep | SolanaLaunchStep;
+
+export function isEvmLaunchStep(step: ChainLaunchStep): step is LaunchStep {
+  return step.group !== "solana" && step.chain !== "solana:mainnet";
 }
 
 export function launchPlanError(error: unknown) {

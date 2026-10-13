@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 724 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 725 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1323,3 +1323,12 @@ POO-2351 changes these rows, which keep their numbers:
 - PP-MGR-LIB-031 gains `poolPickStatus`, and PP-MGR-CMP-061, PP-MGR-CMP-068 and PP-MGR-CMP-069 gain
   `emptyCaption`: Uniswap v4 with no mandate pool on its network shows an empty state that links to
   the Pools step (R2).
+## Solana Bootstrap Re-sync, 2026-10-07 (POO-2262)
+
+Renumbered from `PP-MGR-LIB-059` to `PP-MGR-LIB-099` on 2026-10-13 when the integration branch merged `main`: `main` had already given `PP-MGR-LIB-059` to SolanaPreviewModel (POO-2281).
+
+| ID | Artifact | Rules | Source |
+|---|---|---|---|
+| `PP-MGR-LIB-099` | Committed bootstrap manifest and signing guard | DEC-190, DEC-200, DEC-201 (unversioned founder rulings) | `src/lib/solana/bootstrap.ts` |
+
+The test-only bootstrap fixture and regression suite support this artifact; they do not claim separate executable components or invented business-rule versions.
