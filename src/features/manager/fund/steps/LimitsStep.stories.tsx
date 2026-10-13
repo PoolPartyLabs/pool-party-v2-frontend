@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-039
  * @name LimitsStep.stories
- * @implements-rules-version v3 (POO-2142 rules v2, POO-2197 rules v2, POO-2332 rules v1)
+ * @implements-rules-version v4 (POO-2142 rules v2, POO-2197 rules v2, POO-2332 rules v1, POO-2349 rules v1)
  *
  * Storybook coverage for Mandate step 5 (POO-2126 [R6] / [R39] to [R43]).
  *
@@ -230,4 +230,25 @@ export const CapZeroBlocked: Story = {
 /** POO-2332 R9: the "All tokens" row of Selected mode shows "Mixed" when the token caps differ. */
 export const MixedTokenCaps: Story = {
   render: () => <Harness catalog={catalog} initial={selections(FIGMA_CAPS)} />,
+};
+
+/** POO-2349 R3: the box of each group is mixed in `Figma`, checked when every row has No cap and clear when none has it. */
+export const GroupBoxStates: Story = {
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={selections({
+        networks: {
+          arbitrum: { noCap: true, pct: 0 },
+          robinhood: { noCap: true, pct: 40 },
+        },
+        protocols: {
+          "aave-v3": { noCap: false, pct: 60 },
+          "uniswap-v3": { noCap: false, pct: 35 },
+          "uniswap-v4": { noCap: false, pct: 10 },
+        },
+        tokens: FIGMA_CAPS.tokens,
+      })}
+    />
+  ),
 };

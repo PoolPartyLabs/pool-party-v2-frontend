@@ -4,6 +4,7 @@
  * @implements-rules-version v2 (POO-2143 rules v2, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2332 rules v1: token caps and All tokens mode)
+ * @implements-rules-version v1 (POO-2349 rules v1: a No cap box for each group)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] / [R40] / [R41] / [R42] / [R43], epic POO-2119. Mandate step 5: how much of
@@ -28,6 +29,14 @@
  * POO-2197 rules v2: reaching 100% selects No cap while retaining the prior numeric value for an
  * untick. A focused slider hands focus to that row's surviving checkbox. Limits now requires USDC
  * plus another editable token with No cap or a percentage above zero; zero and unset do not count.
+ *
+ * ## POO-2349: the box of a group
+ *
+ * Each group has a "No cap" box on the row of its title, on the right (R1). It sets every row of the
+ * group (R2), shows checked, mixed or clear from the rows (R3, R4), and is absent for a group with
+ * no row. The logic is in `limitsNoCap.ts` (PP-MGR-LIB-097). In All tokens mode the Per token group
+ * has the one Every token row, and its box sets that row. The Per protocol and Per token captions
+ * have their own keys in real data mode too (R5).
  *
  * ## The refusal is the shell's, and the row is this screen's
  *
@@ -61,13 +70,21 @@ import { cn } from "@/lib/utils/cn";
 import { MandateCheckbox, MandateRow } from "../components/MandateRow";
 import { NetworkLogoWithName, useNetworkNames } from "../components/NetworkDots";
 import { ProtocolMark } from "../components/ProtocolMark";
+import {
+  type CapScope,
+  type SectionNoCapState,
+  sectionCapsOf,
+  sectionNoCapState,
+  setEveryTokenNoCap,
+  setSectionNoCap,
+  toggleNoCap,
+} from "../limitsNoCap";
 import type { MandateProtocol } from "../mandateCatalog";
 import {
   ALL_TOKENS_ROW_ID,
   allTokensCapOf,
   CAP_STEP_PCT,
   capRows,
-  clearCap,
   EVERY_TOKEN_ROW_ID,
   effectiveCap,
   HUB_NETWORK,
@@ -101,43 +118,26 @@ const BLINK_PERIOD_MS = 250;
 /** Logo edge, in px. The rows are taller than steps 1 and 2, so the mark grows with them. */
 const LOGO_SIZE = 28;
 
-/** The three scopes `setCap` writes to, which are also the three groups on this screen. */
-type CapScope = "networks" | "protocols" | "tokens";
-
 /**
- * What the "No cap" box does, in both directions.
- *
- * Ticking is the easy half: the row keeps whatever share it had, so un-ticking can give it back.
- * Un-ticking is where the three states matter. A row that HAD a share returns to it. A row that had
- * none goes back to UNSET rather than to `{ noCap: false, pct: 0 }`, because 0% is a deliberate
- * answer ("this network may hold nothing") that `validateStep` accepts: writing it here would let
- * Next through on a ceiling nobody chose, one click after the manager said they wanted no ceiling at
- * all. `pct` is 0 exactly when no share was ever stored, which is why that is the test.
+ * One group's head: the title and the rule it applies, on one baseline (R39). The section "No cap"
+ * box (POO-2349 R1) sits on the same row, on the right.
  */
-function toggleNoCap(
-  draft: MandateDraft,
-  scope: CapScope,
-  id: string,
-  cap: MandateCap | undefined,
-): MandateDraft {
-  const noCap = cap?.noCap ?? false;
-  const pct = cap?.pct ?? 0;
-  if (!noCap) return setCap(draft, scope, id, { noCap: true, pct });
-  // PP-NOTE: assumption (coordinator default). `pct > 0` also swallows a DELIBERATE 0%: capped at
-  // 0%, ticked, then unticked, and the row is unset rather than back at 0%. `{ noCap: true, pct: 0 }`
-  // is what both a chosen 0% and an untouched row leave behind, so the draft cannot tell them apart,
-  // and this reading is the one that fails closed: Next is refused for a missing cap and the manager
-  // sets the slider again. The alternative lets Next through on a ceiling nobody chose. Pinned by
-  // "forgets a deliberate 0% cap across a No cap round trip" in `LimitsStep.test.tsx`.
-  return pct > 0 ? setCap(draft, scope, id, { noCap: false, pct }) : clearCap(draft, scope, id);
-}
-
-/** One group's head: the title and the rule it applies, on one baseline (R39). */
-function GroupHead({ title, caption }: { title: string; caption: string }) {
+function GroupHead({
+  title,
+  caption,
+  trailing,
+}: {
+  title: string;
+  caption: string;
+  trailing?: ReactNode;
+}) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <h3 className="font-medium text-foreground text-sm">{title}</h3>
-      <p className="text-muted-foreground text-sm">{caption}</p>
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h3 className="font-medium text-foreground text-sm">{title}</h3>
+        <p className="text-muted-foreground text-sm">{caption}</p>
+      </div>
+      {trailing}
     </div>
   );
 }
@@ -195,6 +195,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   const realMode = catalog.dataMode === "real";
   const allMode = !realMode && tokenModeOf(draft) === "all";
   const summary = allTokensSummary(draft, catalog);
+  const tokenIds = rows.tokens.map(tokenKey);
 
   const ownBlock = block?.step === STEP ? block : null;
   const focusNoCapRow = useRef<string | null>(null);
@@ -469,6 +470,50 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
     });
   }
 
+  /**
+   * POO-2349 R1 to R4: the "No cap" box of one group. It has the style of the row box and three
+   * states (R3): checked, mixed (`aria-checked="mixed"`) and clear. A group with no row has no box.
+   * Pressing it checks every row unless every row is checked already, so a mixed box checks (R2).
+   * `rowState` reads the draft, so a change on one row moves the box (R4).
+   */
+  function sectionBox(sectionName: string, rowState: SectionNoCapState, press: () => void) {
+    if (rowState === "none") return null;
+    return (
+      // biome-ignore lint/a11y/useSemanticElements: the same 20 px box as the row "No cap" (a button with role="checkbox"); a native <input> cannot show the mixed state in this style.
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={rowState === "mixed" ? "mixed" : rowState === "checked"}
+        data-section-no-cap={rowState}
+        aria-label={t("fundBuilder.limits.sectionNoCapLabel", { name: sectionName })}
+        onClick={press}
+        className={cn(
+          "flex shrink-0 items-center gap-2 rounded-md text-sm transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          rowState === "clear" ? "text-muted-foreground hover:text-foreground" : "text-foreground",
+        )}
+      >
+        <MandateCheckbox selected={rowState !== "clear"} mixed={rowState === "mixed"} />
+        {noCapLabel}
+      </button>
+    );
+  }
+
+  /** The section box of a scoped group: network, protocol, or the token rows of Selected mode. */
+  function scopedSectionBox(scope: CapScope, sectionName: string, ids: readonly string[]) {
+    return sectionBox(sectionName, sectionNoCapState(sectionCapsOf(draft, scope, ids)), () =>
+      update((current) =>
+        setSectionNoCap(
+          current,
+          scope,
+          ids,
+          sectionNoCapState(sectionCapsOf(current, scope, ids)) !== "checked",
+          realMode,
+        ),
+      ),
+    );
+  }
+
   /** R43: a group whose earlier step added nothing says so rather than showing a bare head. */
   function emptyLine() {
     return <p className="text-muted-foreground text-sm">{noRowsLabel}</p>;
@@ -509,6 +554,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
               ? t("fundBuilder.real.limits")
               : t("fundBuilder.limits.perNetworkCaption")
           }
+          trailing={scopedSectionBox("networks", t("fundBuilder.limits.perNetwork"), rows.networks)}
         />
 
         {/* R40: the hub is not a cap, it is the remainder. Locked, with no control to move. */}
@@ -544,9 +590,14 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           title={t("fundBuilder.limits.perProtocol")}
           caption={
             catalog.dataMode === "real"
-              ? t("fundBuilder.real.allocation")
+              ? t("fundBuilder.real.allocationProtocol")
               : t("fundBuilder.limits.perProtocolCaption")
           }
+          trailing={scopedSectionBox(
+            "protocols",
+            t("fundBuilder.limits.perProtocol"),
+            rows.protocols,
+          )}
         />
         {rows.protocols.length === 0
           ? emptyLine()
@@ -568,10 +619,22 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           title={t("fundBuilder.limits.perToken")}
           caption={
             realMode
-              ? t("fundBuilder.real.allocation")
+              ? t("fundBuilder.real.allocationToken")
               : allMode
                 ? t("fundBuilder.limits.perTokenAllCaption")
                 : t("fundBuilder.limits.perTokenCaption")
+          }
+          trailing={
+            allMode
+              ? sectionBox(
+                  t("fundBuilder.limits.perToken"),
+                  sectionNoCapState([allTokensCapOf(draft)]),
+                  () =>
+                    update((current) =>
+                      setEveryTokenNoCap(current, !allTokensCapOf(current).noCap),
+                    ),
+                )
+              : scopedSectionBox("tokens", t("fundBuilder.limits.perToken"), tokenIds)
           }
         />
         {allMode ? (

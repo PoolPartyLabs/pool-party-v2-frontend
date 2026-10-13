@@ -731,6 +731,8 @@
       "metrics": "TVL과 APR은 아직 인덱싱되지 않았어요.",
       "limits": "Robinhood 비율은 펀드의 의도로 저장되지만 POO-2169 전에는 on-chain으로 강제되지 않아요.",
       "allocation": "프로토콜 및 토큰 슬라이더는 로컬 Build 배분 도구이며 펀드 한도가 아니에요.",
+      "allocationProtocol": "프로토콜 슬라이더는 로컬 Build 배분 도구이며 펀드 한도가 아니에요.",
+      "allocationToken": "토큰 슬라이더는 로컬 Build 배분 도구이며 펀드 한도가 아니에요.",
       "poolId": "bytes32 PoolId를 붙여 넣으세요"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "계속하려면 한도를 설정하거나 '한도 없음'을 선택하세요.",
       "sliderLabel": "{name}의 최대 비율",
       "noCapLabel": "{name}에 한도 없음",
+      "sectionNoCapLabel": "{name}의 모든 행에 한도 없음",
       "unset": "설정되지 않음",
       "noRows": "여기에는 설정할 한도가 없습니다. 이 그룹에 추가된 항목이 없습니다.",
       "kind": {

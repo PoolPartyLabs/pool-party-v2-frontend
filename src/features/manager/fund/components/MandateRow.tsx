@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-041
  * @name MandateRow
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2349 rules v1: `MandateCheckbox` has a mixed state)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R15] / [R17] / [R19] / [R21], epic POO-2119. One row of a Mandate list: a
@@ -25,7 +26,7 @@
  */
 "use client";
 
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, Minus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
@@ -62,7 +63,14 @@ export interface MandateRowProps {
  * Exported because a step's "Select all" is the same box at the head of its group (R16/R20), and a
  * second hand-rolled copy there is how a 20 px box quietly becomes an 18 px one.
  */
-export function MandateCheckbox({ selected }: { selected: boolean }) {
+export function MandateCheckbox({
+  selected,
+  mixed = false,
+}: {
+  selected: boolean;
+  /** POO-2349 R3: some of the rows it stands for are selected. Drawn as a dash on the selected style. */
+  mixed?: boolean;
+}) {
   return (
     <span
       aria-hidden="true"
@@ -71,7 +79,11 @@ export function MandateCheckbox({ selected }: { selected: boolean }) {
         selected ? "border-primary bg-primary text-primary-foreground" : "border-input",
       )}
     >
-      {selected ? <Check className="size-3.5" strokeWidth={3} /> : null}
+      {mixed ? (
+        <Minus className="size-3.5" strokeWidth={3} />
+      ) : selected ? (
+        <Check className="size-3.5" strokeWidth={3} />
+      ) : null}
     </span>
   );
 }

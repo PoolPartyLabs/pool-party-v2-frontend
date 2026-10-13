@@ -731,6 +731,8 @@
       "metrics": "TVL và APR chưa được lập chỉ mục.",
       "limits": "Tỷ lệ Robinhood được lưu như ý định của quỹ, chưa được thực thi on-chain cho đến POO-2169.",
       "allocation": "Thanh trượt giao thức và token chỉ hỗ trợ phân bổ Build cục bộ, không phải giới hạn quỹ.",
+      "allocationProtocol": "Thanh trượt giao thức chỉ hỗ trợ phân bổ Build cục bộ, không phải giới hạn quỹ.",
+      "allocationToken": "Thanh trượt token chỉ hỗ trợ phân bổ Build cục bộ, không phải giới hạn quỹ.",
       "poolId": "Dán PoolId bytes32"
     },
     "header": {
@@ -909,6 +911,7 @@
       "capMissing": "Đặt một giới hạn hoặc chọn Không giới hạn để tiếp tục.",
       "sliderLabel": "Tỷ lệ tối đa cho {name}",
       "noCapLabel": "Không giới hạn cho {name}",
+      "sectionNoCapLabel": "Không giới hạn cho tất cả các hàng trong {name}",
       "unset": "Chưa đặt",
       "noRows": "Không có gì để giới hạn ở đây: chưa có gì được thêm vào nhóm này.",
       "kind": {
