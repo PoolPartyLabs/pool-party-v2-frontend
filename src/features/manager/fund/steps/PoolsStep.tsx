@@ -5,6 +5,7 @@
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 Figma parity: R8, R9)
  * @implements-rules-version v1 (POO-2343 R4: Raydium CLMM pools from DEX Screener; R5: one failed network keeps the other networks' pools; R10: a Solana failure names its network)
+ * @implements-rules-version DEC-204 (POO-2262: the Raydium stock pools are listed and unavailable)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -85,6 +86,11 @@
  * address (see `searchMandatePools`). A DEX Screener failure takes the same error state with Try
  * again as any other failed read (R5). Orca has no pool search.
  *
+ * DEC-204: the Solana source puts the pinned Raydium release pools first (SOL/USDC, TSLAx/USDC,
+ * NVDAx/USDC). A pool with a token the catalog lists as unavailable (a stock) is drawn with the
+ * permanent-refusal control, "Unavailable" with the reason, and reports `coming_soon`; it never counts
+ * as addable (see {@link canEverAdd}), so "Add all", the universe and R37 leave it out.
+ *
  * Pool catalog resolved by POO-2133: `mandatePoolSource` reads the real v4 catalog;
  * mock mode retains the existing fixtures.
  */
@@ -125,6 +131,7 @@ import {
   type MandatePoolRef,
   type MandateTokenRef,
   type NetworkId,
+  poolHoldsUnavailableToken,
   poolSideAddable,
   removePool,
   SOLANA_NETWORK,
@@ -132,6 +139,7 @@ import {
   slotCeiling,
   slotsUsed,
   tokenKey,
+  unavailableTokenKeys,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
 import {
@@ -826,6 +834,12 @@ export function PoolsStep({
     onUniverseCountRef.current?.(universeCount);
   }, [universeCount, draft.poolUniverseCount]);
 
+  // DEC-204: the tokens the catalog lists but never lets in, read once per mandate.
+  const unavailable = useMemo(
+    () => unavailableTokenKeys(catalog, draft.networks, draft.protocols),
+    [catalog, draft.networks, draft.protocols],
+  );
+
   const ownBlock = block?.step === STEP ? block : null;
 
   // Scroll the offending row into view when the shell points a block at this step.
@@ -845,13 +859,21 @@ export function PoolsStep({
    * would make that pool's Add do nothing visible at all, which is the silent refusal premise 11
    * exists to prevent.
    */
+  // DEC-204: a refused stock pool names its reason rather than "Coming soon".
+  const stockBlock =
+    ownBlock?.reason === "coming_soon" &&
+    [...resolution.pools, ...draft.pools].some(
+      (pool) => pool.id === ownBlock.rowId && poolHoldsUnavailableToken(pool, unavailable),
+    );
   const notice = ownBlock
     ? ({
         nothing_selected: t("fundBuilder.common.nothingSelected"),
         has_hook: t("fundBuilder.pools.hasHook"),
         no_slots: t("fundBuilder.common.noSlots"),
         not_priced: t("fundBuilder.tokens.noPrice"),
-        coming_soon: t("fundBuilder.common.comingSoon"),
+        coming_soon: stockBlock
+          ? t("fundBuilder.common.stockUnavailable")
+          : t("fundBuilder.common.comingSoon"),
         cap_missing: null,
         cap_zero: null,
         token_allowance_required: null,
@@ -1075,8 +1097,17 @@ export function PoolsStep({
    * cannot reach a result list, since every search is scoped to the draft's own networks, and the
    * only copy for it would be "Coming soon", which is not what happened.
    */
-  function rowRefusal(pool: MandatePoolRef): { reason: MandateBlockReason; label: string } | null {
+  function rowRefusal(
+    pool: MandatePoolRef,
+  ): { reason: MandateBlockReason; label: string; hint?: string } | null {
     if (pool.hasHook) return { reason: "has_hook", label: t("fundBuilder.pools.hasHook") };
+    // DEC-204: a stock pool is listed, and refused for its stock side with the reason as the hint.
+    if (poolHoldsUnavailableToken(pool, unavailable))
+      return {
+        reason: "coming_soon",
+        label: t("fundBuilder.common.unavailable"),
+        hint: t("fundBuilder.common.stockUnavailable"),
+      };
     const unpriced = [pool.token0, pool.token1].some(
       (side) => !poolSideAddable(draft, pool, side, catalog),
     );
@@ -1253,7 +1284,7 @@ export function PoolsStep({
                 <button
                   type="button"
                   aria-disabled="true"
-                  title={refusal.label}
+                  title={refusal.hint ?? refusal.label}
                   onClick={() => onBlocked({ step: STEP, reason: refusal.reason, rowId: pool.id })}
                   className="shrink-0 cursor-not-allowed rounded-full border border-border px-3 py-1.5 text-muted-foreground text-xs"
                 >
@@ -1261,7 +1292,7 @@ export function PoolsStep({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={4}>
-                {refusal.label}
+                {refusal.hint ?? refusal.label}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
