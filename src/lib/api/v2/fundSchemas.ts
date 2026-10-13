@@ -180,6 +180,8 @@ export const transactionSchema = z.object({
   /** §3.9: deposit and payout builds pad `eth_estimateGas` x 1.25; it is sent as the gas limit. */
   gas: uint.nullable().optional(),
 });
+/** §3.9: builder refusals that mean "a spoke report is refreshing, rebuild after the hint". */
+export const reportWaitCodes = ["SOLANA_REPORT_REFRESHING", "SPOKE_REPORT_STALE"] as const;
 export const previewSchema = record.extend({
   sharesMinted: uint.optional(),
   usdcCharged: uint.optional(),
