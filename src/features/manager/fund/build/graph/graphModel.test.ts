@@ -106,7 +106,7 @@ describe("graphItems", () => {
         },
       ],
     };
-    const layout = layoutGraph(input, EN);
+    const layout = layoutGraph(input, { ...EN, spokeContext: true });
     const context = layout.spokeContexts?.[0];
     if (!context) throw new Error("missing local context");
     const items = graphItems(layout);

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-MCK-004
  * @name buildCanvasFixtures
- * @implements-rules-version v2 (POO-2345); v1 (POO-2153 rules v1)
+ * @implements-rules-version v1 (POO-2348); v2 (POO-2345); v1 (POO-2153 rules v1)
  * @analytics-events none, a data fixture: nothing here is rendered on its own or tracked.
  *
  * PP-MOCK. The reference canvases of the Build canvas handoff (v1.2) as layout inputs, plus the
@@ -463,6 +463,49 @@ export const solanaTwoChainReturn: BuildCanvasFixture = fixture(
           id: "sol-kamino",
           sharePct: 30,
           entries: [kaminoSupply("sol-kamino-supply", "USDC")],
+        },
+      ],
+    },
+  ],
+  null,
+);
+
+/**
+ * POO-2348: the Build screen of the problem. The Arbitrum hub has one chain with a fee swap, and
+ * the Solana spoke has a Raydium CLMM chain and a Kamino chain. The spoke has a return Bridge. On
+ * the old layout, the return lines of the hub chain ran inside the Solana box (2 group
+ * intrusions), and the spoke showed Idle and Operating cash. Built from the report, not drawn.
+ */
+export const solanaBuildProblem: BuildCanvasFixture = fixture(
+  [
+    {
+      id: "sbp-hub",
+      sharePct: 30,
+      entries: [
+        swapAuto("sbp-hub-swap"),
+        pool("sbp-hub-pool", "WBTC / USDC", "0.05%"),
+        collectFees("sbp-hub-fees"),
+      ],
+    },
+  ],
+  [
+    {
+      network: "solana",
+      sharePct: 70,
+      chains: [
+        {
+          id: "sbp-raydium",
+          sharePct: 40,
+          entries: [
+            swapAuto("sbp-raydium-swap"),
+            raydiumPool("sbp-raydium-pool", "SOL / USDC"),
+            collectFees("sbp-raydium-fees"),
+          ],
+        },
+        {
+          id: "sbp-kamino",
+          sharePct: 30,
+          entries: [kaminoSupply("sbp-kamino-supply", "USDC")],
         },
       ],
     },

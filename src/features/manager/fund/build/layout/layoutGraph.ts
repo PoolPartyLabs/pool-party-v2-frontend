@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-023
  * @name layoutGraph
  * @implements-rules-version v2 (POO-2273); v2 (POO-2345 return line routing); POO-2153 rules v1; POO-2213 rules v1; POO-2235 rules v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
- * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine); v1 (POO-2348 Build canvas without Solana context, return lines below the group boxes)
  * @analytics-events none, a pure geometry module: the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event; nothing here is rendered or tracked.
  *
@@ -18,8 +18,11 @@
  * Structural input/template segments retain their approved Build geometry. Visible route legs
  * exclude internal Bridge transfers, while hoverRoutes associates all visible legs of one origin.
  * This layout does not infer token compatibility, repayment, operating cash or launch capability.
- * POO-2301 explicitly opts local Solana spokes into an Idle/cash presentation context; no balances
- * or cash financial adjacency are inferred from that declaration.
+ * POO-2301 opts local Solana spokes into an Idle/cash presentation context; no balances or cash
+ * financial adjacency are inferred from that declaration. POO-2348 v1 makes it an option
+ * (`LayoutOptions.spokeContext`, off by default): the Build canvas lays a Solana spoke out like any
+ * other spoke, with no Idle and no cash. POO-2348 v1 also puts Idle output (and so the return lane
+ * band) below the box of every spoke group, so no return line enters a group that is not its own.
  * POO-2345 v2 routes the return lines with fewer crossings and bends, without changing that
  * geometry: `returnLanes.ts` plans the Bridge ports and the lanes of the lines.
  * Stored block IDs, insertion/drop ports, chain order and nominal Build sizes remain unchanged.
@@ -294,8 +297,15 @@ interface PlacedSpoke {
 }
 
 /** A spoke's group: its chains, its circle, its Bridge, its inner bus and its label (C3, C20). */
-function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number, occurrence: string): PlacedSpoke {
-  const local = spoke.network === "solana";
+function placeSpoke(
+  d: Draft,
+  spoke: LayoutSpoke,
+  left: number,
+  occurrence: string,
+  withContext: boolean,
+): PlacedSpoke {
+  // POO-2348 R1: only a caller that asks for the context (Manage) gets Idle and cash for Solana.
+  const local = withContext && spoke.network === "solana";
   const circleLeft =
     spoke.chains.length > 0
       ? left + L.GROUP_PAD + spoke.chains.length * (L.CARD_W + L.SIBLING)
@@ -458,7 +468,7 @@ function placeReturns(d: Draft, chains: PlacedChain[], deepest: number): void {
 }
 
 /** A plan with at least one chain or one spoke. */
-function layoutPlan(input: LayoutInput): Draft {
+function layoutPlan(input: LayoutInput, options: LayoutOptions): Draft {
   const d = newDraft(0);
   const hub: PlacedChain[] = [];
   let x: number = L.CANVAS_PAD;
@@ -477,7 +487,13 @@ function layoutPlan(input: LayoutInput): Draft {
   for (const spoke of input.spokes) {
     const occurrence = occurrences.get(spoke.network) ?? 0;
     occurrences.set(spoke.network, occurrence + 1);
-    const placed = placeSpoke(d, spoke, x, occurrence ? `#${occurrence + 1}` : "");
+    const placed = placeSpoke(
+      d,
+      spoke,
+      x,
+      occurrence ? `#${occurrence + 1}` : "",
+      options.spokeContext === true,
+    );
     spokes.push(placed);
     x = rightOf(placed.group.rect) + L.GROUP_GAP;
   }
@@ -505,7 +521,8 @@ function layoutPlan(input: LayoutInput): Draft {
   const deepest = Math.max(
     bottomOf(hubCircle),
     ...hub.map((p) => p.bottom),
-    ...spokes.map((s) => s.lowest),
+    // POO-2348 R2: the return lines start below the box of every spoke group, not below its content.
+    ...spokes.map((s) => bottomOf(s.group.rect)),
   );
   placeReturns(d, [...hub, ...spokes.flatMap((s) => s.chains)], deepest);
   return d;
@@ -621,7 +638,7 @@ function normalise(d: Draft): GraphLayout {
  */
 export function layoutGraph(input: LayoutInput, options: LayoutOptions): GraphLayout {
   const empty = input.hub.chains.length === 0 && input.spokes.length === 0;
-  const graph = normalise(empty ? layoutEmpty(input, options) : layoutPlan(input));
+  const graph = normalise(empty ? layoutEmpty(input, options) : layoutPlan(input, options));
   graph.hubNetwork = input.hubNetwork;
   const horizontals = graph.edges.filter((edge) => edge.points[0]?.y === edge.points[1]?.y);
   graph.edges = graph.edges.map((edge) =>

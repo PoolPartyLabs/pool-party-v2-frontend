@@ -305,6 +305,14 @@ React Flow owns the sole pan/zoom transform. The same Fit, reveal, background se
 Focused renderer and real-engine BuildScreen tests preserve gesture, fit, selection, configuration/Apply, navigation, removals and storage behavior. No mock of the React Flow engine is used. Native browser pixel/scroll/zoom acceptance remains with Murilo. No full local suite, coverage or build is required by the current owner constraints.
 
 
+## Return band and group boxes (POO-2348, rules v1)
+
+The return lines start below the box of each spoke group. The outbound return Bridge is inside the group box, so the box bottom is the lowest point of the group. The top of the lane band is the lowest box bottom plus `LAYOUT.LANE_MARGIN`. The Idle output is one band below the same box bottom. A return line does not enter the box of a group that is not its source or target. Because of this, a canvas with a spoke is `GROUP_PAD` (16 px) taller than before.
+
+`layoutMetrics.ts` counts the group intrusions. An intrusion is a line segment that runs inside the box of a group that is not the source or the target of its line. The owner of a line comes from its id. Each fixture has 0 intrusions, and a test checks this. The fixture `solanaBuildProblem` has an Arbitrum hub with a chain, and a Solana spoke with a Raydium chain, a Kamino chain and a return Bridge.
+
+The Build canvas shows no Idle and no Operating cash for a Solana spoke, the same as for a Robinhood spoke. The option `LayoutOptions.spokeContext` is off by default. Manage has its own layout and still shows both.
+
 ## Shared local Solana domain, October 9, 2026 (POO-2301 v1)
 
 The V2 catalog adds, for the Solana network, four position descriptors, chain-aware token keys, protocol marks and complete analytics mappings. A protocol of this set is available only on Solana. Configure reducers check the selected network, protocol and exact USDC/WSOL identities for both the position and its automatic Jupiter conversion before accepting a write. USDC Holding remains correctable when another chain is invalid.
@@ -313,6 +321,8 @@ Default planReadiness refuses local Solana cards/spokes even when a USDC-only po
 
 
 ## Local Solana Idle and operating cash, October 9, 2026 (POO-2301 v1)
+
+POO-2348 v1: the Build canvas does not use this context. `layoutGraph` adds it only when `LayoutOptions.spokeContext` is `true`, and no Build caller sets it. The text below is the geometry of that option.
 
 Explicit local runtime mapping adds a236x62 USDC Idle surface after each Solana inbound Bridge and a144x96 native SOL cash decoration to its right, separated by32px and vertically centered. The layout expands hull/bounds for cash without moving the financial axis and places branch buses below both surfaces. Idle owns declared Bridge-to-Idle-to-branch handles; cash owns none. Amount and independent USD readings remain Not available, never zero. Standard EVM layouts and the shared palette/viewport are unchanged.
 
