@@ -103,8 +103,8 @@ importers:
         specifier: ^1.7.2
         version: 1.7.2(next@15.5.27(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(@types/node@20.19.41)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       libphonenumber-js:
-        specifier: ^1.13.8
-        version: 1.13.8
+        specifier: ^1.13.15
+        version: 1.13.15
       lucide-react:
         specifier: ^1.23.0
         version: 1.23.0(react@19.1.0)
@@ -5904,8 +5904,8 @@ packages:
   keyvaluestorage-interface@1.0.0:
     resolution: {integrity: sha512-8t6Q3TclQ4uZynJY9IGr2+SsIGwK9JHcO6ootkHCGA0CrQCRy+VkouYNO2xicET6b9al7QKzpebNow+gkpCL8g==}
 
-  libphonenumber-js@1.13.8:
-    resolution: {integrity: sha512-80xal1m93rADejw2pMp2MSzFhHCPLEspjHxnH2UtqI+DgAmElsbmLMiqk9niwH9NWAfjsRtaJI+qBrOEmRx9nQ==}
+  libphonenumber-js@1.13.15:
+    resolution: {integrity: sha512-AHdhEQeDFEJ4GKDAQ9AwxChy+v2kUILUB3TGQRpkXMkWePjXTU/WQEzWVQoIx/Gz8fE73Wr5SEuZCy2vk8jrMQ==}
 
   lightningcss-android-arm64@1.32.0:
     resolution: {integrity: sha512-YK7/ClTt4kAK0vo6w3X+Pnm0D2cf2vPHbhOXdoNti1Ga0al1P4TBZhwjATvjNwLEBCnKvjJc2jQgHXH0NEwlAg==}
@@ -7913,8 +7913,8 @@ packages:
       typescript:
         optional: true
 
-  watchpack@2.5.2:
-    resolution: {integrity: sha512-6i/00NBjP4yGPs+caKSyRfpTF/8Torsu0MOW3mMzIbhgISFder8i7xbqgHlLMwJrdiN8ndBV3UA1/AfzPSr+jg==}
+  watchpack@2.6.1:
+    resolution: {integrity: sha512-8mk/LnXpQAiM2xKZhTkxikwly5GhL2Z+DWiLTkMa/E1Nfv9zURhHgiFyWvM4BWqW+LjIgL2AIS7JntEUx6v3vQ==}
     engines: {node: '>=10.13.0'}
 
   webextension-polyfill@0.10.0:
@@ -10045,7 +10045,7 @@ snapshots:
       fetch-retry: 6.0.0
       jose: 4.15.9
       js-cookie: 3.0.8
-      libphonenumber-js: 1.13.8
+      libphonenumber-js: 1.13.15
       set-cookie-parser: 2.7.2
     optionalDependencies:
       viem: 2.56.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
@@ -15487,7 +15487,7 @@ snapshots:
 
   keyvaluestorage-interface@1.0.0: {}
 
-  libphonenumber-js@1.13.8: {}
+  libphonenumber-js@1.13.15: {}
 
   lightningcss-android-arm64@1.32.0:
     optional: true
@@ -17818,7 +17818,7 @@ snapshots:
       - immer
       - porto
 
-  watchpack@2.5.2:
+  watchpack@2.6.1:
     dependencies:
       graceful-fs: 4.2.11
 
@@ -17851,7 +17851,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.5.0
       tapable: 2.3.3
-      watchpack: 2.5.2
+      watchpack: 2.6.1
       webpack-sources: 3.6.0
     transitivePeerDependencies:
       - '@minify-html/node'
