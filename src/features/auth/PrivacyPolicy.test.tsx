@@ -1,7 +1,7 @@
 /**
  * @id PP-AUTH-SCR-007
  * @name PrivacyPolicy.test
- * Behavior: renders the key Privacy Policy sections, the legal entity, and the contact email link.
+ * Behavior: renders the key Privacy Policy sections, the operator sentence (no former entity), and the contact email link.
  */
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders, screen } from "../../../tests/utils/renderWithProviders";
@@ -27,9 +27,16 @@ describe("PrivacyPolicy", () => {
     }
   });
 
-  it("names the legal entity", () => {
-    renderWithProviders(<PrivacyPolicy />);
-    expect(screen.getByText(/ARESTA DIVINAL, UNIPESSOAL, LDA/)).toBeInTheDocument();
+  it("names Pool Party as the operator", () => {
+    const { container } = renderWithProviders(<PrivacyPolicy />);
+    // @rule POO-2714 R4: the whole rendered markup, so a string split across elements or placed
+    // in an attribute fails too.
+    expect(container.textContent ?? "").not.toMatch(/ARESTA|DIVINAL|517878240/i);
+    expect(container.innerHTML).not.toMatch(/ARESTA|DIVINAL|517878240/i);
+    // @rule POO-2714 R6
+    expect(
+      screen.getByText(/Pool Party is the name used by the operators of the Services/),
+    ).toBeInTheDocument();
   });
 
   it("exposes the contact email as a mailto link", () => {
