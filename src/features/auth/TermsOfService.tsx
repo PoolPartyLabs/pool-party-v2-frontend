@@ -18,7 +18,7 @@ export function TermsOfService() {
       <p>
         These Terms of Service (the “Agreement”) explain the terms and conditions by which you may
         access and use the Products provided by Pool Party. Pool Party is the name used by the
-        operators of the Services (hereinafter referred to as “Pool Party,” “we,” “our,” or “us”).
+        operators of the Products (hereinafter referred to as “Pool Party,” “we,” “our,” or “us”).
       </p>
       <p>
         Our primary Product is a website-hosted user interface (the “Interface”), which allows

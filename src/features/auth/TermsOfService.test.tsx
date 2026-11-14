@@ -40,7 +40,7 @@ describe("TermsOfService", () => {
     expect(screen.queryByText(/ARESTA|DIVINAL|517878240/i)).toBeNull();
     // @rule POO-2714 R6
     expect(
-      screen.getByText(/Pool Party is the name used by the operators of the Services/),
+      screen.getByText(/Pool Party is the name used by the operators of the Products/),
     ).toBeInTheDocument();
     expect(screen.getByText(/ONE HUNDRED U\.S\. DOLLARS/)).toBeInTheDocument();
   });
