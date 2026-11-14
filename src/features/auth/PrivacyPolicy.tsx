@@ -25,10 +25,7 @@ export function PrivacyPolicy() {
 
       <h2>High Level Summary</h2>
       <ul>
-        <li>
-          Pool Party provides an interface to a decentralized protocol. We are a company based in
-          Portugal.
-        </li>
+        <li>Pool Party provides an interface to a decentralized protocol.</li>
         <li>
           We do not collect and store personal data, such as first name, last name, street address,
           date of birth, email address, or IP address in connection with your use of the core

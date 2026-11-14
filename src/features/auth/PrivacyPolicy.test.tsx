@@ -33,6 +33,11 @@ describe("PrivacyPolicy", () => {
     // in an attribute fails too.
     expect(container.textContent ?? "").not.toMatch(/ARESTA|DIVINAL|517878240/i);
     expect(container.innerHTML).not.toMatch(/ARESTA|DIVINAL|517878240/i);
+    // The operator is not described as a company of any one country. Whitespace is collapsed first,
+    // because the sentence wrapped across two source lines the last time it shipped.
+    const fullText = (container.textContent ?? "").replace(/\s+/g, " ");
+    expect(fullText).not.toMatch(/company based in Portugal/i);
+    expect(container.innerHTML.replace(/\s+/g, " ")).not.toMatch(/company based in Portugal/i);
     // @rule POO-2714 R6
     expect(
       screen.getByText(/Pool Party is the name used by the operators of the Services/),
