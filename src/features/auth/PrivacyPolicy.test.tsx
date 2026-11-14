@@ -27,9 +27,14 @@ describe("PrivacyPolicy", () => {
     }
   });
 
-  it("names the legal entity", () => {
+  it("names Pool Party as the operator", () => {
     renderWithProviders(<PrivacyPolicy />);
-    expect(screen.getByText(/ARESTA DIVINAL, UNIPESSOAL, LDA/)).toBeInTheDocument();
+    // @rule POO-2714 R4
+    expect(screen.queryByText(/ARESTA|DIVINAL|517878240/i)).toBeNull();
+    // @rule POO-2714 R6
+    expect(
+      screen.getByText(/Pool Party is the name used by the operators of the Services/),
+    ).toBeInTheDocument();
   });
 
   it("exposes the contact email as a mailto link", () => {
