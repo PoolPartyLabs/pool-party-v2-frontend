@@ -18,17 +18,14 @@ export function PrivacyPolicy() {
       <p>
         This Privacy Policy (the “Policy”) explains how Pool Party collects, uses, and shares data
         in connection with our website, web app, and all of our other properties, products, and
-        services (the “Services”). Pool Party is the trading name of ARESTA DIVINAL, UNIPESSOAL, LDA
-        (NIPC/NIF 517878240), a company registered in Portugal (“Pool Party”, “we”, “us” or “our”).
-        Your use of the Services is subject to this Policy as well as our Terms of Service.
+        services (the “Services”). Pool Party is the name used by the operators of the Services
+        (“Pool Party”, “we”, “us” or “our”). Your use of the Services is subject to this Policy as
+        well as our Terms of Service.
       </p>
 
       <h2>High Level Summary</h2>
       <ul>
-        <li>
-          Pool Party provides an interface to a decentralized protocol. We are a company based in
-          Portugal.
-        </li>
+        <li>Pool Party provides an interface to a decentralized protocol.</li>
         <li>
           We do not collect and store personal data, such as first name, last name, street address,
           date of birth, email address, or IP address in connection with your use of the core

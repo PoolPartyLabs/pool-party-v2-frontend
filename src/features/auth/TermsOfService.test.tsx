@@ -1,7 +1,7 @@
 /**
  * @id PP-AUTH-SCR-008
  * @name TermsOfService.test
- * Behavior: renders the key Terms sections/subsections, the legal entity, and the liability cap.
+ * Behavior: renders the key Terms sections/subsections, the operator sentence (no former entity), and the liability cap.
  */
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders, screen } from "../../../tests/utils/renderWithProviders";
@@ -34,9 +34,16 @@ describe("TermsOfService", () => {
     expect(screen.getByRole("heading", { name: "8.3. Class Action Waiver" })).toBeInTheDocument();
   });
 
-  it("names the entity and the liability cap", () => {
-    renderWithProviders(<TermsOfService />);
-    expect(screen.getByText(/ARESTA DIVINAL, UNIPESSOAL, LDA/)).toBeInTheDocument();
+  it("names Pool Party as the operator and states the liability cap", () => {
+    const { container } = renderWithProviders(<TermsOfService />);
+    // @rule POO-2714 R4: the whole rendered markup, so a string split across elements or placed
+    // in an attribute fails too.
+    expect(container.textContent ?? "").not.toMatch(/ARESTA|DIVINAL|517878240/i);
+    expect(container.innerHTML).not.toMatch(/ARESTA|DIVINAL|517878240/i);
+    // @rule POO-2714 R6
+    expect(
+      screen.getByText(/Pool Party is the name used by the operators of the Products/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/ONE HUNDRED U\.S\. DOLLARS/)).toBeInTheDocument();
   });
 });

@@ -17,9 +17,8 @@ export function TermsOfService() {
     <LegalDocument title="Terms of Service" lastModified="Last modified: July 10, 2025">
       <p>
         These Terms of Service (the “Agreement”) explain the terms and conditions by which you may
-        access and use the Products provided by Pool Party. Pool Party is the trading name of ARESTA
-        DIVINAL, UNIPESSOAL, LDA (NIPC/NIF 517878240), a company registered in Portugal (hereinafter
-        referred to as “Pool Party,” “we,” “our,” or “us”).
+        access and use the Products provided by Pool Party. Pool Party is the name used by the
+        operators of the Products (hereinafter referred to as “Pool Party,” “we,” “our,” or “us”).
       </p>
       <p>
         Our primary Product is a website-hosted user interface (the “Interface”), which allows
