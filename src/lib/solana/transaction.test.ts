@@ -8,6 +8,7 @@ import {
   createTransactionMessage,
   getAddressDecoder,
   getBase58Decoder,
+  getBase64Decoder,
   getCompiledTransactionMessageDecoder,
   getTransactionDecoder,
   getTransactionEncoder,
@@ -182,15 +183,25 @@ it("honors cancellation before requesting a signature", async () => {
   expect(options.sign).not.toHaveBeenCalled();
 });
 
-describe("a wallet-recompiled message (Phantom Lighthouse assertions)", () => {
+describe("a wallet-recompiled message (Phantom Lighthouse assertions and priority fee)", () => {
   const at = (fill: number) => getAddressDecoder().decode(new Uint8Array(32).fill(fill));
   const manager = at(9);
   const spoke = at(200);
-  const unitLimit = (units: number): Instruction => {
+  const budget = (data: Uint8Array): Instruction => ({
+    programAddress: address("ComputeBudget111111111111111111111111111111"),
+    data,
+  });
+  const unitLimit = (units: number) => {
     const data = new Uint8Array(5);
     data[0] = 2;
     new DataView(data.buffer).setUint32(1, units, true);
-    return { programAddress: address("ComputeBudget111111111111111111111111111111"), data };
+    return budget(data);
+  };
+  const unitPrice = (microLamports: bigint) => {
+    const data = new Uint8Array(9);
+    data[0] = 3;
+    new DataView(data.buffer).setBigUint64(1, microLamports, true);
+    return budget(data);
   };
   const spokeCall = (data = [7, 7], readonly = at(100)): Instruction => ({
     programAddress: spoke,
@@ -236,7 +247,11 @@ describe("a wallet-recompiled message (Phantom Lighthouse assertions)", () => {
     options.sign.mockResolvedValue(signed);
     return { ...options, walletAddress: manager as string };
   }
-  async function refused(signed: Uint8Array<ArrayBuffer>, original = built) {
+  const passes = (signed: Uint8Array<ArrayBuffer>, original = built) =>
+    expect(sendSolanaTransaction(walletReturns(signed, original))).resolves.toBe(signatureOf(7));
+  /** Refused after signing, not submitted, logged once with the reason and both messages. */
+  async function refused(signed: Uint8Array<ArrayBuffer>, reason: string, original = built) {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const options = walletReturns(signed, original);
     const failure = await sendSolanaTransaction(options).catch((error: unknown) => error);
     expect((failure as Error).message).toBe("UNSAFE_SOLANA_TRANSACTION");
@@ -244,12 +259,20 @@ describe("a wallet-recompiled message (Phantom Lighthouse assertions)", () => {
     expect(options.sign).toHaveBeenCalled();
     expect(options.persist).not.toHaveBeenCalled();
     expect(options.rpc.send).not.toHaveBeenCalled();
+    const base64 = getBase64Decoder();
+    const message = (bytes: Uint8Array) =>
+      base64.decode(getTransactionDecoder().decode(bytes).messageBytes);
+    expect(log).toHaveBeenCalledExactlyOnceWith("[solana] signed message rejected", {
+      reason,
+      unsigned: message(wire(original)),
+      signed: message(signed),
+    });
+    log.mockRestore();
   }
   const signatureOf = (fill: number) => getBase58Decoder().decode(new Uint8Array(64).fill(fill));
 
   it("(a) still accepts a byte-identical signed message", async () => {
-    const options = walletReturns(wire(built, 7));
-    await expect(sendSolanaTransaction(options)).resolves.toBe(signatureOf(7));
+    await passes(wire(built, 7));
   });
   it("(b) accepts appended Lighthouse assertions that renumber the accounts, and sends them", async () => {
     const signed = wire([...built, assertion()], 7);
@@ -268,36 +291,57 @@ describe("a wallet-recompiled message (Phantom Lighthouse assertions)", () => {
   });
   it("(b) accepts an assertion on the fee payer and a raised unit limit up to the 1.4M cap", async () => {
     const payerAssertion = assertion([{ address: manager, role: AccountRole.READONLY }]);
-    const options = walletReturns(wire([unitLimit(1_400_000), spokeCall(), payerAssertion], 7));
-    await expect(sendSolanaTransaction(options)).resolves.toBe(signatureOf(7));
+    await passes(wire([unitLimit(1_400_000), spokeCall(), payerAssertion], 7));
   });
-  it("(c) refuses an appended instruction of any other program", async () => {
-    await refused(wire([...built, assertion(undefined, at(77))], 7));
+  it("(c) refuses an added instruction of any other program, or Lighthouse before the payload", async () => {
+    await refused(wire([...built, assertion(undefined, at(77))], 7), "payload");
+    await refused(wire([assertion(), ...built], 7), "lighthouse");
   });
-  it("(d) refuses a changed built instruction: data, account or a lowered or uncapped unit limit", async () => {
-    await refused(wire([unitLimit(200_000), spokeCall([7, 8]), assertion()], 7));
-    await refused(wire([unitLimit(200_000), spokeCall(undefined, at(101))], 7));
-    await refused(wire([unitLimit(150_000), spokeCall(), assertion()], 7));
-    await refused(wire([unitLimit(1_400_001), spokeCall(), assertion()], 7));
-    await refused(wire([spokeCall(), unitLimit(200_000), assertion()], 7));
+  it("(d) refuses a changed payload instruction: data or account", async () => {
+    await refused(wire([unitLimit(200_000), spokeCall([7, 8]), assertion()], 7), "payload");
+    await refused(wire([unitLimit(200_000), spokeCall(undefined, at(101))], 7), "payload");
   });
   it("(e) refuses a changed blockhash", async () => {
-    await refused(
-      wire([...built, assertion()], 7, blockhash("SysvarRent111111111111111111111111111111111")),
-    );
+    const hash = blockhash("SysvarRent111111111111111111111111111111111");
+    await refused(wire([...built, assertion()], 7, hash), "blockhash");
   });
   it("(f) refuses an added signer, or an assertion touching a signer other than the fee payer", async () => {
-    await refused(
-      wire([...built, assertion([{ address: at(60), role: AccountRole.READONLY_SIGNER }])], 7),
-    );
+    const newSigner = assertion([{ address: at(60), role: AccountRole.READONLY_SIGNER }]);
+    await refused(wire([...built, newSigner], 7), "signers");
     const mint = { address: at(170), role: AccountRole.WRITABLE_SIGNER };
     const withMint = [
       unitLimit(200_000),
       { ...spokeCall(), accounts: [...(spokeCall().accounts ?? []), mint] },
     ];
-    await refused(
-      wire([...withMint, assertion([{ address: mint.address, role: AccountRole.READONLY }])], 7),
-      withMint,
-    );
+    const onMint = assertion([{ address: mint.address, role: AccountRole.READONLY }]);
+    await refused(wire([...withMint, onMint], 7), "lighthouse", withMint);
+  });
+  it("(g) accepts a prepended unit price within the cap (Phantom's priority fee)", async () => {
+    await passes(wire([unitPrice(BigInt(50_000)), ...built, assertion()], 7));
+    await passes(wire([unitPrice(BigInt(1_000_000)), unitLimit(1_400_000), spokeCall()], 7));
+  });
+  it("(h) refuses a unit price over the cap, or a second one", async () => {
+    await refused(wire([unitPrice(BigInt(1_000_001)), ...built], 7), "compute_unit_price");
+    const twice = [unitPrice(BigInt(1)), unitPrice(BigInt(1)), ...built];
+    await refused(wire(twice, 7), "compute_budget");
+  });
+  it("(i) bounds the implied fee: the per-CU cap at 1.4M CU stays under 0.01 SOL", async () => {
+    // 1,000,000 micro-lamports x 1,400,000 CU = 0.0014 SOL, so the 0.01 SOL bound is a backstop
+    // that the price and limit caps already enforce: the most expensive message they allow passes.
+    await passes(wire([unitPrice(BigInt(1_000_000)), unitLimit(1_400_000), spokeCall()], 7));
+  });
+  it("(j) accepts the unit limit replaced by a higher one at another position", async () => {
+    await passes(wire([unitPrice(BigInt(10)), spokeCall(), assertion(), unitLimit(300_000)], 7));
+  });
+  it("(k) refuses a lowered, removed, uncapped or malformed unit limit", async () => {
+    await refused(wire([spokeCall(), unitLimit(150_000), assertion()], 7), "compute_unit_limit");
+    await refused(wire([unitPrice(BigInt(10)), spokeCall()], 7), "compute_unit_limit");
+    await refused(wire([unitLimit(1_400_001), spokeCall()], 7), "compute_unit_limit");
+    await refused(wire([budget(new Uint8Array([4, 0, 0, 1, 0])), ...built], 7), "compute_budget");
+  });
+  it("(l) refuses a payload instruction reordered or duplicated", async () => {
+    const two = [unitLimit(200_000), spokeCall([1]), spokeCall([2])];
+    await refused(wire([unitLimit(200_000), spokeCall([2]), spokeCall([1])], 7), "payload", two);
+    await refused(wire([...built, spokeCall()], 7), "payload");
   });
 });

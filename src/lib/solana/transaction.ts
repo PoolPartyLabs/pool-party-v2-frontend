@@ -6,6 +6,7 @@
 import {
   assertIsFullySignedTransaction,
   getBase58Decoder,
+  getBase64Decoder,
   getCompiledTransactionMessageDecoder,
   getSignatureFromTransaction,
   getTransactionDecoder,
@@ -19,7 +20,11 @@ export const SOLANA_MAINNET_GENESIS_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc1
  * (docs.phantom.com/developer-powertools/lighthouse). The only program a wallet may add.
  */
 export const LIGHTHOUSE_PROGRAM = "L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95";
-const COMPUTE_BUDGET_PROGRAM = "ComputeBudget111111111111111111111111111111";
+export const COMPUTE_BUDGET_PROGRAM = "ComputeBudget111111111111111111111111111111";
+/** Ceiling on a priority fee: 1,000,000 micro-lamports per CU (0.0014 SOL at 1.4M CU). */
+export const MAX_MICRO_LAMPORTS_PER_CU = BigInt(1_000_000);
+/** Ceiling on the priority fee a wallet may add: 0.01 SOL. */
+const MAX_PRIORITY_FEE_LAMPORTS = BigInt(10_000_000);
 
 export interface SolanaLifetime {
   blockhash: string;
@@ -110,21 +115,89 @@ function resolvedInstructions(message: CompiledMessage) {
   });
 }
 type ResolvedInstruction = ReturnType<typeof resolvedInstructions>[number];
-/** SetComputeUnitLimit's units, or null for any other instruction. */
-function computeUnitLimit(instruction: ResolvedInstruction): number | null {
-  const { program, indices, data } = instruction;
-  if (program !== COMPUTE_BUDGET_PROGRAM || indices.length || data.length !== 5 || data[0] !== 2)
-    return null;
-  return new DataView(data.buffer, data.byteOffset, data.byteLength).getUint32(1, true);
+/** A well-formed SetComputeUnitLimit or SetComputeUnitPrice, or null. */
+function computeBudget({
+  indices,
+  data,
+}: ResolvedInstruction): { limit?: bigint; price?: bigint } | null {
+  if (indices.length) return null;
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  if (data[0] === 2 && data.length === 5) return { limit: BigInt(view.getUint32(1, true)) };
+  if (data[0] === 3 && data.length === 9) return { price: view.getBigUint64(1, true) };
+  return null;
+}
+
+/** Why a wallet-returned message differs unsafely from the built one, or null when it is safe. */
+function signedMessageMismatch(
+  unsignedBytes: ReadonlyUint8Array,
+  signedBytes: ReadonlyUint8Array,
+): string | null {
+  const decoder = getCompiledTransactionMessageDecoder();
+  const unsigned = decoder.decode(unsignedBytes);
+  const signed = decoder.decode(signedBytes);
+  const lookups = (message: CompiledMessage) =>
+    JSON.stringify(("addressTableLookups" in message && message.addressTableLookups) || []);
+  const signers = unsigned.header.numSignerAccounts;
+  if (unsigned.version !== 0 || signed.version !== 0) return "version";
+  if (signed.lifetimeToken !== unsigned.lifetimeToken) return "blockhash";
+  if (lookups(signed) !== lookups(unsigned)) return "lookups";
+  if (
+    signers === 0 ||
+    signed.header.numSignerAccounts !== signers ||
+    signed.header.numReadonlySignerAccounts !== unsigned.header.numReadonlySignerAccounts ||
+    unsigned.staticAccounts
+      .slice(0, signers)
+      .some((account, index) => signed.staticAccounts[index] !== account)
+  )
+    return "signers";
+  const built = resolvedInstructions(unsigned);
+  const sent = resolvedInstructions(signed);
+  const isPayload = (instruction: ResolvedInstruction) =>
+    instruction.program !== COMPUTE_BUDGET_PROGRAM && instruction.program !== LIGHTHOUSE_PROGRAM;
+  const payload = (list: ResolvedInstruction[]) => list.filter(isPayload).map(({ key }) => key);
+  if (payload(sent).join("\n") !== payload(built).join("\n")) return "payload";
+  const firstPayload = sent.findIndex(isPayload);
+  if (
+    sent.some(
+      (instruction, position) =>
+        instruction.program === LIGHTHOUSE_PROGRAM &&
+        (firstPayload < 0 ||
+          position < firstPayload ||
+          instruction.indices.some((index) => index > 0 && index < signers)),
+    )
+  )
+    return "lighthouse";
+  const budget = (list: ResolvedInstruction[]) =>
+    list.filter((instruction) => instruction.program === COMPUTE_BUDGET_PROGRAM).map(computeBudget);
+  const sentBudget = budget(sent);
+  const limits = sentBudget.flatMap((entry) => (entry?.limit === undefined ? [] : [entry.limit]));
+  const prices = sentBudget.flatMap((entry) => (entry?.price === undefined ? [] : [entry.price]));
+  if (sentBudget.includes(null) || limits.length > 1 || prices.length > 1) return "compute_budget";
+  const builtLimit = budget(built).find((entry) => entry?.limit !== undefined)?.limit;
+  const limit = limits[0];
+  if (
+    (limit !== undefined && limit > BigInt(1_400_000)) ||
+    (builtLimit !== undefined && (limit === undefined || limit < builtLimit))
+  )
+    return "compute_unit_limit";
+  const price = prices[0] ?? BigInt(0);
+  if (price > MAX_MICRO_LAMPORTS_PER_CU) return "compute_unit_price";
+  // Without a limit instruction the runtime grants 200k CU per other instruction, up to 1.4M.
+  const effectiveLimit =
+    limit ?? BigInt(Math.min(1_400_000, 200_000 * (sent.length - sentBudget.length)));
+  if (price * effectiveLimit > MAX_PRIORITY_FEE_LAMPORTS * BigInt(1_000_000)) return "priority_fee";
+  return null;
 }
 
 /**
- * The wallet may return a recompiled message: Phantom appends Lighthouse assertions (new readonly
- * accounts, renumbered indices) and may raise the compute-unit limit to pay for them. Accept that
- * and nothing else: same version, blockhash, lookups and signers; every built instruction, in
- * order, with the same program, accounts (by address and writability) and data, except a raised
- * unit limit up to Solana's 1.4M cap (the pre-sign bound); extra instructions only Lighthouse,
- * touching no signer but the fee payer. Anything else is unsafe and provably unsent.
+ * The wallet may return a recompiled message: Phantom adds Lighthouse assertions (new readonly
+ * accounts, renumbered indices) and may add a priority fee or raise the compute-unit limit. Accept
+ * that and nothing else: same version, blockhash, lookups and signers; the built non-budget
+ * instructions unchanged and in order (program, accounts by address and writability, data);
+ * Lighthouse only after the first of them, touching no signer but the fee payer; compute budget
+ * only one unit limit (never lowered, at most 1.4M) and one unit price (at most
+ * MAX_MICRO_LAMPORTS_PER_CU, fee at most 0.01 SOL). Anything else is unsafe and provably unsent,
+ * logged with both messages (public data) so the wallet's change can be read.
  */
 function assertSignedMessageMatches(
   unsignedBytes: ReadonlyUint8Array,
@@ -135,45 +208,20 @@ function assertSignedMessageMatches(
     unsignedBytes.every((byte, index) => byte === signedBytes[index])
   )
     return;
-  let safe: boolean;
+  let reason: string | null;
   try {
-    const decoder = getCompiledTransactionMessageDecoder();
-    const unsigned = decoder.decode(unsignedBytes);
-    const signed = decoder.decode(signedBytes);
-    const lookups = (message: CompiledMessage) =>
-      JSON.stringify(("addressTableLookups" in message && message.addressTableLookups) || []);
-    const signers = unsigned.header.numSignerAccounts;
-    const built = resolvedInstructions(unsigned);
-    const sent = resolvedInstructions(signed);
-    safe =
-      unsigned.version === 0 &&
-      signed.version === 0 &&
-      signed.lifetimeToken === unsigned.lifetimeToken &&
-      lookups(signed) === lookups(unsigned) &&
-      signers > 0 &&
-      signed.header.numSignerAccounts === signers &&
-      signed.header.numReadonlySignerAccounts === unsigned.header.numReadonlySignerAccounts &&
-      unsigned.staticAccounts
-        .slice(0, signers)
-        .every((account, index) => signed.staticAccounts[index] === account) &&
-      sent.length >= built.length &&
-      built.every((instruction, index) => {
-        const after = sent[index];
-        if (!after || instruction.key === after.key) return !!after;
-        const [limit, raised] = [computeUnitLimit(instruction), computeUnitLimit(after)];
-        return limit !== null && raised !== null && raised >= limit && raised <= 1_400_000;
-      }) &&
-      sent
-        .slice(built.length)
-        .every(
-          (extra) =>
-            extra.program === LIGHTHOUSE_PROGRAM &&
-            extra.indices.every((index) => index === 0 || index >= signers),
-        );
+    reason = signedMessageMismatch(unsignedBytes, signedBytes);
   } catch {
-    safe = false;
+    reason = "undecodable";
   }
-  if (!safe) notSubmitted("UNSAFE_SOLANA_TRANSACTION");
+  if (reason === null) return;
+  const base64 = getBase64Decoder();
+  console.error("[solana] signed message rejected", {
+    reason,
+    unsigned: base64.decode(unsignedBytes),
+    signed: base64.decode(signedBytes),
+  });
+  notSubmitted("UNSAFE_SOLANA_TRANSACTION");
 }
 
 /**
